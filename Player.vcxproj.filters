@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Function.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MyProject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalVar.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="QKCtrl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LrcWnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="OLEDragDrop.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MainWnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectDialog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="WndList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalDef.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="WndMain.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Function.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalVar.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="QKCtrl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WndLrc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="OLEDragDrop.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Entry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WndEffect.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WndList.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Player.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Res\BTJump.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTOpen.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTLoad.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTLast.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTLrc.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTNext.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTPause.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTPlay.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTStop.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTBlance.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTSlient.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTSpeed.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTVol.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTSave.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTEmpty.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTPlay_Lrc.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTClose_Lrc.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTLast_Lrc.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTNext_Lrc.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\MAIN.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTPause_Lrc.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTLast_TB.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTNext_TB.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTPause_TB.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTPlay_TB.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTSearch.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTPlayList.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTInGroup.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\RMRadom.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\RMSingle.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\RMTotal.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\RMSingleLoop.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\RMTotalLoop.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTSetting.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTTick.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\About.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTMore.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\BTListManaging.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
