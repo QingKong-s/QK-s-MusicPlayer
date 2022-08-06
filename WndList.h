@@ -21,8 +21,9 @@ struct PLAYERLISTUNIT// 内存播放列表项目
 #define QKLIF_INVALID			0x00000001// 项目无效
 #define QKLIF_IGNORED			0x00000002// 忽略
 #define QKLIF_BOOKMARK			0x00000004// 有书签
-#define QKLIF_DRAGMARK_CURRFILE	0x00000008// 仅在拖放时有效，现行播放文件标志
+#define QKLIF_DRAGMARK_CURRFILE	0x00000008// 仅在拖放时有效，现行播放标志，还原索引用
 #define QKLIF_TIME				0x00000010// 仅在存档或读取文件时有效，已有时长字符串
+#define QKLIF_DRAGMARK_PLLATER	0x00000020// 仅在拖放时有效，稍后播放标志，还原索引用
 
 struct LISTFILEHEADER	// 播放列表文件头
 {

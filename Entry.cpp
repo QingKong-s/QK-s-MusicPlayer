@@ -245,7 +245,7 @@ void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc, DWORD
                 dwErrCode = GetLastError();
             else
                 dwErrCode = dwOtherErrCode;
-            lstrcatW(psz, L"\n´íÎó´úÂë£º");
+            lstrcatW(psz, L"\n´íÎó´úÂë£º0x");
             wsprintfW(psz + lstrlenW(psz), L"%08x", dwErrCode);
         }
     }
@@ -258,7 +258,7 @@ void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc, DWORD
         else
             dwErrCode = dwOtherErrCode;
         psz = new WCHAR[20];
-        lstrcpyW(psz, L"´íÎó´úÂë£º");
+        lstrcpyW(psz, L"´íÎó´úÂë£º0x");
         wsprintfW(psz + lstrlenW(psz), L"%08x", dwErrCode);
     }
 

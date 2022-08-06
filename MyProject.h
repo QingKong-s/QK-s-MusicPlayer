@@ -226,7 +226,7 @@ struct MUSICINFO
 
 struct CURRMUSICINFO
 {
-	PWSTR pszFile;
+	PWSTR pszName;
 	MUSICINFO mi;
 };
 

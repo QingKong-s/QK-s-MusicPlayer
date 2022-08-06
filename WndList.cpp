@@ -209,7 +209,7 @@ void List_Delete(int iItem, BOOL bRedraw)
             // 对空指针delete是安全的
             delete[] p->pszFile;
             delete[] p->pszName;
-            //delete[] p->pszTime;
+            delete[] p->pszTime;
             delete[] p->pszBookMark;
             delete[] p->pszBookMarkComment;
         }
@@ -221,7 +221,7 @@ void List_Delete(int iItem, BOOL bRedraw)
         p = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iItem);
         delete[] p->pszFile;
         delete[] p->pszName;
-        //delete[] p->pszTime;
+        delete[] p->pszTime;
         delete[] p->pszBookMark;
         delete[] p->pszBookMarkComment;
         QKArray_DeleteMember(&g_ItemData, iItem, QKADF_DELETE);
@@ -2138,14 +2138,27 @@ HRESULT CALLBACK OLEDrop_OnDrop(IDataObject* pDataObj, DWORD grfKeyState, POINTL
             SendMessageW(g_hLV, LVM_SETITEMSTATE, iTargetIndex + i, (LPARAM)&li);// 选中新移动的项
         }
 
-        for (int i = 0; i < g_ItemData->iCount; ++i)// 捏麻麻地算这算那的劳资脑子不够用了，直接用个简单粗暴的方法还原现行播放索引
+        PLAYERLISTUNIT* pi;
+        BOOL b[2] = { 0 };
+        for (int i = 0; i < g_ItemData->iCount; ++i)// 捏麻麻地算这算那的劳资脑子不够用了，直接用个简单粗暴的方法还原索引
         {
-            if (((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->dwFlags & QKLIF_DRAGMARK_CURRFILE)
+            pi = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
+            if (pi->dwFlags & QKLIF_DRAGMARK_CURRFILE)
             {
                 g_iCurrFileIndex = i;
-                ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->dwFlags &= ~QKLIF_DRAGMARK_CURRFILE;
-                break;
+                pi->dwFlags &= ~QKLIF_DRAGMARK_CURRFILE;
+                b[0] = TRUE;
             }
+
+            if (pi->dwFlags & QKLIF_DRAGMARK_PLLATER)
+            {
+                g_iLaterPlay = i;
+                pi->dwFlags &= ~QKLIF_DRAGMARK_PLLATER;
+                b[1] = TRUE;
+            }
+
+            if (b[0] && b[1])
+                break;
         }
         GlobalUnlock(sm.hGlobal);
         List_SetRedraw(TRUE);

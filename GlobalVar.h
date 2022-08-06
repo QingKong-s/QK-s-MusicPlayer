@@ -27,7 +27,7 @@ extern GLOBALRES		GR;                     // 全局资源
 extern GLOBALCONTEXT	GC;                     // 全局上下文
 extern SETTINGS			GS;                     // 全局设置
 extern HFONT            g_hFontDrawing;         // 绘制用大字体
-extern HFONT			g_hFont;                // 默认九号微软雅黑
+extern HFONT			g_hFont;                // 界面字体
 extern int				WM_TASKBARBUTTONCREATED;// 任务栏按钮创建完毕
 extern UINT				g_uMyClipBoardFmt;      // 内部拖放剪贴板格式
 extern ITaskbarList4*	g_pITaskbarList;        // ITaskbarList接口指针，负责任务栏操作
@@ -41,15 +41,17 @@ extern PWSTR			g_pszCurrDir;           // 路径：程序所在目录
 extern PWSTR			g_pszProfie;            // 路径：配置文件
 // Bass与播放类
 extern QKARRAY			g_Lrc;                  // 全局歌词数据
-extern int				g_iLrcState;            //桌面歌词标志
+extern int				g_iLrcState;            // 桌面歌词标志
 extern QKARRAY			g_ItemData;             // 全局列表数据
 
 extern HSTREAM			g_hStream;              // 全局播放流
 extern BOOL				g_bHMUSIC;              // 是否为MOD音乐
+extern BOOL				g_bPlaying;				// 是否正在播放，用来判断是否播完
 
 extern ULONGLONG        g_llLength;             // 总长度，单位毫秒，进度条单位为百毫秒
 extern float			g_fTime;                // 当前进度
 
+extern PWSTR			g_pszFile;				// 当前文件路径
 extern int				g_iCurrFileIndex;       // 正在播放的文件（LV索引）
 extern int				g_iCurrLrcIndex;        // 现行歌词索引，-1：第一句但不高亮
 extern int				g_iLaterPlay;           // 稍后播放（LV索引）

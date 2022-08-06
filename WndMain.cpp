@@ -39,12 +39,10 @@ HDC             m_hcdcLeftBK2               = NULL;         // 所有绘制工�
 HDC             m_hcdcBookMark              = NULL;
 
 
-DWORD           m_dwThreadFlags[2]          = { THREADFLAG_STOP,THREADFLAG_STOP };  //线程工作状态标志
-HANDLE          m_hThread[2]                = { 0 };        //线程句柄
+DWORD           m_uThreadFlagWaves          = THREADFLAG_STOP;  //线程工作状态标志
+HANDLE          m_htdWaves                  = NULL;         //线程句柄
 DWORD*          m_dwWavesData               = NULL;         //指向波形信息数组，左声道：低WORD，右声道：高WORD
 DWORD           m_dwWavesDataCount          = 0;            //波形计数
-
-WCHAR           m_szCurrFile[MAX_PATH]      = { 0 };        //当前文件
 
 BOOL            m_IsDraw[3]                 = { 0 };        //绘制标志
 DRAWING_TIME    m_TimeStru_VU[2]            = { 0 };        //延迟下落
@@ -447,9 +445,11 @@ INT_PTR CALLBACK DlgProc_Settings(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 }
 
 
+
+
 void MainWnd_ReleaseCurrInfo()
 {
-	delete[] m_CurrSongInfo.pszFile;
+	delete[] m_CurrSongInfo.pszName;
 	MusicInfo_Release(&m_CurrSongInfo.mi);
     ZeroMemory(&m_CurrSongInfo, sizeof(CURRMUSICINFO));
 }
@@ -778,36 +778,58 @@ int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow)
  */
 void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
 {
-    //////////////清理遗留   
-    m_dwThreadFlags[0] = m_dwThreadFlags[1] = THREADFLAG_WORKING;
-    m_IsDraw[0] = m_IsDraw[1] = m_IsDraw[2] = TRUE;
-
+    //////////////清理遗留
     Playing_Stop(TRUE);
+    m_uThreadFlagWaves = THREADFLAG_WORKING;
+    m_IsDraw[0] = m_IsDraw[1] = m_IsDraw[2] = TRUE;
 
     Lrc_ClearArray(g_Lrc);
     g_Lrc = QKArray_Create(0);
-
     delete[] m_dwWavesData;
     m_dwWavesData = NULL;
     //////////////取现行信息
     PLAYERLISTUNIT* p = List_GetArrayItem(iIndex);
-    PWSTR pszName = new WCHAR[lstrlenW(p->pszName) + 1];
-    lstrcpyW(pszName, p->pszName);
-    SetWindowTextW(g_hMainWnd, pszName);
-    m_CurrSongInfo.pszFile = pszName;
-
-    g_iCurrFileIndex = iIndex;
-    lstrcpyW(m_szCurrFile, p->pszFile);
-    g_iLrcState = LRCSTATE_NOLRC;
-    //////////////取MP3信息
-
-    MusicInfo_Get(m_szCurrFile, &m_CurrSongInfo.mi);
-
-    if (!m_CurrSongInfo.mi.pGdipImage)
+    //////取文件名
+    delete[] g_pszFile;// 释放先前的
+    g_pszFile = new WCHAR[lstrlenW(p->pszFile) + 1];
+    lstrcpyW(g_pszFile, p->pszFile);
+    //////取消上一个播放标记
+    int iLastPlayingIndex = g_iCurrFileIndex;
+    g_iCurrFileIndex = -1;
+    if (iLastPlayingIndex != -1)
+        SendMessageW(g_hLV, LVM_REDRAWITEMS, iLastPlayingIndex, iLastPlayingIndex);
+    //////开始播放
+    g_hStream = BASS_OpenMusic(g_pszFile, BASS_SAMPLE_FX, BASS_SAMPLE_FX | BASS_MUSIC_PRESCAN);
+    BASS_ChannelSetSync(g_hStream, BASS_SYNC_END | BASS_SYNC_ONETIME, 0, SyncProc_End, NULL);// 设置同步过程用来跟踪歌曲播放完毕的事件
+    // Bass这个结束判定跟闹弹似的，如果播到最后突然改变位置同步过程就不会触发，你真给我整不会了😅😅😅😅😅
+    if (!g_hStream)
     {
-        GdipLoadImageFromFile(g_pszDefPic, &m_CurrSongInfo.mi.pGdipImage);
+        g_iCurrFileIndex = -1;
+        Global_ShowError(L"文件播放失败", NULL, ECODESRC_BASS);
+        return;
     }
-    else
+    BASS_ChannelPlay(g_hStream, TRUE);
+    g_bPlaying = TRUE;
+    m_htdWaves = CreateThread(NULL, 0, Thread_GetWavesData, NULL, 0, NULL);// 启动线程获取波形数据
+    if (g_pITaskbarList)
+        g_pITaskbarList->SetProgressState(m_hTBGhost, TBPF_NORMAL);
+    SendMessageW(g_hBKBtm, BTMBKM_SETPLAYBTICON, FALSE, 0);
+    //////取名称
+    m_CurrSongInfo.pszName = new WCHAR[lstrlenW(p->pszName) + 1];
+    lstrcpyW(m_CurrSongInfo.pszName, p->pszName);
+    SetWindowTextW(g_hMainWnd, m_CurrSongInfo.pszName);
+    //////置播放标记，判断是否要清除稍后播放标记
+	g_iCurrFileIndex = iIndex;
+	g_iLrcState = LRCSTATE_NOLRC;
+	if (iIndex == g_iLaterPlay)
+		g_iLaterPlay = -1;
+	SendMessageW(g_hLV, LVM_REDRAWITEMS, iIndex, iIndex);
+	//////////////取MP3信息
+    MainWnd_ReleaseCurrInfo();
+	MusicInfo_Get(g_pszFile, &m_CurrSongInfo.mi);
+    if (!m_CurrSongInfo.mi.pGdipImage)// 没有图片，读入默认图片
+        GdipLoadImageFromFile(g_pszDefPic, &m_CurrSongInfo.mi.pGdipImage);
+    else// 有图片，判断尺寸是否过大
     {
         UINT cx0, cy0, cx, cy;
         GdipGetImageWidth(m_CurrSongInfo.mi.pGdipImage, &cx0);
@@ -837,18 +859,20 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
             m_CurrSongInfo.mi.pGdipImage = pGdipImage;
         }
     }
-    UI_UpdateLeftBK();
-    //////////////开始播放
-	g_hStream = BASS_OpenMusic(m_szCurrFile, BASS_SAMPLE_FX, BASS_SAMPLE_FX | BASS_MUSIC_PRESCAN);
-    //BASS_ChannelSetSync(g_hStream, BASS_SYNC_END, 0, SyncProc_End, NULL);// 设置同步过程用来跟踪歌曲播放完毕的事件
-    if (!g_hStream)
+    DwmInvalidateIconicBitmaps(m_hTBGhost);
+    //////解析Lrc歌词
+    Lrc_ParseLrcData(g_pszFile, 0, TRUE, NULL, &g_Lrc, GS.uDefTextCode);
+    if (!g_Lrc->iCount && m_CurrSongInfo.mi.pszLrc)
     {
-        g_iCurrFileIndex = -1;
-        Global_ShowError(L"文件播放失败", NULL, ECODESRC_BASS);
-        return;
+        Lrc_ParseLrcData(
+            m_CurrSongInfo.mi.pszLrc,
+            (lstrlenW(m_CurrSongInfo.mi.pszLrc) + 1) * sizeof(WCHAR),
+            FALSE, NULL, &g_Lrc, GS.uDefTextCode);
     }
-    BASS_ChannelPlay(g_hStream, FALSE);
-    //////////////保存信息
+    SendMessageW(g_hBKLeft, LEFTBKM_SETMAX, g_Lrc->iCount - 1, 0);
+    LrcWnd_DrawLrc();
+    UI_UpdateLeftBK();
+    //////////////应用音效设置
     BASS_ChannelGetAttribute(g_hStream, BASS_ATTRIB_FREQ, &g_fDefSpeed);// 保存默认速度    
     g_llLength = (ULONGLONG)(BASS_ChannelBytes2Seconds(
         g_hStream,
@@ -914,31 +938,8 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
             BASS_FXSetParameters(g_GlobalEffect.hFXEQ[i], &g_GlobalEffect.EQ[i]);
         }
     }
-    // 注意：进度条单位为百毫秒
-    LrcWnd_DrawLrc();
-    if (g_pITaskbarList)
-        g_pITaskbarList->SetProgressState(m_hTBGhost, TBPF_NORMAL);
 
-    SendMessageW(g_hBKBtm, BTMBKM_SETPLAYBTICON, FALSE, 0);
-
-    m_hThread[0] = CreateThread(NULL, 0, Thread_GetWavesData, NULL, 0, NULL);
-	Lrc_ParseLrcData(m_szCurrFile, 0, TRUE, NULL, &g_Lrc, GS.uDefTextCode);
-	if (!g_Lrc->iCount && m_CurrSongInfo.mi.pszLrc)
-	{
-		Lrc_ParseLrcData(
-			m_CurrSongInfo.mi.pszLrc,
-			(lstrlenW(m_CurrSongInfo.mi.pszLrc) + 1) * sizeof(WCHAR),
-			FALSE, NULL, &g_Lrc, GS.uDefTextCode);
-	}
-
-    m_iLrcSBPos = -1;
-    m_iLrcFixedIndex = -1;
-	m_iLrcMouseHover = -1;
-	m_iLrcCenter = -1;
-	SendMessageW(g_hBKLeft, LEFTBKM_SETMAX, g_Lrc->iCount - 1, 0);
-	List_Redraw();
 	m_IsDraw[0] = m_IsDraw[1] = m_IsDraw[2] = TRUE;
-	DwmInvalidateIconicBitmaps(m_hTBGhost);
 }
 void Playing_Stop(BOOL bNoGap)
 {
@@ -949,7 +950,6 @@ void Playing_Stop(BOOL bNoGap)
     KillTimer(g_hMainWnd, IDT_ANIMATION2);
 
     StopThread_Waves();
-    MainWnd_ReleaseCurrInfo();
 
     BASS_ChannelStop(g_hStream);
     BASS_FreeMusic(g_hStream);
@@ -960,6 +960,11 @@ void Playing_Stop(BOOL bNoGap)
     g_iLrcState = LRCSTATE_STOP;
     m_LrcHScrollInfo = { -1 };
     m_LrcVScrollInfo = { 0 };
+    g_bPlaying = FALSE;
+    m_iLrcSBPos = -1;
+    m_iLrcFixedIndex = -1;
+    m_iLrcMouseHover = -1;
+    m_iLrcCenter = -1;
 
     if (g_pITaskbarList)
         g_pITaskbarList->SetProgressState(m_hTBGhost, TBPF_NOPROGRESS);
@@ -1048,23 +1053,23 @@ void Playing_AutoNext()
 void StopThread_Waves()
 {
     DWORD dwExitCode;
-    BOOL bResult = GetExitCodeThread(m_hThread[0], &dwExitCode);
+    BOOL bResult = GetExitCodeThread(m_htdWaves, &dwExitCode);
     if (bResult && dwExitCode == STILL_ACTIVE)
     {
-        m_dwThreadFlags[0] = THREADFLAG_STOP;
-        WaitForSingleObject(m_hThread[0], INFINITE);//等待线程退出
-        m_dwThreadFlags[0] = THREADFLAG_STOPED;
+        m_uThreadFlagWaves = THREADFLAG_STOP;
+        WaitForSingleObject(m_htdWaves, INFINITE);//等待线程退出
+        m_uThreadFlagWaves = THREADFLAG_STOPED;
     }
-    CloseHandle(m_hThread[0]);
-    m_hThread[0] = NULL;//清空句柄
+    CloseHandle(m_htdWaves);
+    m_htdWaves = NULL;//清空句柄
 }
 DWORD WINAPI Thread_GetWavesData(void* p)//调用前必须释放先前的内存
 {
-    HSTREAM hStream = BASS_OpenMusic(m_szCurrFile, BASS_STREAM_DECODE, BASS_MUSIC_DECODE | BASS_MUSIC_PRESCAN);
+    HSTREAM hStream = BASS_OpenMusic(g_pszFile, BASS_STREAM_DECODE, BASS_MUSIC_DECODE | BASS_MUSIC_PRESCAN);
     int iCount = g_llLength / 20;
     if (iCount <= 0)
     {
-        m_dwThreadFlags[0] = THREADFLAG_ERROR;
+        m_uThreadFlagWaves = THREADFLAG_ERROR;
         BASS_FreeMusic(hStream);
         return 0;
     }
@@ -1072,12 +1077,12 @@ DWORD WINAPI Thread_GetWavesData(void* p)//调用前必须释放先前的内存
     for (int i = 0; i < iCount; i++)
     {
         m_dwWavesData[i] = BASS_ChannelGetLevel(hStream);
-        if (m_dwThreadFlags[0] == THREADFLAG_STOP)
+        if (m_uThreadFlagWaves == THREADFLAG_STOP)
             break;
     }
     BASS_FreeMusic(hStream);
     m_dwWavesDataCount = iCount;//计数
-    m_dwThreadFlags[0] = THREADFLAG_STOPED;//已停止
+    m_uThreadFlagWaves = THREADFLAG_STOPED;//已停止
     m_IsDraw[0] = TRUE;//立即重画
     return 0;
 }
@@ -1233,10 +1238,10 @@ void UI_UpdateLeftBK()
     ///////////画大标题
     SetTextColor(m_hcdcLeftBK, QKCOLOR_CYANDEEPER);
     RECT rcText = { DPIS_EDGE, 5, m_cxLeftBK - DPIS_EDGE, DPIS_CYTOPTITLE };
-    if (!m_CurrSongInfo.pszFile)
+    if (!m_CurrSongInfo.pszName)
         DrawTextW(m_hcdcLeftBK, L"未播放", -1, &rcText, DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
     else
-        DrawTextW(m_hcdcLeftBK, m_CurrSongInfo.pszFile, -1, &rcText, DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
+        DrawTextW(m_hcdcLeftBK, m_CurrSongInfo.pszName, -1, &rcText, DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
     ///////////画其他信息
     SelectObject(m_hcdcLeftBK, g_hFont);// 切换字体
     SetTextColor(m_hcdcLeftBK, QKCOLOR_BLACK);
@@ -1430,7 +1435,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         THUMBBUTTON tb[3];
         THUMBBUTTONMASK dwMask = THB_ICON | THB_TOOLTIP;
         tb[0].dwMask = dwMask;
-        tb[0].hIcon = LoadIconW(g_hInst, MAKEINTRESOURCEW(IDI_LAST_TB));//这个图标必须用LoadIcon载入，不知道咋回事..........
+        tb[0].hIcon = LoadIconW(g_hInst, MAKEINTRESOURCEW(IDI_LAST_TB));// 这个图标必须用LoadIcon载入，不知道咋回事..........
         tb[0].iId = IDTBB_LAST;
         lstrcpyW(tb[0].szTip, L"上一曲");
 
@@ -2031,6 +2036,13 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
     {
         if (!g_hStream)
             return 0;
+
+        if (BASS_ChannelIsActive(g_hStream) == BASS_ACTIVE_STOPPED && g_bPlaying)
+        {
+            SyncProc_End(NULL, 0, 0, NULL);
+            return 0;
+        }
+
         int iMin = g_fTime / 60,
             iMin2 = g_llLength / 1000 / 60;
 
@@ -2479,11 +2491,11 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
         HDC hDC = GetDC(g_hBKLeft);
         BitBlt(m_hcdcLeftBK2, m_xWaves, m_yWaves, DPIS_CXSPE, DPIS_CYSPE, m_hcdcLeftBK, m_xWaves, m_yWaves, SRCCOPY);
         LPCWSTR pszText = NULL;
-        if (m_dwThreadFlags[0] == THREADFLAG_WORKING)// 正在加载
+        if (m_uThreadFlagWaves == THREADFLAG_WORKING)// 正在加载
             pszText = L"正在加载...";
         else if (!g_hStream)// 已停止
             pszText = L"未播放";
-        else if (m_dwThreadFlags[0] == THREADFLAG_ERROR)// 出错
+        else if (m_uThreadFlagWaves == THREADFLAG_ERROR)// 出错
             pszText = L"错误！";
 
         if (pszText)
@@ -2497,7 +2509,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
             return;
         }
 
-        if (m_dwThreadFlags[0] == THREADFLAG_STOPED)
+        if (m_uThreadFlagWaves == THREADFLAG_STOPED)
         {
             int iCurrIndex = (int)(g_fTime * 1000.0 / 20.0);// 算数组索引    20ms一单位
             if (iCurrIndex < 0 || iCurrIndex > m_dwWavesDataCount - 1)
@@ -2796,7 +2808,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
     return;
     case IDT_ANIMATION:
     {
-        if (m_LrcHScrollInfo.iIndex == -1)
+		if (m_LrcHScrollInfo.iIndex == -1 || g_iCurrLrcIndex < 0)
             return;
         LRCDATA* p = (LRCDATA*)QKArray_Get(g_Lrc, g_iCurrLrcIndex);
         float fLastTime = g_fTime - p->fTime;
