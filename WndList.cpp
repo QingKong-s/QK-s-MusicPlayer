@@ -16,9 +16,13 @@
 #include "OLEDragDrop.h"
 #include "MainWnd.h"
 
-HANDLE          m_htdMusicTime = NULL;
-UINT            m_uThreadFlagMusicTime = THREADFLAG_STOP;
+HANDLE          m_htdMusicTime          = NULL;
+UINT            m_uThreadFlagMusicTime  = THREADFLAG_STOP;
 
+CDropTarget*    m_pDropTarget           = NULL;
+
+int             m_iDragTimerElapse      = 0;
+int             m_iDragDirection        = 0;// 0 无效   1 向上   2 向下
 void UI_SetRitCtrlPos()
 {
 	SetWindowPos(GetDlgItem(g_hBKRight, IDC_ST_LISTNAME), NULL, 0, 0,
@@ -353,24 +357,30 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 			(HANDLE)SetWindowLongPtrW(hCtrl, GWLP_WNDPROC, (LONG_PTR)WndProc_ListView));
 		SendMessageW(hCtrl, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)ImageList_Create(1, DPIS_CYLVITEM, 0, 1, 0));// ILC_COLOR缺省
 
+        m_pDropTarget = new CDropTarget(OLEDrop_OnEnter, OLEDrop_OnOver, OLEDrop_OnLeave, OLEDrop_OnDrop);
+        RegisterDragDrop(hWnd, m_pDropTarget);// 注册拖放目标
 	}
 	return 0;
 	case WM_SIZE:
 	{
 		cxClient = LOWORD(lParam);
 		cyClient = HIWORD(lParam);
-
+		int iLeft;
+		if (g_bListSeped)
+			iLeft = DPIS_GAP;
+		else
+			iLeft = 0;
 		SetWindowPos(g_hBKRight, NULL,
-			0,
+			iLeft,
 			0,
 			cxClient - DPIS_GAP,
 			DPIS_CYRITBK,
 			SWP_NOZORDER);//右部按钮容器
 
 		SetWindowPos(g_hLV, NULL,
-			0,
+			iLeft,
 			DPIS_CYRITBK,
-			cxClient - DPIS_GAP,
+			cxClient - DPIS_GAP - iLeft,
 			cyClient - DPIS_CYRITBK,
 			SWP_NOZORDER);//列表
 
@@ -486,7 +496,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 				POINT pt;
 				GetCursorPos(&pt);
-				int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, g_hMainWnd, NULL);
+				int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
 				DestroyMenu(hMenu);
 				switch (iRet)
 				{
@@ -611,7 +621,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 				return 0;
 				case IDMI_TL_DELETE:
 				{
-					if (QKMessageBox(L"确定要删除选中的文件吗", L"删除后不可恢复，请确认是否要继续删除", (HICON)TD_INFORMATION_ICON, L"询问", NULL, 2) == QKMSGBOX_BTID_2)
+					if (QKMessageBox(L"确定要删除选中的文件吗", L"删除后不可恢复，请确认是否要继续删除", (HICON)TD_INFORMATION_ICON, L"询问", hWnd, NULL, 2) == QKMSGBOX_BTID_2)
 						return 0;
 					for (int i = g_ItemData->iCount; i >= 0; --i)
 					{
@@ -694,9 +704,9 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 					if (g_iCurrFileIndex != -1)
 						((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iCurrFileIndex))->dwFlags |= QKLIF_DRAGMARK_CURRFILE;
-
-					QKARRAY Files = QKArray_Create(0);
-					QKARRAY Items = QKArray_Create(0);
+					//////////////////取选中项目
+					QKARRAY Files = QKArray_Create(0);// 文件名数组
+					QKARRAY Items = QKArray_Create(0);// 索引数组
 
 					for (int i = 0; i < g_ItemData->iCount; ++i)
 					{
@@ -706,12 +716,12 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 							QKArray_AddValue(&Items, &i);
 						}
 					}
-
+                    //////////////////制拖放源
 					CDataObject* pDataObject;
 					CDropSource* pDropSource;
 					QKMakeDropSource(Files, OLEDrag_GiveFeedBack, &pDataObject, &pDropSource, TRUE);
-					QKArray_Delete(Files);
-
+					QKArray_Delete(Files);// 清理
+                    //////////////////制自定义拖放信息，用来保存索引以便自身程序拖放
 					FORMATETC fe =
 					{
 						g_uMyClipBoardFmt,
@@ -734,14 +744,13 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 						++p;
 					}
 					GlobalUnlock(sm.hGlobal);
-
 					pDataObject->SetData(&fe, &sm, TRUE);
-
+                    //////////////////执行拖放
 					DWORD dwEffect = DROPEFFECT_NONE;
 					HRESULT hr = SHDoDragDrop(hWnd, pDataObject, pDropSource, DROPEFFECT_COPY, &dwEffect);
+                    //////////////////清理，数据为数据对象所有，数据对象释放时会将其一并释放
 					delete pDataObject;
 					delete pDropSource;
-
 					return 0;
 				}
 			}
@@ -778,6 +787,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 	}
 	return 0;
 	case WM_DESTROY:
+        delete m_pDropTarget;
 		CloseThemeData(hLVTheme);
 		return 0;
 	case WM_THEMECHANGED:
@@ -787,6 +797,28 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		cyVSBArrow = GetSystemMetrics(SM_CYVSCROLL);
 	}
 	return 0;
+    case LISTWND_REDRAWBOOKMARK:
+    {
+        RECT rc = { cxClient - DPIS_GAP,DPIS_CYRITBK,cxClient,cyClient };
+        InvalidateRect(hWnd, &rc, FALSE);
+        UpdateWindow(hWnd);
+    }
+    return 0;
+    case WM_TIMER:
+    {
+        int iIndex = SendMessageW(g_hLV, LVM_GETTOPINDEX, 0, 0);
+        if (m_iDragDirection == 1)// 向上
+        {
+            iIndex -= 1;
+            SendMessageW(g_hLV, LVM_ENSUREVISIBLE, iIndex, TRUE);
+        }
+        else if (m_iDragDirection == 2)// 向下
+        {
+            iIndex += (SendMessageW(g_hLV, LVM_GETCOUNTPERPAGE, 0, 0) + 1);
+            SendMessageW(g_hLV, LVM_ENSUREVISIBLE, iIndex, TRUE);
+        }
+    }
+    return 0;
 	}
 	return DefWindowProcW(hWnd, message, wParam, lParam);
 }
@@ -819,7 +851,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
                 RECT rc;
                 GetWindowRect((HWND)lParam, &rc);
-                int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, rc.left, rc.bottom, 0, g_hMainWnd, NULL);
+                int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, rc.left, rc.bottom, 0, hWnd, NULL);
                 DestroyMenu(hMenu);
                 int iIndex = -1;
                 for (int i = 0; i < g_ItemData->iCount; ++i)
@@ -961,7 +993,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             return 0;
             case IDC_BT_LOADLIST:
             {
-                INT_PTR pResult = DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_LIST), g_hMainWnd, DlgProc_List, DLGTYPE_LOADLIST);
+                INT_PTR pResult = DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_LIST), g_hBKList, DlgProc_List, DLGTYPE_LOADLIST);
                 if (pResult == NULL)
                     return 0;
 
@@ -1081,7 +1113,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 if (!QKArray_GetCount(g_ItemData))
                     return 0;
 
-                INT_PTR pResult = DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_LIST), g_hMainWnd, DlgProc_List, DLGTYPE_SAVELIST);
+                INT_PTR pResult = DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_LIST), g_hBKList, DlgProc_List, DLGTYPE_SAVELIST);
                 if (!pResult)
                     return 0;
 
@@ -1145,7 +1177,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             return 0;
             case IDC_BT_EMPTY:
             {
-                if (MessageBoxW(g_hMainWnd, L"确定要清空播放列表吗？", L"询问", MB_ICONWARNING | MB_YESNO) == IDYES)
+				if (QKMessageBox(L"确定要清空播放列表吗？", NULL, (HICON)TD_ERROR_ICON, L"询问", g_hBKList))
                 {
                     List_Delete(-1, TRUE);
                     SetWindowTextW(GetDlgItem(g_hBKRight, IDC_ST_LISTNAME), L"/*当前无播放列表*/");
@@ -1237,7 +1269,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 AppendMenuW(hMenu, 0, IDMI_LM_UPDATETIME, L"强制更新列表时间信息");
                 RECT rc;
                 GetWindowRect((HWND)lParam, &rc);
-                int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, rc.left, rc.bottom, 0, g_hMainWnd, NULL);
+                int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, rc.left, rc.bottom, 0, hWnd, NULL);
                 DestroyMenu(hMenu);
                 switch (iRet)
                 {
@@ -1430,7 +1462,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 }
                 return 0;
                 case IDMI_LM_BOOKMARK:// 书签管理
-                    DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_BOOKMARK), g_hMainWnd, DlgProc_BookMark, 0);
+                    DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_BOOKMARK), g_hBKList, DlgProc_BookMark, 0);
                     return 0;
                 case IDMI_LM_SORT_REVERSE:// 倒置排序
                 {
@@ -1468,12 +1500,26 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 }
                 return 0;
                 case IDMI_LM_SETLVDEFWIDTH:// 置默认列表宽
-                {
-                    g_cxBKList = DPIS_DEFCXLV;
-                    UI_SetRitCtrlPos();
-                    RECT rc;
-                    GetClientRect(g_hMainWnd, &rc);
-                    SendMessageW(g_hMainWnd, WM_SIZE, 0, MAKELONG(rc.right, rc.bottom));
+				{
+					if (g_bListSeped)
+					{
+						RECT rcWnd, rcClient;
+						GetWindowRect(g_hBKList, &rcWnd);
+						GetClientRect(g_hBKList, &rcClient);
+						g_cxBKList = DPIS_DEFCXLV + DPIS_GAP;
+						SetWindowPos(g_hBKList, NULL, 0, 0,
+							g_cxBKList + (rcWnd.right - rcWnd.left - rcClient.right),
+							rcWnd.bottom - rcWnd.top,
+							SWP_NOZORDER | SWP_NOMOVE);
+                    }
+                    else
+                    {
+                        g_cxBKList = DPIS_DEFCXLV;
+                        UI_SetRitCtrlPos();
+                        RECT rc;
+                        GetClientRect(g_hMainWnd, &rc);
+                        SendMessageW(g_hMainWnd, WM_SIZE, 0, MAKELPARAM(rc.right, rc.bottom));
+                    }
                 }
                 return 0;
                 case IDMI_LM_UPDATETIME:
@@ -1660,7 +1706,7 @@ INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
                 if (PathFileExistsW(pResult->szFileName))
                     EndDialog(hDlg, (INT_PTR)pResult);
                 else
-                    QKMessageBox(L"列表文件无效", L"选定的列表文件不存在", (HICON)TD_ERROR_ICON, L"错误");
+					QKMessageBox(L"列表文件无效", L"选定的列表文件不存在", (HICON)TD_ERROR_ICON, L"错误", hDlg);
             }
             else
                 EndDialog(hDlg, (INT_PTR)pResult);
@@ -1674,7 +1720,7 @@ INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
     return FALSE;
     case WM_NOTIFY:
     {
-        if (wParam == IDC_LV_LISTFILE)// 不用这个老是报lParam无效指针
+        if (wParam == IDC_LV_LISTFILE)
         {
             if (((NMHDR*)lParam)->code == LVN_ITEMCHANGED)
             {
@@ -1886,7 +1932,7 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
             {
                 CHOOSECOLORW cc = { sizeof(CHOOSECOLORW) };
                 cc.hwndOwner = hDlg;
-                cc.lpCustColors = (COLORREF*)GetPropW(g_hMainWnd, PROP_BOOKMARKCLRDLGBUF);
+                cc.lpCustColors = (COLORREF*)GetPropW(g_hBKList, PROP_BOOKMARKCLRDLGBUF);
                 cc.Flags = CC_FULLOPEN;
                 if (ChooseColorW(&cc))
                 {
@@ -2057,7 +2103,44 @@ HRESULT CALLBACK OLEDrop_OnOver(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
             lim.iItem = -1;
             SendMessageW(g_hLV, LVM_SETINSERTMARK, 0, (LPARAM)&lim);
         }
+	}
+
+	if (pti.y < GC.DS_LVDRAGEDGE)
+	{
+        int iElapse = TIMERELAPSE_LISTBKDRAG - (GC.DS_LVDRAGEDGE - pti.y) * 10;
+        if (iElapse < 10)
+            iElapse = 10;
+
+        if (m_iDragTimerElapse != iElapse)
+        {
+            m_iDragDirection = 1;
+            m_iDragTimerElapse = iElapse;
+            SetTimer(g_hBKList, IDT_LISTBKDRAG, m_iDragTimerElapse, NULL);
+        }
+	}
+	else if (pti.y > (rcLV.bottom - GC.DS_LVDRAGEDGE))
+	{
+		int iElapse = TIMERELAPSE_LISTBKDRAG - (pti.y - (rcLV.bottom - GC.DS_LVDRAGEDGE)) * 10;
+        if (iElapse < 10)
+            iElapse = 10;
+
+        if (m_iDragTimerElapse != iElapse)
+        {
+            m_iDragDirection = 2;
+            m_iDragTimerElapse = iElapse;
+            SetTimer(g_hBKList, IDT_LISTBKDRAG, m_iDragTimerElapse, NULL);
+        }
+	}
+    else
+    {
+        if (m_iDragTimerElapse)
+        {
+            m_iDragTimerElapse = 0;
+            m_iDragDirection = 0;
+            KillTimer(g_hBKList, IDT_LISTBKDRAG);
+        }
     }
+
     return S_OK;
 }
 HRESULT CALLBACK OLEDrop_OnLeave()
@@ -2069,6 +2152,9 @@ HRESULT CALLBACK OLEDrop_OnLeave()
     lim.cbSize = sizeof(LVINSERTMARK);
     lim.iItem = -1;
     SendMessageW(g_hLV, LVM_SETINSERTMARK, 0, (LPARAM)&lim);
+    m_iDragTimerElapse = 0;
+    m_iDragDirection = 0;
+    KillTimer(g_hBKList, IDT_LISTBKDRAG);
     return S_OK;
 }
 HRESULT CALLBACK OLEDrop_OnDrop(IDataObject* pDataObj, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
@@ -2079,6 +2165,11 @@ HRESULT CALLBACK OLEDrop_OnDrop(IDataObject* pDataObj, DWORD grfKeyState, POINTL
     RemovePropW(g_hLV, PROP_OLEDROPLASTINDEX);
     RemovePropW(g_hLV, PROP_OLEDROPTARGETINDEX);
     RemovePropW(g_hLV, PROP_OLEDROPINVALID);
+
+    m_iDragTimerElapse = 0;
+    m_iDragDirection = 0;
+    KillTimer(g_hBKList, IDT_LISTBKDRAG);
+
     if (b)
         return S_OK;
 

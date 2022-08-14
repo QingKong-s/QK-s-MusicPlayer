@@ -70,13 +70,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	hr = CoInitialize(NULL);
 	if (FAILED(hr))
 	{
-		Global_ShowError(L"COM库初始化失败", NULL, ECODESRC_OTHERS, hr);
+		Global_ShowError(L"COM库初始化失败", NULL, ECODESRC_OTHERS, NULL, hr);
 		return 1;
 	}
 	hr = OleInitialize(NULL);
 	if (FAILED(hr))
 	{
-		Global_ShowError(L"OLE库初始化失败", NULL, ECODESRC_OTHERS, hr);
+		Global_ShowError(L"OLE库初始化失败", NULL, ECODESRC_OTHERS, NULL, hr);
 		return 1;
 	}
     //////////////启动GDI+
@@ -87,7 +87,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     GPRet = GdiplusStartup(&uGPToken, &gpsi, NULL);
 	if (GPRet != Ok)
     {
-		Global_ShowError(L"GDI+启动失败", NULL, ECODESRC_OTHERS, GPRet);
+		Global_ShowError(L"GDI+启动失败", NULL, ECODESRC_OTHERS, NULL, GPRet);
         return 1;
     }
     //////////////载入资源，填充全局上下文
@@ -228,7 +228,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     CoUninitialize();
     return (int)msg.wParam;
 }
-void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc, DWORD dwOtherErrCode)
+void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc, HWND hParent, DWORD dwOtherErrCode)
 {
     PWSTR psz = NULL;
     DWORD dwErrCode;
@@ -262,7 +262,7 @@ void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc, DWORD
         wsprintfW(psz + lstrlenW(psz), L"%08x", dwErrCode);
     }
 
-    QKMessageBox(pszTitle, psz, (HICON)TD_ERROR_ICON, L"错误");
+	QKMessageBox(pszTitle, psz, (HICON)TD_ERROR_ICON, L"错误", hParent);
     delete[] psz;
 }
 ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS, DWORD dwFlagsHM)
@@ -324,4 +324,5 @@ void UI_UpdateDPISize()
     GC.DS_LRCSHOWGAP = DPI(SIZE_LRCSHOWGAP);
     GC.DS_CXDRAGDROPICON = DPI(SIZE_CXDRAGDROPICON);
     GC.DS_CYDRAGDROPICON = DPI(SIZE_CYDRAGDROPICON);
+    GC.DS_LVDRAGEDGE = DPI(SIZE_LVDRAGEDGE);
 }

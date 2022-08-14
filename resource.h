@@ -89,6 +89,29 @@
 #define IDD_I3DL2REVERB                 209
 #define IDD_REVERB                      210
 #define IDD_LRCMAKER                    211
+#define IDI_ARROWCIRCLE                 212
+#define IDI_ARROWCIRCLEONE              213
+#define IDI_ARROWCROSS                  214
+#define IDI_ARROWRIGHT                  215
+#define IDI_ARROWRIGHTTHREE             216
+#define IDI_CROSS                       218
+#define IDI_ICON9                       219
+#define IDI_CROSS2                      219
+#define IDI_DISK                        220
+#define IDI_INFO                        221
+#define IDI_LAST2                       223
+#define IDI_LOCATE                      224
+#define IDI_NEXT2                       228
+#define IDI_PAUSE2                      230
+#define IDI_PLAY2                       232
+#define IDI_PLAYLISTMANAGE              234
+#define IDI_PLUS                        235
+#define IDI_READFILE                    236
+#define IDI_ICON28                      238
+#define IDI_SETTINGS                    238
+#define IDI_THREETRACKBARS              241
+#define IDI_TICK2                       243
+#define IDI_VOLSLIENT                   245
 #define IDC_LB_FILE                     1031
 #define IDC_ED_NEW                      1032
 #define IDC_ED_FILE                     1032
@@ -201,7 +224,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        212
+#define _APS_NEXT_RESOURCE_VALUE        246
 #define _APS_NEXT_COMMAND_VALUE         32774
 #define _APS_NEXT_CONTROL_VALUE         1140
 #define _APS_NEXT_SYMED_VALUE           110

@@ -87,118 +87,109 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Res\BTJump.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTOpen.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTLoad.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTLast.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTLrc.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTNext.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTPause.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTPlay.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTStop.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTBlance.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTSlient.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTSpeed.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTVol.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTSave.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTEmpty.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTPlay_Lrc.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTClose_Lrc.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTLast_Lrc.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTNext_Lrc.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\MAIN.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTPause_Lrc.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTLast_TB.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTNext_TB.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTPause_TB.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTPlay_TB.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTSearch.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTPlayList.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTInGroup.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\RMRadom.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\RMSingle.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\RMTotal.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\RMSingleLoop.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\RMTotalLoop.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTSetting.ico">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="Res\BTTick.ico">
-      <Filter>资源文件</Filter>
-    </Image>
     <Image Include="Res\About.bmp">
       <Filter>资源文件</Filter>
     </Image>
-    <Image Include="Res\BTMore.ico">
+    <Image Include="Res\ArrowCircle.ico">
       <Filter>资源文件</Filter>
     </Image>
-    <Image Include="Res\BTListManaging.ico">
+    <Image Include="Res\ArrowCircleOne.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\ArrowCross.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\ArrowRight.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\ArrowRightThree.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Blance.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Cross.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Cross2.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Disk.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Info.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Last.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Last2.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Locate.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Lrc.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Main.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Next.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Next2.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Pause.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Pause2.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Play.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Play2.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\PlayList.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\PlayList_Manage.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Plus.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\ReadFile.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Search.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Settings.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Speed.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Stop.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\ThreeTrackbars.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Tick.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Tick2.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Vol.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Res\Vol_Slient.ico">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

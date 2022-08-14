@@ -117,16 +117,16 @@ void QKArray_Set(QKARRAY pArray, DWORD dwIndex, LPVOID pMember, DWORD dwDeleteFl
 void QKArray_DeleteMember(QKARRAY* ppArray, DWORD dwIndex, DWORD dwDeleteFlag = QKADF_NO);
 BOOL QKInputBox(PCWSTR pszTitle, PCWSTR pszTip, PWSTR* ppszBuffer, HWND hParent);
 UINT QKMessageBox(
-    LPCWSTR pszMainInstruction,
-    LPCWSTR pszContent = NULL,
+    PCWSTR pszMainInstruction,
+    PCWSTR pszContent = NULL,
     HICON hIcon = NULL,
-    LPCWSTR pszWndTitle = NULL,
-    LPCWSTR pszChackBoxTitle = NULL,//设为Null则不显示复选框
-    UINT iButtonCount = 1,
-    LPCWSTR pszButton1Title = NULL,
-    LPCWSTR pszButton2Title = NULL,
-    LPCWSTR pszButton3Title = NULL,
+    PCWSTR pszWndTitle = NULL,
     HWND hParent = NULL,
+    PCWSTR pszChackBoxTitle = NULL,//设为Null则不显示复选框
+    UINT iButtonCount = 1,
+    PCWSTR pszButton1Title = NULL,
+    PCWSTR pszButton2Title = NULL,
+    PCWSTR pszButton3Title = NULL,
     UINT iDefButton = 1,
     BOOL IsCenterPos = FALSE,
     BOOL* IsCheck = NULL

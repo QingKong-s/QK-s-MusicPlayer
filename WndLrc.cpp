@@ -151,7 +151,8 @@ BOOL LrcWnd_Init()
 }
 LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static BOOL IsLBTDown = FALSE;
+    static BOOL bLBTDown = FALSE;
+    static BOOL bShowBKOld = FALSE;
     switch (message)
     {
     case WM_CREATE:
@@ -163,19 +164,15 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         return MA_NOACTIVATE;//不激活窗口，也不丢弃鼠标消息
     case WM_NCLBUTTONDOWN://非客户区鼠标按键事件
     {
-        ////////////////按下
-        IsLBTDown = TRUE;
-        ////////////////
+        bLBTDown = TRUE;
         LRESULT lResult = DefWindowProcW(hWnd, message, wParam, lParam);
-        ////////////////放开
-        IsLBTDown = FALSE;
-        ////////////////
+        bLBTDown = FALSE;
         return lResult;
     }
     case WM_LBUTTONDOWN:
     {
-        SetCapture(hWnd);
-        IsLBTDown = TRUE;
+        //SetCapture(hWnd);
+        bLBTDown = TRUE;
         int iRet = LrcWnd_HitTest();
         if (iRet < 0)
         {
@@ -183,11 +180,11 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
             LrcWnd_DrawLrc();
         }
     }
-    return 0;
+    break;
     case WM_LBUTTONUP:
     {
-        ReleaseCapture();
-        IsLBTDown = FALSE;
+        //ReleaseCapture();
+        bLBTDown = FALSE;
         int iRet = LrcWnd_HitTest();
         switch (iRet)
         {
@@ -207,11 +204,9 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         m_iLrcBT = 0;
         LrcWnd_DrawLrc();
     }
-    return 0;
+    break;
     case WM_NCHITTEST:
 	{
-		// 用了这玩意后会收不到WM_LBUTTONDOWN和WM_LBUTTONUP（因为判定成非客户区了），按照博客园一老哥的方法，这俩都放到WM_NCLBUTTONDOWN里处理
-		// https://www.cnblogs.com/hhj-321/articles/3342448.html
         if (m_bShowBK)
         {
             int iRet = LrcWnd_HitTest();
@@ -226,14 +221,16 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         else
         {
             m_bShowBK = TRUE;
-            LrcWnd_DrawLrc();
+            if (m_bShowBK != bShowBKOld)
+            {
+                bShowBKOld = m_bShowBK;
+                LrcWnd_DrawLrc();
+            }
         }
 	}
 	break;
 	case WM_SIZE:
 	{
-		m_bShowBK = TRUE;
-
 		m_cxClient = LOWORD(lParam);
 		m_cyClient = HIWORD(lParam);
 
@@ -286,26 +283,21 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         {
         case IDT_LRC:
         {
-            static BOOL bShowBKOld = FALSE;
+            
             POINT pt;
             GetPhysicalCursorPos(&pt);
-            ScreenToClient(hWnd, &pt);
+			ScreenToClient(hWnd, &pt);
 			RECT rc = { 0,0,m_cxClient,m_cyClient };
-            if (m_bShowBK)
-            {
-                if (PtInRect(&rc, pt))
-                    m_bShowBK = TRUE;
-                else
-                    m_bShowBK = FALSE;
-            }
+			if (!PtInRect(&rc, pt))
+				m_bShowBK = FALSE;
 
-            if (IsLBTDown)
-                m_bShowBK = TRUE;
+			if (bLBTDown)
+				m_bShowBK = TRUE;
 
-            if (m_bShowBK != bShowBKOld)
-            {
-                bShowBKOld = m_bShowBK;
-                LrcWnd_DrawLrc();
+			if (m_bShowBK != bShowBKOld)
+			{
+				bShowBKOld = m_bShowBK;
+				LrcWnd_DrawLrc();
             }
         }
         return 0;
@@ -427,7 +419,7 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
             pD2DSolidBrush, DPIS_DTLRCEDGE);
         pD2DSolidBrush->Release();// 删除画刷
 		int iLeft = (m_cxClient - DPIS_CXDTLRCBTNRGN) / 2;
-		if (m_iMouseHoverBT < 0)//画按钮背景
+		if (m_iMouseHoverBT < 0)// 画按钮背景
 		{
 			if (m_iLrcBT != 0)
                 m_pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0x00FFFF, 0.5), &pD2DSolidBrush);

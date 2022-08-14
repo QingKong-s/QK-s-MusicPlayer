@@ -287,6 +287,7 @@ struct CURRMUSICINFO
 #define IDT_LRCSCROLL				108
 #define IDT_ANIMATION				109
 #define IDT_ANIMATION2				110
+#define IDT_LISTBKDRAG				111
 
 #define TIMERELAPSE_PGS				500
 #define TIMERELAPSE_WAVES			0
@@ -298,6 +299,7 @@ struct CURRMUSICINFO
 #define TIMERELAPSE_LRCSCROLL		1000
 #define TIMERELAPSE_ANIMATION		60
 #define TIMERELAPSE_ANIMATION2		30
+#define TIMERELAPSE_LISTBKDRAG		800
 
 
 #define MAXPROFILEBUFFER			48
@@ -397,6 +399,7 @@ struct GLOBALCONTEXT
 	int DS_LRCSHOWGAP;
 	int DS_CXDRAGDROPICON;
 	int DS_CYDRAGDROPICON;
+	int DS_LVDRAGEDGE;
 };
 #define SIZE_CYPROGBAR			35
 #define SIZE_CYBTBK				40
@@ -434,6 +437,7 @@ struct GLOBALCONTEXT
 #define SIZE_LRCSHOWGAP			10
 #define SIZE_CXDRAGDROPICON		200
 #define SIZE_CYDRAGDROPICON		150
+#define SIZE_LVDRAGEDGE			80
 
 #define DPIS_CYPROGBAR GC.DS_CYPROGBAR
 #define DPIS_CYBTBK GC.DS_CYBTBK
@@ -496,7 +500,7 @@ ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS = 0, DWORD dwFlagsHM = 0
 BOOL BASS_FreeMusic(ULONG_PTR h);
 void UI_UpdateDPISize();
 
-void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc = ECODESRC_NONE, DWORD dwOtherErrCode = 0);
+void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc = ECODESRC_NONE, HWND hParent = NULL, DWORD dwOtherErrCode = 0);
 #define _CRT_SECURE_NO_WARNINGS
 
 typedef UINT(__stdcall* pFuncGetDpiForSystem)(void);

@@ -349,16 +349,16 @@ void QKStrTrim(PWSTR pszOrg)
 		while (*pszOrg++ = *p++);
 }
 UINT QKMessageBox(
-    LPCWSTR pszMainInstruction,
-    LPCWSTR pszContent,
+    PCWSTR pszMainInstruction,
+    PCWSTR pszContent,
     HICON hIcon,
-    LPCWSTR pszWndTitle,
-    LPCWSTR pszChackBoxTitle,//设为Null则不显示复选框
-    UINT iButtonCount,
-    LPCWSTR pszButton1Title,
-    LPCWSTR pszButton2Title,
-    LPCWSTR pszButton3Title,
+    PCWSTR pszWndTitle,
     HWND hParent,
+    PCWSTR pszChackBoxTitle,//设为Null则不显示复选框
+    UINT iButtonCount,
+    PCWSTR pszButton1Title,
+    PCWSTR pszButton2Title,
+    PCWSTR pszButton3Title,
     UINT iDefButton,
     BOOL IsCenterPos,
     _Out_ BOOL* IsCheck
