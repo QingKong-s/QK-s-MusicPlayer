@@ -329,31 +329,32 @@ struct GLOBALRES
 {
 	HBITMAP hbmpNewItem;
 	HICON hiLocate;			// 定位
-	HICON hiAdd;			// 添加
-	HICON hiLoadList;		// 读取列表
-	HICON hiSaveList;		// 保存列表
-	HICON hiEmpty;			// 清空
+	HICON hiPlus;			// 添加
+	HICON hiReadFile;		// 读取列表
+	HICON hiSaveFile;		// 保存列表
+	HICON hiCross;			// 清空
 	HICON hiSearch;			// 搜索
-	HICON hiBTPlaySetting;	// 播放设置
-	HICON hiBTPlayList;		// 显示/隐藏播放列表
-	HICON hiRMRadom;		// 随机播放
-	HICON hiRMSingle;		// 单曲播放
-	HICON hiRMTotal;		// 整体播放
-	HICON hiRMSingleLoop;	// 单曲循环
-	HICON hiRMTotalLoop;	// 整体循环
-	HICON hiBTLast;			// 上一曲
-	HICON hiBTPlay;			// 播放
-	HICON hiBTPause;		// 暂停
-	HICON hiBTStop;			// 停止
-	HICON hiBTNext;			// 下一曲
-	HICON hiBTLrc;			// 歌词
-	HICON hiBTMore;			// 更多
+	HICON hiPlaySetting;	// 播放设置
+	HICON hiPlayList;		// 显示/隐藏播放列表
+	HICON hiArrowCross;		// 随机播放
+	HICON hiArrowRight;		// 单曲播放
+	HICON hiArrowRightThree;// 整体播放
+	HICON hiArrowCircleOne;	// 单曲循环
+	HICON hiArrowCircle;	// 整体循环
+	HICON hiLast;			// 上一曲
+	HICON hiPlay;			// 播放
+	HICON hiPause;			// 暂停
+	HICON hiStop;			// 停止
+	HICON hiNext;			// 下一曲
+	HICON hiLrc;			// 歌词
+	HICON hiSettings;		// 设置
+	HICON hiInfo;			// 被圈住的"i"
 	HICON hiListManaging;	// 播放列表管理
-	HICON hiDTLLast;
-	HICON hiDTLPlay;
-	HICON hiDTLPause;
-	HICON hiDTLNext;
-	HICON hiDTLClose;
+	HICON hiLast2;
+	HICON hiPlay2;
+	HICON hiPause2;
+	HICON hiNext2;
+	HICON hiCross2;
 	HICON hiTick;
 };
 
@@ -362,27 +363,34 @@ struct GLOBALCONTEXT
 	HBRUSH hbrCyanDeeper;	// 青蓝画刷
 	HBRUSH hbrMyBule;
 	UINT uLrcDTFlags;		// 强制双行标志
-	int DS_CYPROGBAR;
-	int DS_CYBTBK;
-	int DS_CYSPE;
+	int DS_CYPROGBAR;		// 进度条高度
+
+	int DS_CYBTBK;			// 
+	int DS_CYSPE;			// 
 	int DS_CYSPEHALF;
-	int DS_CXSPEBAR;
-	int DS_CXSPEBARDIV;
+	int DS_CXSPEBAR;		// 
+	int DS_CXSPEBARDIV;		//
 	int DS_CXSPE;
 	int DS_CXSPEHALF;
 	int DS_CXBTMBTBK;
-	int DS_CXPIC;
-	int DS_EDGE;
-	int DS_CYTOPBK;
+
+	int DS_CXPIC;			// 
+	int DS_EDGE;			// 左侧间隔
+	int DS_CYTOPBK;			// 顶部信息高度
+
 	int DS_BT;
-	int DS_CXRITBT;
-	int DS_GAP;
-	int DS_LARGEIMAGE;
-	int DS_CYRITBK;
-	int DS_CYSTLISTNAME;
-	int DS_CXTIME;
-	int DS_CXWAVESLINE;
-	int DS_CYTOPTITLE;
+	int DS_CXRITBT;			// 右侧按钮宽度
+	int DS_GAP;				// 界面间隔
+
+
+	int DS_LARGEIMAGE;		// 超大图片尺寸
+
+	int DS_CYRITBK;			
+
+	int DS_CYSTLISTNAME;	// 右侧列表名称静态高度
+	int DS_CXTIME;			// 进度提示宽度
+	int DS_CXWAVESLINE;		// 每单位波形宽度
+	int DS_CYTOPTITLE;	
 	int DS_CXTOPTIP;
 	int DS_CYTOPTIP;
 	int DS_GAPTOPTIP;
@@ -400,6 +408,10 @@ struct GLOBALCONTEXT
 	int DS_CXDRAGDROPICON;
 	int DS_CYDRAGDROPICON;
 	int DS_LVDRAGEDGE;
+
+	int cyBT;			// 底部背景高度
+	int cxBKBtm;			// 底部背景宽度
+	int iIconSize;			// 图标大小
 };
 #define SIZE_CYPROGBAR			35
 #define SIZE_CYBTBK				40
@@ -499,6 +511,8 @@ struct SETTINGS
 ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS = 0, DWORD dwFlagsHM = 0);
 BOOL BASS_FreeMusic(ULONG_PTR h);
 void UI_UpdateDPISize();
+void Res_Free();
+void Res_Load(int iSize);
 
 void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc = ECODESRC_NONE, HWND hParent = NULL, DWORD dwOtherErrCode = 0);
 #define _CRT_SECURE_NO_WARNINGS

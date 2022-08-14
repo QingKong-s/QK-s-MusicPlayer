@@ -1,4 +1,4 @@
-﻿#include "MainWnd.h"
+﻿#include "WndMain.h"
 
 #include <Windows.h>
 #include <commdlg.h>
@@ -21,9 +21,9 @@
 #include "Resource.h"
 #include "MyProject.h"
 #include "QKCtrl.h"
-#include "LrcWnd.h"
+#include "WndLrc.h"
 #include "OLEDragDrop.h"
-#include "EffectDialog.h"
+#include "WndEffect.h"
 #include "WndList.h"
 
 CURRMUSICINFO       m_CurrSongInfo = { 0 };        //当前信息（在顶部显示）
@@ -1444,17 +1444,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         THUMBBUTTON tb[3];
         THUMBBUTTONMASK dwMask = THB_ICON | THB_TOOLTIP;
         tb[0].dwMask = dwMask;
-        tb[0].hIcon = LoadIconW(g_hInst, MAKEINTRESOURCEW(IDI_LAST_TB));// 这个图标必须用LoadIcon载入，不知道咋回事..........
+        tb[0].hIcon = GR.hiLast2;
         tb[0].iId = IDTBB_LAST;
         lstrcpyW(tb[0].szTip, L"上一曲");
 
         tb[1].dwMask = dwMask;
-        tb[1].hIcon = LoadIconW(g_hInst, MAKEINTRESOURCEW(IDI_PLAY_TB));
+        tb[1].hIcon = GR.hiPlay2;
         tb[1].iId = IDTBB_PLAY;
         lstrcpyW(tb[1].szTip, L"播放");
 
         tb[2].dwMask = dwMask;
-        tb[2].hIcon = LoadIconW(g_hInst, MAKEINTRESOURCEW(IDI_NEXT_TB));
+        tb[2].hIcon = GR.hiNext2;
         tb[2].iId = IDTBB_NEXT;
         lstrcpyW(tb[2].szTip, L"下一曲");
         g_pITaskbarList->ThumbBarAddButtons(m_hTBGhost, 3, tb);
@@ -1530,7 +1530,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         SendMessageW(hCtrl, QKCTBM_GETRANGE, FALSE, MAKELONG(0, 10));
         ///////////////////////////底部按钮容器
         hCtrl2 = CreateWindowExW(0, BKWNDCLASS, NULL, WS_CHILD | WS_VISIBLE,
-            0, 0, DPIS_CXBTMBTBK, DPIS_BT,
+            0, 0, GC.cxBKBtm, GC.cyBT,
             hCtrl2, (HMENU)IDC_BK_BOTTOMBTBK, g_hInst, NULL);
         g_hBKBtm = hCtrl2;
         SetWindowLongPtrW(hCtrl2, GWLP_WNDPROC, (LONG_PTR)WndProc_BtmBK);
@@ -1560,13 +1560,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         GDIObj_LeftBK(GDIOBJOPE_DELETE);
         MainWnd_ReleaseCurrInfo();
-        for (int i = 0; i <= sizeof(GR); i += sizeof(HANDLE))
-        {
-            DeleteObject((HGDIOBJ)((BYTE*)&GR + i));
-        }
         Lrc_ClearArray(g_Lrc);
         delete[] m_dwWavesData;
-
 
 		PostQuitMessage(0);
 	}
@@ -1637,7 +1632,7 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 {
     static WCHAR szTime[20] = L"00:00/00:00";
     static int iRepeatMode = REPEATMODE_TOTALLOOP;
-    static RECT rcTimeText = { 0,0,DPIS_CXTIME,DPIS_BT };
+    static RECT rcTimeText = { 0,0,DPIS_CXTIME,GC.cyBT };
     static int iHot = -1, iPushed = -1, iLastHot = -1, iLastOver = -1;
     static BOOL bBTPLPushed = FALSE, bBTIGPushed = FALSE;
     static HWND hToolTip;
@@ -1661,11 +1656,11 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
         SetTimer(hWnd, IDT_PGS, TIMERELAPSE_PGS, NULL);
 
         HDC hDC = GetDC(hWnd);
-        hBitmap = CreateCompatibleBitmap(hDC, DPIS_CXBTMBTBK, DPIS_BT);
+        hBitmap = CreateCompatibleBitmap(hDC, GC.cxBKBtm, GC.cyBT);
         hCDC = CreateCompatibleDC(hDC);
         ReleaseDC(hWnd, hDC);
         SelectObject(hCDC, hBitmap);
-        BitBlt(hCDC, 0, 0, DPIS_CXBTMBTBK, DPIS_BT, m_hcdcLeftBK, m_xBtmBK, m_yBtmBK, SRCCOPY);
+        BitBlt(hCDC, 0, 0, GC.cxBKBtm, GC.cyBT, m_hcdcLeftBK, m_xBtmBK, m_yBtmBK, SRCCOPY);
         SelectObject(hCDC, g_hFont);
         SetBkMode(hCDC, TRANSPARENT);
     }
@@ -1679,7 +1674,7 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
         {
             THUMBBUTTON tb;
             tb.dwMask = THB_ICON | THB_TOOLTIP;
-            tb.hIcon = LoadIconW(g_hInst, MAKEINTRESOURCEW(IDI_PLAY_TB));
+            tb.hIcon = GR.hiPlay2;
             tb.iId = IDTBB_PLAY;
             lstrcpyW(tb.szTip, L"播放");
             if (g_pITaskbarList)
@@ -1694,7 +1689,7 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
         {
             THUMBBUTTON tb;
             tb.dwMask = THB_ICON | THB_TOOLTIP;
-            tb.hIcon = LoadIconW(g_hInst, MAKEINTRESOURCEW(IDI_PAUSE_TB));
+            tb.hIcon = GR.hiPause2;
             tb.iId = IDTBB_PLAY;
             lstrcpyW(tb.szTip, L"暂停");
             if (g_pITaskbarList)
@@ -1723,12 +1718,12 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
     {
         PAINTSTRUCT ps;
         HDC hDC = BeginPaint(hWnd, &ps);
-        BitBlt(hCDC, 0, 0, DPIS_CXBTMBTBK, DPIS_BT, m_hcdcLeftBK, m_xBtmBK, m_yBtmBK, SRCCOPY);
+        BitBlt(hCDC, 0, 0, GC.cxBKBtm, GC.cyBT, m_hcdcLeftBK, m_xBtmBK, m_yBtmBK, SRCCOPY);
         DrawTextW(hCDC, szTime, -1, &rcTimeText, DT_RIGHT | DT_SINGLELINE | DT_VCENTER);
         int x = rcTimeText.right + 3;
-        int iIconOffest = (DPIS_BT - SIZE_STDICON) / 2;
+        int iIconOffest = (GC.cyBT - GC.iIconSize) / 2;
         HBRUSH hBrush;
-        RECT rc = { 0,0,0,DPIS_BT };
+        RECT rc = { 0,0,0,GC.cyBT };
         if (iHot != -1 || iPushed != -1)
         {
             int i;
@@ -1742,72 +1737,76 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 i = iHot;
                 hBrush = CreateSolidBrush(MYCLR_BTHOT);
             }
-            rc.left = x + DPIS_BT * i;
-            rc.right = rc.left + DPIS_BT;
+            rc.left = x + GC.cyBT * i;
+            rc.right = rc.left + GC.cyBT;
             FillRect(hCDC, &rc, hBrush);
             DeleteObject(hBrush);
         }
 
 
-        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiBTLast, 0, 0, 0, NULL, DI_NORMAL);// 1 上一曲
-        x += DPIS_BT;
-        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, g_bPlayIcon ? GR.hiBTPlay : GR.hiBTPause, 0, 0, 0, NULL, DI_NORMAL);// 2 播放/暂停
-        x += DPIS_BT;
-        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiBTStop, 0, 0, 0, NULL, DI_NORMAL);// 3 停止
-        x += DPIS_BT;
-        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiBTNext, 0, 0, 0, NULL, DI_NORMAL);// 4 下一曲
-        x += DPIS_BT;
-        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiBTLrc, 0, 0, 0, NULL, DI_NORMAL);// 5 歌词
-        x += DPIS_BT;
+        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiLast, 0, 0, 0, NULL, DI_NORMAL);// 1 上一曲
+        x += GC.cyBT;
+        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, g_bPlayIcon ? GR.hiPlay : GR.hiPause, 0, 0, 0, NULL, DI_NORMAL);// 2 播放/暂停
+        x += GC.cyBT;
+        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiStop, 0, 0, 0, NULL, DI_NORMAL);// 3 停止
+        x += GC.cyBT;
+        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiNext, 0, 0, 0, NULL, DI_NORMAL);// 4 下一曲
+        x += GC.cyBT;
+        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiLrc, 0, 0, 0, NULL, DI_NORMAL);// 5 歌词
+        x += GC.cyBT;
         HICON hi;
         switch (iRepeatMode)
         {
         case REPEATMODE_TOTALLOOP:
-            hi = GR.hiRMTotalLoop;
+            hi = GR.hiArrowCircle;
             break;
         case REPEATMODE_RADOM:
-            hi = GR.hiRMRadom;
+            hi = GR.hiArrowCross;
             break;
         case REPEATMODE_SINGLE:
-            hi = GR.hiRMSingle;
+            hi = GR.hiArrowRight;
             break;
         case REPEATMODE_SINGLELOOP:
-            hi = GR.hiRMSingleLoop;
+            hi = GR.hiArrowCircleOne;
             break;
         case REPEATMODE_TOTAL:
-            hi = GR.hiRMTotal;
+            hi = GR.hiArrowRightThree;
             break;
         default:
-            hi = GR.hiRMTotalLoop;
+            hi = GR.hiArrowCircle;
             break;
         }
 
         DrawIconEx(hCDC, x + iIconOffest, iIconOffest, hi, 0, 0, 0, NULL, DI_NORMAL);// 6 循环方式
-        x += DPIS_BT;
+        x += GC.cyBT;
 
-        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiBTPlaySetting, 0, 0, 0, NULL, DI_NORMAL);// 7 均衡器
-        x += DPIS_BT;
+        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiPlaySetting, 0, 0, 0, NULL, DI_NORMAL);// 7 均衡器
+        x += GC.cyBT;
         if (bBTPLPushed)
         {
             hBrush = CreateSolidBrush(MYCLR_BTPUSHED);
             rc.left = x;
-            rc.right = rc.left + DPIS_BT;
+            rc.right = rc.left + GC.cyBT;
             FillRect(hCDC, &rc, hBrush);
             DeleteObject(hBrush);
         }
-        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiBTPlayList, 0, 0, 0, NULL, DI_NORMAL);// 8 显示播放列表
-        x += DPIS_BT;
+        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiPlayList, 0, 0, 0, NULL, DI_NORMAL);// 8 显示播放列表
+        x += GC.cyBT;
         if (bBTPLPushed)
         {
             hBrush = CreateSolidBrush(MYCLR_BTPUSHED);
             rc.left = x;
-            rc.right = rc.left + DPIS_BT;
+            rc.right = rc.left + GC.cyBT;
             FillRect(hCDC, &rc, hBrush);
             DeleteObject(hBrush);
         }
-        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiBTMore, 0, 0, 0, NULL, DI_NORMAL);// 9 更多
-        x += DPIS_BT;
-        BitBlt(hDC, 0, 0, DPIS_CXBTMBTBK, DPIS_BT, hCDC, 0, 0, SRCCOPY);
+        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiSettings, 0, 0, 0, NULL, DI_NORMAL);// 9 设置
+        x += GC.cyBT;
+
+        DrawIconEx(hCDC, x + iIconOffest, iIconOffest, GR.hiInfo, 0, 0, 0, NULL, DI_NORMAL);// 10 关于
+        x += GC.cyBT;
+
+        BitBlt(hDC, 0, 0, GC.cxBKBtm, GC.cyBT, hCDC, 0, 0, SRCCOPY);
 
         EndPaint(hWnd, &ps);
     }
@@ -1843,7 +1842,7 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             ti.lpszText = NULL;
             SendMessageW(hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&ti);
             if (iHot == 5)
-                ti.lpszText = (LPWSTR)c_szBtmTip[10 + iRepeatMode];
+                ti.lpszText = (LPWSTR)c_szBtmTip[BTMBKBTNCOUNT + iRepeatMode];
             else
                 ti.lpszText = (LPWSTR)c_szBtmTip[iHot];
             SendMessageW(hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&ti);
@@ -1892,7 +1891,7 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
         UpdateWindow(hWnd);
         switch (i)
         {
-        case 0://上一曲
+        case 0:// 上一曲
         BTOpe_Last:
         {
             if (g_iCurrFileIndex == -1)
@@ -1900,7 +1899,7 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             Playing_PlayNext(TRUE);
         }
         break;
-        case 1://播放/暂停
+        case 1:// 播放/暂停
         BTOpe_Play:
         {
             if (g_iCurrFileIndex == -1)
@@ -1912,18 +1911,18 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 WndProc_BtmBK(hWnd, BTMBKM_SETPLAYBTICON, FALSE, 0);
         }
         break;
-        case 2://停止
+        case 2:// 停止
             if (g_iCurrFileIndex == -1)
                 return 0;
             Playing_Stop();
             break;
-        case 3://下一曲
+        case 3:// 下一曲
         BTOpe_Next:
             if (g_iCurrFileIndex == -1)
                 return 0;
             Playing_PlayNext();
             break;
-        case 4://歌词
+        case 4:// 歌词
         {
             HMENU hMenu = CreatePopupMenu();
             AppendMenuW(hMenu, IsWindow(g_hLrcWnd) ? MF_CHECKED : 0, IDMI_LRC_SHOW, L"桌面歌词");
@@ -1965,14 +1964,14 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             }
         }
         break;
-        case 5://循环方式
+        case 5:// 循环方式
             iRepeatMode++;
             if (iRepeatMode > 4)
                 iRepeatMode %= 5;
             InvalidateRect(hWnd, NULL, FALSE);
             goto ShowToolTip;
             break;
-        case 6://播放设置
+        case 6:// 播放设置
             if (!IsWindow(hDlg))
             {
                 hDlg = CreateDialogParamW(g_hInst, MAKEINTRESOURCEW(IDD_EFFECT), hWnd, DlgProc_Effect, 0);
@@ -1981,14 +1980,14 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             else
                 SetFocus(hDlg);
             break;
-        case 7://播放列表
+        case 7:// 播放列表
         {
             HMENU hMenu = CreatePopupMenu();
             AppendMenuW(hMenu, g_bListSeped ? MF_CHECKED : 0, IDMI_PL_SEPARATE, L"将列表从主窗口拆离");//MF_STRING缺省
             AppendMenuW(hMenu, g_bListHidden ? 0 : MF_CHECKED, IDMI_PL_SHOW, L"显示播放列表");
             RECT rc;
             GetWindowRect(g_hBKBtm, &rc);
-            int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, rc.left + DPIS_CXTIME + DPIS_BT * 7, rc.top + DPIS_BT, 0, g_hMainWnd, NULL);
+            int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, rc.left + DPIS_CXTIME + GC.cyBT * 7, rc.top + GC.cyBT, 0, g_hMainWnd, NULL);
             DestroyMenu(hMenu);
             switch (iRet)
             {
@@ -1998,32 +1997,18 @@ LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             case IDMI_PL_SHOW:
                 UI_ShowList(g_bListHidden);
                 break;
-            }
-        }
-        break;
-        case 8://更多
-        {
-            HMENU hMenu = CreatePopupMenu();
-            AppendMenuW(hMenu, 0, IDMI_MORE_SETTING, L"设置");//MF_STRING缺省
-            AppendMenuW(hMenu, 0, IDMI_MORE_ABOUT, L"关于");
-            RECT rc;
-            GetWindowRect(g_hBKBtm, &rc);
-            int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, rc.left + DPIS_CXTIME + DPIS_BT * 8, rc.top + DPIS_BT, 0, g_hMainWnd, NULL);
-            DestroyMenu(hMenu);
-            switch (iRet)
-            {
-            case IDMI_MORE_ABOUT:
-                DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_ABOUT), g_hMainWnd, DlgProc_About, 0);
-                return 0;
-            case IDMI_MORE_SETTING:
-                DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_OPTIONS), g_hMainWnd, DlgProc_Settings, 0);
-                return 0;
-            }
-        }
-        break;
-        }
-    }
-    return 0;
+			}
+		}
+		break;
+		case 8:// 设置
+			DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_OPTIONS), g_hMainWnd, DlgProc_Settings, 0);
+			break;
+		case 9:// 关于
+			DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_ABOUT), g_hMainWnd, DlgProc_About, 0);
+			break;
+		}
+	}
+	return 0;
     case WM_DESTROY:
     {
         DestroyWindow(hToolTip);
@@ -2102,7 +2087,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
                 DPIS_CXPIC + DPIS_EDGE * 2,
                 DPIS_CYTOPBK + DPIS_EDGE,
                 m_cxLeftBK - DPIS_EDGE,
-                m_cyLeftBK - DPIS_BT - DPIS_CYPROGBAR);
+                m_cyLeftBK - GC.cyBT - DPIS_CYPROGBAR);
             m_cxLrcShow = m_rcLrcShow.right - m_rcLrcShow.left;
             m_cyLrcShow = m_rcLrcShow.bottom - m_rcLrcShow.top;
             m_xSpe = DPIS_EDGE;
@@ -2121,19 +2106,19 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             m_cxLrcShow = 0;
             m_cyLrcShow = 0;
             m_xSpe = (m_cxLeftBK - (cxSpe * 2 + DPIS_EDGE)) / 2;
-            m_ySpe = m_cyLeftBK - DPIS_CYBTBK - DPIS_CYPROGBAR - DPIS_CYSPE;
+            m_ySpe = m_cyLeftBK - GC.cyBT - DPIS_CYPROGBAR - DPIS_CYSPE;
             m_xWaves = m_xSpe + DPIS_EDGE + DPIS_CXSPE;
             m_yWaves = m_ySpe;
         }
 
         SetWindowPos(g_hTBProgess, 0,
             0,
-            m_cyLeftBK - DPIS_BT - DPIS_CYPROGBAR,
+            m_cyLeftBK - GC.cyBT - DPIS_CYPROGBAR,
             m_cxLeftBK,
             DPIS_CYPROGBAR,
             SWP_NOZORDER);//进度条
-        m_xBtmBK = (m_cxLeftBK - DPIS_CXBTMBTBK) / 2;
-        m_yBtmBK = m_cyLeftBK - DPIS_BT;
+        m_xBtmBK = (m_cxLeftBK - GC.cxBKBtm) / 2;
+        m_yBtmBK = m_cyLeftBK - GC.cyBT;
         SetWindowPos(g_hBKBtm, 0,
             m_xBtmBK,
             m_yBtmBK,
@@ -3033,12 +3018,12 @@ void GDIObj_LeftBK(DWORD dwOpe)
 }
 int HitTest_BtmBK(int x, int y)
 {
-    if (x < DPIS_CXTIME || y < 0 || x > DPIS_CXBTMBTBK || y > DPIS_BT)
+    if (x < DPIS_CXTIME || y < 0 || x > GC.cxBKBtm || y > GC.cyBT)
         return -1;
 
-    for (int i = 0; i < 9; i++)
+	for (int i = 0; i < BTMBKBTNCOUNT; i++)
     {
-        if (x > DPIS_CXTIME + i * DPIS_BT && x < DPIS_CXTIME + (i + 1) * DPIS_BT)
+        if (x > DPIS_CXTIME + i * GC.cyBT && x < DPIS_CXTIME + (i + 1) * GC.cyBT)
             return i;
     }
     return -1;

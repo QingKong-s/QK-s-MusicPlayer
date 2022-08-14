@@ -10,7 +10,7 @@
 
 #include "MyProject.h"
 #include "Function.h"
-#include "EffectDialog.h"
+#include "WndEffect.h"
 // 窗口句柄类
 extern HWND				g_hMainWnd;             // 主窗口
 extern HWND				g_hLV;                  // 列表ListView
@@ -24,7 +24,7 @@ extern HWND				g_hBKList;              // 列表背景
 // 全局类
 extern HINSTANCE		g_hInst;                // 全局实例句柄
 extern GLOBALRES		GR;                     // 全局资源
-extern GLOBALCONTEXT	GC;                     // 全局上下文
+extern GLOBALCONTEXT	GC;                     // 全局上下文（尺寸等）
 extern SETTINGS			GS;                     // 全局设置
 extern HFONT            g_hFontDrawing;         // 绘制用大字体
 extern HFONT			g_hFont;                // 界面字体

@@ -1,5 +1,5 @@
 /*
-* EffectDialog.h
+* WndEffect.h
 * 包含声音效果对话框过程及声音效果相关函数的定义
 */
 #pragma once
@@ -34,7 +34,7 @@ struct GLOBALEFFECT
 	BASS_DX8_PARAMEQ EQ[10];
 };
 
-struct
+struct// 抄的网易云
 {
 	PCWSTR pszText;
 	int Setting[10];
@@ -66,7 +66,7 @@ const c_EQSetting[23] =
 	{L"超重低音",	{6,5,8,2,0,0,0,0,0,0}},
 };
 
-const float c_EQCenter[10] = { 31,62,125,250,500,1000,2000,4000,8000,16000 };
+const float c_EQCenter[10] = { 31,62,125,250,500,1000,2000,4000,8000,16000 };// 也是抄的网易云
 
 #define EFFECTWNDTABCOUNT		10
 #define SBV_INVALIDVALUE		-2

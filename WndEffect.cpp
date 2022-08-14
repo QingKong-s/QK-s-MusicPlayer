@@ -2,7 +2,7 @@
 * EffectDialog.cpp
 * 包含声音效果对话框过程及声音效果相关函数的实现
 */
-#include "EffectDialog.h"
+#include "WndEffect.h"
 
 #include <Windows.h>
 #include <CommCtrl.h>
@@ -1331,7 +1331,7 @@ INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             ShowWindow(hChild[i], SW_HIDE);
 
             SendDlgItemMessageW(hChild[i], IDC_CB_ENABLE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiTick);
-            SendDlgItemMessageW(hChild[i], IDC_BT_RESET, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiRMTotalLoop);// 设置图标
+            SendDlgItemMessageW(hChild[i], IDC_BT_RESET, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiArrowCircle);// 设置图标
         }
         ShowWindow(hChild[0], SW_SHOW);
     }

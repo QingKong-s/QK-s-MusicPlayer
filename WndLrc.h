@@ -8,6 +8,8 @@
 #define LRCHITTEST_NEXT			-3
 #define LRCHITTEST_CLOSE		-4
 
+#define DTLRCBTNCOUNT			4
+
 BOOL LrcWnd_Init();
 void LrcWnd_Show();
 void LrcWnd_DrawLrc();

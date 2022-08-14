@@ -6,7 +6,7 @@
 #include "MyProject.h"
 #include "resource.h"
 #include "Function.h"
-#include "EffectDialog.h"
+#include "WndEffect.h"
 
 HWND			g_hMainWnd;
 HWND			g_hLV;
@@ -19,7 +19,7 @@ HWND			g_hSEB;
 HWND			g_hBKList;
 
 HINSTANCE		g_hInst;
-GLOBALRES		GR;
+GLOBALRES		GR						= { 0 };
 GLOBALCONTEXT	GC;
 SETTINGS		GS;
 HFONT           g_hFontDrawing;

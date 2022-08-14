@@ -1,7 +1,11 @@
-﻿#pragma once
+﻿/*
+* Function.h
+* 包含帮助性函数、结构和常量的定义
+*/
+#pragma once
 #include <Windows.h>
 
-#include "MainWnd.h"
+#include "WndMain.h"
 ////////////////////////////////////
 typedef struct QKARRAYHEADER
 {
@@ -47,19 +51,19 @@ struct FLAC_Header
 #define QKMSGBOX_BTID_2                   101
 #define QKMSGBOX_BTID_3                   102
 
-//0x0BGR（红绿蓝从低位到高位排列）
+// COLORREF，0x0BGR（红绿蓝从低位到高位排列）
 #define QKCOLOR_GREEN                     0x00FF00
 #define QKCOLOR_BLUE                      0xFF0000
 #define QKCOLOR_RED                       0x0000FF
 #define QKCOLOR_YELLOW                    0x00FFFF
-#define QKCOLOR_CYAN                      0xFFFF00//cyan [ˈsaɪən] 青色
-#define QKCOLOR_FUCHSIA                   0xFF00FF//fuchsia [ˈfjuːʃə] 紫红色，品红
+#define QKCOLOR_CYAN                      0xFFFF00// cyan [ˈsaɪən] 青色
+#define QKCOLOR_FUCHSIA                   0xFF00FF// fuchsia [ˈfjuːʃə] 紫红色，品红
 #define QKCOLOR_WHITE                     0xFFFFFF
 #define QKCOLOR_BLACK                     0x000000
-#define QKCOLOR_CYANDEEPER                0xC06000//易语言青蓝
-#define QKCOLOR_GRAYDEEPER2               0x808080//易语言灰色
+#define QKCOLOR_CYANDEEPER                0xC06000// 易语言青蓝
+#define QKCOLOR_GRAYDEEPER2               0x808080// 易语言灰色
 #define QKCOLOR_GRAYDEEPER1               0xA0A0A0
-#define QKCOLOR_GRAY                      0xC0C0C0//易语言浅灰
+#define QKCOLOR_GRAY                      0xC0C0C0// 易语言浅灰
 
 #define PROP_INPUTBOXCONTEXT              L"QKProp.InputBox.Context"
 

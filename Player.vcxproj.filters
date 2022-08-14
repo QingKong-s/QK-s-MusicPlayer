@@ -33,16 +33,16 @@
     <ClInclude Include="QKCtrl.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="LrcWnd.h">
+    <ClInclude Include="WndLrc.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="OLEDragDrop.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MainWnd.h">
+    <ClInclude Include="WndMain.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="EffectDialog.h">
+    <ClInclude Include="WndEffect.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="WndList.h">

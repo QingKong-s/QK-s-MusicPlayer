@@ -14,7 +14,7 @@
 #include "GlobalVar.h"
 #include "resource.h"
 #include "OLEDragDrop.h"
-#include "MainWnd.h"
+#include "WndMain.h"
 
 HANDLE          m_htdMusicTime          = NULL;
 UINT            m_uThreadFlagMusicTime  = THREADFLAG_STOP;
@@ -32,18 +32,18 @@ void UI_SetRitCtrlPos()
 
 	HWND hEdit = GetDlgItem(g_hBKRight, IDC_ED_SEARCH);
 	SetWindowPos(hEdit, NULL, 0, 0,
-		g_cxBKList - DPIS_BT - DPIS_GAP,
-		DPIS_BT,
+		g_cxBKList - GC.cyBT - DPIS_GAP,
+        GC.cyBT,
 		SWP_NOZORDER | SWP_NOMOVE);
 	RECT rcText;
 	SendMessageW(hEdit, EM_GETRECT, 0, (LPARAM)&rcText);
 	rcText.left = DPIS_GAP;
-	rcText.right = g_cxBKList - DPIS_BT - DPIS_GAP * 2;
-	OffsetRect(&rcText, 0, (DPIS_BT - (rcText.bottom - rcText.top)) / 2 - rcText.top);
+	rcText.right = g_cxBKList - GC.cyBT - DPIS_GAP * 2;
+	OffsetRect(&rcText, 0, (GC.cyBT - (rcText.bottom - rcText.top)) / 2 - rcText.top);
 	SendMessageW(hEdit, EM_SETRECT, 0, (LPARAM)&rcText);
 
 	SetWindowPos(GetDlgItem(g_hBKRight, IDC_BT_SEARCH), NULL,
-		g_cxBKList - DPIS_BT - DPIS_GAP,
+		g_cxBKList - GC.cyBT - DPIS_GAP,
 		DPIS_CYSTLISTNAME + DPIS_GAP * 2,
 		0, 0, SWP_NOZORDER | SWP_NOSIZE);
 }
@@ -288,50 +288,50 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 			(HANDLE)SetWindowLongPtrW(hCtrl, GWLP_WNDPROC, (LONG_PTR)WndProc_Edit));
 		///////////////////////////搜索按钮
 		hCtrl = CreateWindowExW(0, WC_BUTTONW, NULL, WS_CHILD | WS_VISIBLE | BS_ICON,
-			0, 0, DPIS_BT, DPIS_BT,
+			0, 0, GC.cyBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_SEARCH, g_hInst, NULL);
 		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiSearch);
 		UI_SetRitCtrlPos();
 		///////////////////////////
-		int iLeft = 0;
+        int iLeft = 0, iTop = DPIS_CYSTLISTNAME + DPIS_GAP * 3 + GC.cyBT;
 		///////////////////////////
 		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"定位", WS_CHILD | WS_VISIBLE,
-			iLeft, DPIS_CYSTLISTNAME + DPIS_GAP * 3 + DPIS_BT, DPIS_CXRITBT, DPIS_BT,
+			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_JUMP, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiLocate);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
 		///////////////////////////
 		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"添加", WS_CHILD | WS_VISIBLE,
-			iLeft, DPIS_CYSTLISTNAME + DPIS_GAP * 3 + DPIS_BT, DPIS_CXRITBT, DPIS_BT,
+			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_OPEN, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
-		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiAdd);
+		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiPlus);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
 		///////////////////////////
 		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"读取", WS_CHILD | WS_VISIBLE,
-			iLeft, DPIS_CYSTLISTNAME + DPIS_GAP * 3 + DPIS_BT, DPIS_CXRITBT, DPIS_BT,
+			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_LOADLIST, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
-		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiLoadList);
+		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiReadFile);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
 		///////////////////////////
 		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"保存", WS_CHILD | WS_VISIBLE,
-			iLeft, DPIS_CYSTLISTNAME + DPIS_GAP * 3 + DPIS_BT, DPIS_CXRITBT, DPIS_BT,
+			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_SAVE, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
-		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiSaveList);
+		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiSaveFile);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
 		///////////////////////////
 		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"清空", WS_CHILD | WS_VISIBLE,
-			iLeft, DPIS_CYSTLISTNAME + DPIS_GAP * 3 + DPIS_BT, DPIS_CXRITBT, DPIS_BT,
+			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_EMPTY, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
-		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiEmpty);
+		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiCross);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
 		///////////////////////////
 		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"管理", WS_CHILD | WS_VISIBLE,
-			iLeft, DPIS_CYSTLISTNAME + DPIS_GAP * 3 + DPIS_BT, DPIS_CXRITBT, DPIS_BT,
+			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_MANAGING, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiListManaging);

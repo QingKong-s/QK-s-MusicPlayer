@@ -36,7 +36,7 @@ struct LRCVSCROLLINFO
 	float fTime;				// 
 };
 
-const PCWSTR c_szBtmTip[15] =
+const PCWSTR c_szBtmTip[] =
 {
 	L"上一曲",
 	L"播放/暂停",
@@ -46,8 +46,8 @@ const PCWSTR c_szBtmTip[15] =
 	L"循环方式",
 	L"播放设置",
 	L"显示/隐藏播放列表",
-	L"仅在分组内播放",
-	L"更多",
+	L"设置",
+	L"关于",
 	L"循环方式：整体循环",
 	L"循环方式：随机播放",
 	L"循环方式：单曲播放",
@@ -172,6 +172,8 @@ const PCWSTR c_szBtmTip[15] =
 #define BTMBT_NORMAL			0
 #define BTMBT_HOT				1
 #define BTMBT_PUSHED			2
+
+#define BTMBKBTNCOUNT			10
 
 void MainWnd_ReleaseCurrInfo();
 void CALLBACK SyncProc_End(HSYNC handle, DWORD channel, DWORD data, void* user);

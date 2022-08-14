@@ -161,11 +161,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="EffectDialog.h" />
+    <ClInclude Include="WndEffect.h" />
     <ClInclude Include="GlobalDef.h" />
     <ClInclude Include="GlobalVar.h" />
-    <ClInclude Include="LrcWnd.h" />
-    <ClInclude Include="MainWnd.h" />
+    <ClInclude Include="WndLrc.h" />
+    <ClInclude Include="WndMain.h" />
     <ClInclude Include="OLEDragDrop.h" />
     <ClInclude Include="QKCtrl.h" />
     <ClInclude Include="Resource.h" />

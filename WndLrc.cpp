@@ -8,9 +8,9 @@
 #include "GlobalVar.h"
 #include "resource.h"
 #include "Function.h"
-#include "LrcWnd.h"
+#include "WndLrc.h"
 #include "QKCtrl.h"
-#include "MainWnd.h"
+#include "WndMain.h"
 #include "WndList.h"
 
 HDC             m_hCDC_Lrc      = NULL;
@@ -235,7 +235,7 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		m_cyClient = HIWORD(lParam);
 
 		m_xLrcRgn = DPIS_DTLRCFRAME;
-		m_yLrcRgn = DPIS_DTLRCFRAME + DPIS_DTLRCEDGE * 2 + DPIS_BT;
+		m_yLrcRgn = DPIS_DTLRCFRAME + DPIS_DTLRCEDGE * 2 + GC.cyBT;
 		m_cxLrcRgn = m_cxClient - m_xLrcRgn * 2;
 		m_cyLrcRgn = m_cyClient - m_yLrcRgn - m_xLrcRgn;
 
@@ -418,7 +418,7 @@ void LrcWnd_DrawLrc()//  £Ä£É£Ò£Å£Ã£Ô¡¡£Ø¡¡£²£Ä£¡£¡£¡
         m_pD2DRenderTarget->DrawRectangle(D2D1::RectF(DPIS_DTLRCEDGE, DPIS_DTLRCEDGE, m_cxClient - DPIS_DTLRCEDGE, m_cyClient - DPIS_DTLRCEDGE),
             pD2DSolidBrush, DPIS_DTLRCEDGE);
         pD2DSolidBrush->Release();// É¾³ý»­Ë¢
-		int iLeft = (m_cxClient - DPIS_CXDTLRCBTNRGN) / 2;
+		int iLeft = (m_cxClient - GC.cyBT * DTLRCBTNCOUNT) / 2;
 		if (m_iMouseHoverBT < 0)// »­°´Å¥±³¾°
 		{
 			if (m_iLrcBT != 0)
@@ -426,29 +426,29 @@ void LrcWnd_DrawLrc()//  £Ä£É£Ò£Å£Ã£Ô¡¡£Ø¡¡£²£Ä£¡£¡£¡
 			else
                 m_pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0xA3FFFF, 0.5), &pD2DSolidBrush);// ´´½¨°´Å¥±³¾°»­Ë¢
             D2D1_RECT_F rcF;
-            rcF.left = iLeft + (DPIS_BT + DPIS_DTLRCEDGE) * (abs(m_iMouseHoverBT) - 1);
+            rcF.left = iLeft + (GC.cyBT + DPIS_DTLRCEDGE) * (abs(m_iMouseHoverBT) - 1);
             rcF.top = DPIS_DTLRCFRAME + DPIS_DTLRCEDGE;
-            rcF.right = rcF.left + DPIS_BT;
-            rcF.bottom = rcF.top + DPIS_BT;
+            rcF.right = rcF.left + GC.cyBT;
+            rcF.bottom = rcF.top + GC.cyBT;
             m_pD2DRenderTarget->FillRectangle(&rcF, pD2DSolidBrush);
             pD2DSolidBrush->Release();// É¾³ý»­Ë¢
 		}
-		int iIconOffest = (DPIS_BT - SIZE_STDICON) / 2;
+		int iIconOffest = (GC.cyBT - GC.iIconSize) / 2;
 		int iIconTop = DPIS_DTLRCFRAME + DPIS_DTLRCEDGE + iIconOffest;
-		int iIconStep = DPIS_BT + DPIS_DTLRCEDGE;
+		int iIconStep = GC.cyBT + DPIS_DTLRCEDGE;
         rcF = { (float)(iLeft + iIconOffest) ,(float)iIconTop };
         rcF.left = iLeft + iIconOffest;
         rcF.top = iIconTop;
-        rcF.right = rcF.left + DPIS_BT;
-        rcF.bottom = rcF.top + DPIS_BT;
+        rcF.right = rcF.left + GC.cyBT;
+        rcF.bottom = rcF.top + GC.cyBT;
         m_pD2DRenderTarget->EndDraw();
-		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, GR.hiDTLLast, 0, 0, 0, NULL, DI_NORMAL);
+		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, GR.hiLast2, 0, 0, 0, NULL, DI_NORMAL);
 		iLeft += iIconStep;
-		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, g_bPlayIcon ? GR.hiDTLPlay : GR.hiDTLPause, 0, 0, 0, NULL, DI_NORMAL);
+		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, g_bPlayIcon ? GR.hiPlay2 : GR.hiPause2, 0, 0, 0, NULL, DI_NORMAL);
 		iLeft += iIconStep;
-		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, GR.hiDTLNext, 0, 0, 0, NULL, DI_NORMAL);
+		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, GR.hiNext2, 0, 0, 0, NULL, DI_NORMAL);
 		iLeft += iIconStep;
-		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, GR.hiDTLClose, 0, 0, 0, NULL, DI_NORMAL);
+		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, GR.hiCross2, 0, 0, 0, NULL, DI_NORMAL);
         m_pD2DRenderTarget->BeginDraw();
 	}
 	PWSTR pszLrc = NULL;
@@ -757,26 +757,26 @@ int LrcWnd_HitTest()//¸è´Ê´°¿ÚÃüÖÐ²âÊÔ
 	if (PtInRect(&rc, pt))//µ×±ß
 		return HTBOTTOM;
 	///////////////////////////²âÊÔ°´Å¥ÇøÓò
-	int iLeft = (m_cxClient - DPIS_CXDTLRCBTNRGN) / 2;
+	int iLeft = (m_cxClient - GC.cyBT * DTLRCBTNCOUNT) / 2;
 	rc.left = iLeft;
 	rc.top = DPIS_DTLRCFRAME + DPIS_DTLRCEDGE;
-	rc.right = rc.left + DPIS_BT;
-	rc.bottom = rc.top + DPIS_BT;
+	rc.right = rc.left + GC.cyBT;
+	rc.bottom = rc.top + GC.cyBT;
 	if (PtInRect(&rc, pt))
 		return LRCHITTEST_LAST;
 
-	rc.left += (DPIS_BT + DPIS_DTLRCEDGE);
-	rc.right += (DPIS_BT + DPIS_DTLRCEDGE);
+	rc.left += (GC.cyBT + DPIS_DTLRCEDGE);
+	rc.right += (GC.cyBT + DPIS_DTLRCEDGE);
 	if (PtInRect(&rc, pt))
 		return LRCHITTEST_PLAY;
 
-	rc.left += (DPIS_BT + DPIS_DTLRCEDGE);
-	rc.right += (DPIS_BT + DPIS_DTLRCEDGE);
+	rc.left += (GC.cyBT + DPIS_DTLRCEDGE);
+	rc.right += (GC.cyBT + DPIS_DTLRCEDGE);
 	if (PtInRect(&rc, pt))
 		return LRCHITTEST_NEXT;
 
-	rc.left += (DPIS_BT + DPIS_DTLRCEDGE);
-	rc.right += (DPIS_BT + DPIS_DTLRCEDGE);
+	rc.left += (GC.cyBT + DPIS_DTLRCEDGE);
+	rc.right += (GC.cyBT + DPIS_DTLRCEDGE);
 	if (PtInRect(&rc, pt))
 		return LRCHITTEST_CLOSE;
 

@@ -24,8 +24,8 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include "MyProject.h"
 #include "GlobalVar.h"
 #include "QKCtrl.h"
-#include "LrcWnd.h"
-#include "MainWnd.h"
+#include "WndLrc.h"
+#include "WndMain.h"
 #include "WndList.h"
 #include "resource.h"
 
@@ -91,37 +91,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         return 1;
     }
     //////////////载入资源，填充全局上下文
-    GR =
-    {
-        NULL,
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_JUMP), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_OPEN), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_LOAD), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_SAVE), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_EMPTY), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_SEARCH), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_SETTING), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PLAYLIST), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_RMRADOM), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_RMSINGLE), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_RMTOTAL), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_RMSINGLELOOP), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_RMTOTALLOOP), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_LAST), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PLAY), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PAUSE), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_STOP), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_NEXT), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_LRC), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_MORE), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_LISTMANAGING), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_BTLAST_LRC), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_BTPLAY_LRC), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_BTPAUSE_LRC), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_BTNEXT_LRC), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_BTCLOSE_LRC), IMAGE_ICON, 0, 0, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_TICK), IMAGE_ICON, 0, 0, 0)
-    };
+    if (pGetDpiForSystem)
+        Res_Load(pGetDpiForSystem() * 16 / 96);
+    else
+        Res_Load(16);
     GC =
     {
         CreateSolidBrush(QKCOLOR_CYANDEEPER),
@@ -322,7 +295,54 @@ void UI_UpdateDPISize()
     GC.DS_CXDTLRCBTNRGN = DPIS_DTLRCEDGE * 3 + DPIS_BT * 4;
     GC.DS_CYLVITEM = DPI(SIZE_CYLVITEM);
     GC.DS_LRCSHOWGAP = DPI(SIZE_LRCSHOWGAP);
-    GC.DS_CXDRAGDROPICON = DPI(SIZE_CXDRAGDROPICON);
-    GC.DS_CYDRAGDROPICON = DPI(SIZE_CYDRAGDROPICON);
-    GC.DS_LVDRAGEDGE = DPI(SIZE_LVDRAGEDGE);
+	GC.DS_CXDRAGDROPICON = DPI(SIZE_CXDRAGDROPICON);
+	GC.DS_CYDRAGDROPICON = DPI(SIZE_CYDRAGDROPICON);
+	GC.DS_LVDRAGEDGE = DPI(SIZE_LVDRAGEDGE);
+
+	GC.iIconSize = DPI(16);
+	GC.cyBT = GC.iIconSize * 10 / 5;
+    GC.cxBKBtm = DPIS_CXTIME + BTMBKBTNCOUNT * GC.cyBT;
+}
+void Res_Free()
+{
+    for (int i = 0; i <= sizeof(GR); i += sizeof(HANDLE))
+    {
+        DeleteObject(*(HGDIOBJ*)((BYTE*)&GR + i));
+    }
+}
+void Res_Load(int iSize)
+{
+    Res_Free();
+    GR =
+    {
+        NULL,
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_LOCATE), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PLUS), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_READFILE), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_DISK), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_CROSS), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_SEARCH), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_THREETRACKBARS), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PLAYLIST), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_ARROWCROSS), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_ARROWRIGHT), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_ARROWRIGHTTHREE), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_ARROWCIRCLEONE), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_ARROWCIRCLE), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_LAST), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PLAY), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PAUSE), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_STOP), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_NEXT), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_LRC), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_SETTINGS), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_INFO), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PLAYLISTMANAGE), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_LAST2), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PLAY2), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PAUSE2), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_NEXT2), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_CROSS2), IMAGE_ICON, iSize, 0, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_TICK), IMAGE_ICON, iSize, 0, 0)
+    };
 }

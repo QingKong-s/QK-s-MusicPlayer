@@ -1,13 +1,18 @@
-#include "windows.h"
-#include "CommCtrl.h"
-#include "shlobj_core.h"
-#include "shlwapi.h"
+/*
+* Function.cpp
+* 包含帮助性函数的实现
+*/
+#include <Windows.h>
+#include <CommCtrl.h>
+#include <shlobj_core.h>
+#include <shlwapi.h>
+
+#include <math.h>
+
 #include "Function.h"
-#include "math.h"
 #include "GlobalVar.h"
 #include "resource.h"
-
-#include "MainWnd.h"
+#include "WndMain.h"
 
 HFONT QKCreateFont(LPCWSTR szFontName, int nPoint, int nWeight, bool IsItalic, bool IsUnderline, bool IsStrikeOut)
 {
