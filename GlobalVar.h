@@ -28,6 +28,7 @@ extern GLOBALCONTEXT	GC;                     // 全局上下文（尺寸等）
 extern SETTINGS			GS;                     // 全局设置
 extern HFONT            g_hFontDrawing;         // 绘制用大字体
 extern HFONT			g_hFont;                // 界面字体
+extern HFONT			g_hFontCenterLrc;		// 中间歌词字体
 extern int				WM_TASKBARBUTTONCREATED;// 任务栏按钮创建完毕
 extern UINT				g_uMyClipBoardFmt;      // 内部拖放剪贴板格式
 extern ITaskbarList4*	g_pITaskbarList;        // ITaskbarList接口指针，负责任务栏操作

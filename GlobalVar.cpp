@@ -24,6 +24,7 @@ GLOBALCONTEXT	GC;
 SETTINGS		GS;
 HFONT           g_hFontDrawing;
 HFONT			g_hFont;
+HFONT			g_hFontCenterLrc;
 int				WM_TASKBARBUTTONCREATED;
 UINT			g_uMyClipBoardFmt;
 ITaskbarList4*	g_pITaskbarList			= NULL;

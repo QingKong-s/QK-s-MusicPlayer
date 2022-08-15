@@ -96,18 +96,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     else
         Res_Load(16);
     GC =
-    {
-        CreateSolidBrush(QKCOLOR_CYANDEEPER),
-        CreateSolidBrush(0xDA9E46),
-        0
-    };
-    //////////////创建字体
-    g_hFont = QKCreateFont(L"微软雅黑", 9);
-    g_hFontDrawing = QKCreateFont(L"微软雅黑", 13);
-    //////////////保存运行目录
-    PWSTR p = new WCHAR[MAX_PATH];
-    GetModuleFileNameW(NULL, p, MAX_PATH);
-    PathRemoveFileSpecW(p);
+	{
+		CreateSolidBrush(QKCOLOR_CYANDEEPER),
+		CreateSolidBrush(0xDA9E46),
+		0
+	};
+	//////////////创建字体
+	g_hFont = QKCreateFont(L"微软雅黑", 9);
+	g_hFontDrawing = QKCreateFont(L"微软雅黑", 13);
+	g_hFontCenterLrc = QKCreateFont(L"微软雅黑", 15, 700);
+	//////////////保存运行目录
+	PWSTR p = new WCHAR[MAX_PATH];
+	GetModuleFileNameW(NULL, p, MAX_PATH);
+	PathRemoveFileSpecW(p);
 
     g_pszDefPic = new WCHAR[lstrlenW(p) + lstrlenW(DEFPICFILENAME) + 1];
     lstrcpyW(g_pszDefPic, p);
@@ -194,6 +195,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     //////////////清理全局资源
     FreeLibrary(hLib);
     BASS_Free();
+    DeleteObject(g_hFontCenterLrc);
     DeleteObject(g_hFont);
     DeleteObject(g_hFontDrawing);
     GdiplusShutdown(uGPToken);

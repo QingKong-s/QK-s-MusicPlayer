@@ -471,17 +471,21 @@ void CALLBACK SyncProc_End(HSYNC handle, DWORD channel, DWORD data, void* user)
  */
 int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow)
 {
-    BOOL bCurr = (iIndex == g_iCurrLrcIndex);
+	BOOL bCurr = (iIndex == g_iCurrLrcIndex);
 	if (bCurr)
 		SetTextColor(m_hcdcLeftBK2, QKCOLOR_RED);
 	else
 		SetTextColor(m_hcdcLeftBK2, QKCOLOR_CYANDEEPER);
 
-    LRCDATA* p = (LRCDATA*)QKArray_Get(g_Lrc, iIndex);
-    if (y == -1)
-    {
-        if (p->iDrawID != m_iDrawingID)
-            return -1;
+	if (iIndex == m_iLrcCenter)
+		SelectObject(m_hcdcLeftBK2, g_hFontCenterLrc);
+	else
+		SelectObject(m_hcdcLeftBK2, g_hFontDrawing);
+	LRCDATA* p = (LRCDATA*)QKArray_Get(g_Lrc, iIndex);
+	if (y == -1)
+	{
+		if (p->iDrawID != m_iDrawingID)
+			return -1;
         y = p->iLastTop;
         bTop = TRUE;
     }
@@ -2486,7 +2490,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
         {
             m_IsDraw[0] = FALSE;
             SetTextColor(m_hcdcLeftBK2, QKCOLOR_CYANDEEPER);// 蓝色
-
+            SelectObject(m_hcdcLeftBK2, g_hFontDrawing);
             DrawTextW(m_hcdcLeftBK2, pszText, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);// 画错误提示
             BitBlt(hDC, m_xWaves, m_yWaves, DPIS_CXSPE, DPIS_CYSPE, m_hcdcLeftBK2, m_xWaves, m_yWaves, SRCCOPY);// 显示
             ReleaseDC(g_hBKLeft, hDC);
@@ -2577,6 +2581,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
                 BitBlt(m_hcdcLeftBK2, m_rcLrcShow.left, m_rcLrcShow.top, m_rcLrcShow.right - m_rcLrcShow.left, m_rcLrcShow.bottom - m_rcLrcShow.top,
                     m_hcdcLeftBK, m_rcLrcShow.left, m_rcLrcShow.top, SRCCOPY);//清除
                 m_IsDraw[2] = FALSE;
+                SelectObject(m_hcdcLeftBK2, g_hFontDrawing);
                 SetTextColor(m_hcdcLeftBK2, QKCOLOR_CYANDEEPER);
                 DrawTextW(m_hcdcLeftBK2, pszText, -1, &m_rcLrcShow, DT_CENTER);
                 LrcWnd_DrawLrc();
