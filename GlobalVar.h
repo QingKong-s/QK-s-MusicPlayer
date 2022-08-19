@@ -5,6 +5,8 @@
 #pragma once
 #include <Windows.h>
 #include <Shobjidl.h>
+#include <d2d1.h>
+#include <dwrite.h>
 
 #include "bass.h"
 
@@ -29,6 +31,8 @@ extern SETTINGS			GS;                     // 全局设置
 extern HFONT            g_hFontDrawing;         // 绘制用大字体
 extern HFONT			g_hFont;                // 界面字体
 extern HFONT			g_hFontCenterLrc;		// 中间歌词字体
+extern IDWriteFactory*	g_pDWFactory;
+extern ID2D1Factory*	g_pD2DFactory;
 extern int				WM_TASKBARBUTTONCREATED;// 任务栏按钮创建完毕
 extern UINT				g_uMyClipBoardFmt;      // 内部拖放剪贴板格式
 extern ITaskbarList4*	g_pITaskbarList;        // ITaskbarList接口指针，负责任务栏操作

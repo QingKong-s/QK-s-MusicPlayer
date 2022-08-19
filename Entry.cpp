@@ -20,6 +20,8 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 #include <Windows.h>
 #include <WinUser.h>
+#include <d2d1.h>
+#include <dwrite.h>
 
 #include "MyProject.h"
 #include "GlobalVar.h"
@@ -105,6 +107,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	g_hFont = QKCreateFont(L"Î¢ÈíÑÅºÚ", 9);
 	g_hFontDrawing = QKCreateFont(L"Î¢ÈíÑÅºÚ", 13);
 	g_hFontCenterLrc = QKCreateFont(L"Î¢ÈíÑÅºÚ", 15, 700);
+
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &g_pD2DFactory);
+    DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&g_pDWFactory));
+
 	//////////////±£´æÔËÐÐÄ¿Â¼
 	PWSTR p = new WCHAR[MAX_PATH];
 	GetModuleFileNameW(NULL, p, MAX_PATH);

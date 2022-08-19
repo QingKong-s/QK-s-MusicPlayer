@@ -567,11 +567,11 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
     DWORD dwLengthRead;
     BYTE by[4];
     ReadFile(hFile, by, 4, &dwLengthRead, NULL);// 读文件头
-    if (memcmp(by, "ID3", 3) == 0)
+    if (memcmp(by, "ID3", 3) == 0)// ID3v2
     {
         ID3v2_Header Header = { 0 };
         SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-        ReadFile(hFile, &Header, sizeof(Header), &dwLengthRead, NULL);//读出标签头
+        ReadFile(hFile, &Header, sizeof(Header), &dwLengthRead, NULL);// 读出标签头
         if (dwLengthRead < sizeof(ID3v2_Header))
             return;
         if (Header.Ver == 3)// ID3v2.3标签(https://id3.org)
@@ -581,9 +581,8 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
                 ((Header.Size[1] & 0x7F) << 14) |
                 ((Header.Size[2] & 0x7F) << 7) |
                 (Header.Size[3] & 0x7F);// 28位数据，包括标签头
-            HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, dwTotalSize, NULL);//映射ID3v2到内存
+            HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, dwTotalSize, NULL);// 映射ID3v2到内存
             BYTE* pFile = (BYTE*)MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, dwTotalSize);
-            //参考资料：https://blog.csdn.net/u010650845/article/details/53520426
             if (pFile)
             {
                 BYTE* pFrame;
@@ -697,7 +696,7 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
             CloseHandle(hMapping);
         }
     }
-    else if (memcmp(by, "fLaC", 4) == 0)
+    else if (memcmp(by, "fLaC", 4) == 0)// Flac
     {
         FLAC_Header Header;
         DWORD dwSize;
@@ -725,10 +724,10 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
 
                     t = MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pBuffer, -1, NULL, 0);
                     PWSTR pBuf = (PWSTR)HeapAlloc(GetProcessHeap(), 0, t * sizeof(WCHAR));
-                    MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pBuffer, -1, pBuf, t);// 转换编码
+                    MultiByteToWideChar(CP_UTF8, 0, (CHAR*)pBuffer, -1, pBuf, t);// 转换编码，UTF-8到UTF-16LE
                     HeapFree(GetProcessHeap(), 0, pBuffer);
 
-                    UINT uPos = QKStrInStr(pBuf, L"=");
+                    UINT uPos = QKStrInStr(pBuf, L"=");// 找等号
 
                     if (QKStrInStr(pBuf, L"TITLE"))
                     {
@@ -760,12 +759,12 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
                 }
             }
             break;
-            case 6:// 图片
+            case 6:// 图片（大端序）
             {
                 SetFilePointer(hFile, 4, NULL, FILE_CURRENT);// 跳过图片类型
 
                 ReadFile(hFile, &t, 4, &dwLengthRead, NULL);
-                t = QKByteStreamToBEUINT32((BYTE*)&t);
+                t = QKByteStreamToBEUINT32((BYTE*)&t);// 大端序字节到整数，下同
                 SetFilePointer(hFile, t, NULL, FILE_CURRENT);// 跳过MIME类型字符串
 
                 ReadFile(hFile, &t, 4, &dwLengthRead, NULL);
@@ -793,7 +792,7 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
                 SetFilePointer(hFile, dwSize, NULL, FILE_CURRENT);// 跳过块
             }
 
-        } while (!(Header.by & 0x80));
+        } while (!(Header.by & 0x80));// 检查最高位，判断是不是最后一个块
     }
     CloseHandle(hFile);
 }
@@ -973,7 +972,7 @@ int QKIsTextUTF8(char* str, ULONGLONG length)
  * 目标：读取歌词数据
  *
  * 参数：
- * pStream 输入流，文件名或LRC文件数据字节流。当作为字节流输入时，函数复制缓冲区并使用副本
+ * pStream 输入流，文件名或LRC文件数据字节流。当作为文件字节流输入时，函数复制内存并使用副本
  * iSize 若输入LRC字节流，则该参数指示字节流长度
  * bFileName 指示pStream是否为文件名
  * Result 结果数组，调用函数前数组应初始化完毕
@@ -1278,7 +1277,7 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
                 }
             }
         }
-        iLineLength = dwLength - iStrPos2 + 1;//处理末尾一行文本
+        iLineLength = dwLength - iStrPos2 + 1;// 处理末尾一行文本
         if (iLineLength > 0)
         {
             pszLine = new WCHAR[iLineLength + 1];
@@ -1288,7 +1287,7 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
     }
     HeapFree(GetProcessHeap(), 0, (BYTE*)pBuffer - iBufPtrOffest);//释放文件内容缓冲区
     //                                                                          文本行数组
-    //至此文件分割完毕
+    // 至此文件分割完毕
     ////////////////////////////处理每行标签
     int iStrPos3;
     QKARRAY SameUnitTimeLabel = NULL;
@@ -1310,7 +1309,7 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
         {
             iStrPos2 = QKStrInStr(pszLine, L"]", iStrPos2);
             if (iStrPos2 <= 0 || iStrPos2 <= iStrPos1)
-                iStrPos1 = iStrPos2 = 0;// 中括号错误，直接进行下一次循环，md歌词文件不规范的爬爬爬，劳资可不给你写容错（暴躁）
+                iStrPos1 = iStrPos2 = 0;// 中括号错误，直接进行下一次循环，md歌词文件不规范的爬爬爬（暴躁）
             dwLength = iStrPos2 - iStrPos1 - 1;
             iStrPos3 = QKStrInStr(pszLine, L"[", iStrPos1 + dwLength + 1);
 
@@ -1394,7 +1393,7 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
                 p1 = pItem->pszLrc;
                 p2 = p->pszLrc;
                 QKStrTrim(p1);
-                QKStrTrim(p2);
+                QKStrTrim(p2);// 删首尾空
                 int iLen1 = lstrlenW(p1), iLen2 = lstrlenW(p2);
 
                 if (iLen1 && !iLen2)// 只有第一个

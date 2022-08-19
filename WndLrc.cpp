@@ -31,9 +31,7 @@ int             m_cxClient      = 0,
 
 LRCHSCROLLINFO          m_LrcScrollInfo         = { -1 };
 
-ID2D1Factory*           m_pD2DFactory           = NULL;// D2D工厂
 ID2D1DCRenderTarget*    m_pD2DRenderTarget      = NULL;// 渲染目标
-IDWriteFactory*         m_pDWFactory            = NULL;// DW工厂
 IDWriteTextFormat*      m_pDWTextFormat         = NULL;// 文本格式
 ID2D1SolidColorBrush*   m_pD2DSolidBrush1       = NULL,// 描边画刷
                        *m_pD2DSolidBrush2       = NULL;// 阴影画刷
@@ -54,7 +52,7 @@ HRESULT QKDWTextRenderer_DrawOutline::DrawGlyphRun(void* clientDrawingContext, f
     ID2D1PathGeometry* pD2DPathGeometry;// 路径图形
     ID2D1TransformedGeometry* pD2DTransformedGeometry;// 变换图形
     ID2D1GeometrySink* pD2DGeometrySink;// 几何接收器
-    m_pD2DFactory->CreatePathGeometry(&pD2DPathGeometry);
+    g_pD2DFactory->CreatePathGeometry(&pD2DPathGeometry);
     
     pD2DPathGeometry->Open(&pD2DGeometrySink);
     glyphRun->fontFace->GetGlyphRunOutline(glyphRun->fontEmSize,glyphRun->glyphIndices,glyphRun->glyphAdvances,glyphRun->glyphOffsets,
@@ -63,12 +61,12 @@ HRESULT QKDWTextRenderer_DrawOutline::DrawGlyphRun(void* clientDrawingContext, f
 
     float fShandowOffest = 3;
 
-    m_pD2DFactory->CreateTransformedGeometry(pD2DPathGeometry, 
+    g_pD2DFactory->CreateTransformedGeometry(pD2DPathGeometry, 
         D2D1::Matrix3x2F::Translation(baselineOriginX + fShandowOffest, baselineOriginY + fShandowOffest), &pD2DTransformedGeometry);// 平移
     m_pD2DRenderTarget_Outline->FillGeometry(pD2DTransformedGeometry, m_pD2DSolidBrush2);// 画阴影
     pD2DTransformedGeometry->Release();
 
-    m_pD2DFactory->CreateTransformedGeometry(pD2DPathGeometry, 
+    g_pD2DFactory->CreateTransformedGeometry(pD2DPathGeometry, 
         D2D1::Matrix3x2F::Translation(baselineOriginX, baselineOriginY), &pD2DTransformedGeometry);
     m_pD2DRenderTarget_Outline->DrawGeometry(pD2DTransformedGeometry, m_pD2DBrushOutline, DPI(1.5));// 描边
     m_pD2DRenderTarget_Outline->FillGeometry(pD2DTransformedGeometry, m_pD2DBrushBody);// 填充
@@ -80,11 +78,9 @@ HRESULT QKDWTextRenderer_DrawOutline::DrawGlyphRun(void* clientDrawingContext, f
 }
 void LrcWnd_CreateRes()
 {
-    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pD2DFactory);
-    DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&m_pDWFactory));
-    m_pDWFactory->CreateTextFormat(
+    g_pDWFactory->CreateTextFormat(
         L"微软雅黑",
-        0,
+        NULL,
         DWRITE_FONT_WEIGHT_REGULAR,
         DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL,
@@ -104,10 +100,7 @@ void LrcWnd_DeleteRes()
     m_pDWTextFormat = NULL;
     m_pD2DRenderTarget->Release();
     m_pD2DRenderTarget = NULL;
-    m_pDWFactory->Release();
-    m_pDWFactory = NULL;
-    m_pD2DFactory->Release();
-    m_pD2DFactory = NULL;
+
     DeleteDC(m_hCDC_Lrc);
     m_hCDC_Lrc = NULL;
     DeleteObject(m_hBitmap);
@@ -171,7 +164,6 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     }
     case WM_LBUTTONDOWN:
     {
-        //SetCapture(hWnd);
         bLBTDown = TRUE;
         int iRet = LrcWnd_HitTest();
         if (iRet < 0)
@@ -183,7 +175,6 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     break;
     case WM_LBUTTONUP:
     {
-        //ReleaseCapture();
         bLBTDown = FALSE;
         int iRet = LrcWnd_HitTest();
         switch (iRet)
@@ -266,7 +257,7 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 			D2D1_RENDER_TARGET_USAGE_NONE,
 			D2D1_FEATURE_LEVEL_DEFAULT
 		};
-		HRESULT hr = m_pD2DFactory->CreateDCRenderTarget(&DCRTProp, &m_pD2DRenderTarget);
+		HRESULT hr = g_pD2DFactory->CreateDCRenderTarget(&DCRTProp, &m_pD2DRenderTarget);
 		RECT rc = { 0,0,m_cxClient,m_cyClient };
 		m_pD2DRenderTarget->BindDC(m_hCDC_Lrc, &rc);
         m_pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pD2DSolidBrush1);// 创建单色画刷
@@ -512,7 +503,7 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
         if (p->iOrgLength == -1)// 单行
         {
             m_pDWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-            m_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 创建文本布局
+            g_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 创建文本布局
             pDWTextLayout->GetMetrics(&DWTextMetrics);
             if (g_iCurrLrcIndex != m_LrcScrollInfo.iIndex && g_iLrcState == LRCSTATE_NORMAL)
             {
@@ -522,7 +513,7 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
                 else
                     m_LrcScrollInfo.bWndSizeChangedFlag = FALSE;
 
-                KillTimer(g_hMainWnd, IDT_ANIMATION);
+                KillTimer(g_hLrcWnd, IDT_ANIMATION);
                 if (DWTextMetrics.width > m_cxLrcRgn)
                 {
                     m_LrcScrollInfo.cx1 = DWTextMetrics.width;// 超长了，需要后续滚动
@@ -540,7 +531,7 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
             {
                 pDWTextLayout->Release();
                 m_pDWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-                m_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 重新创建文本布局
+                g_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 重新创建文本布局
             NotShowingLrc:
                 m_rcLrcText.left = (m_cxClient - DWTextMetrics.width) / 2;
                 m_rcLrcText.top = m_yLrcRgn;
@@ -580,9 +571,9 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
         else// 双行
         {
             m_pDWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-            m_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 创建文本布局
+            g_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 创建文本布局
             pDWTextLayout->GetMetrics(&DWTextMetrics);
-            m_pDWFactory->CreateTextLayout(pszLrc + p->iOrgLength + 1, uStr2Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout2);// 创建文本布局
+            g_pDWFactory->CreateTextLayout(pszLrc + p->iOrgLength + 1, uStr2Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout2);// 创建文本布局
             pDWTextLayout2->GetMetrics(&DWTextMetrics2);
             if (g_iCurrLrcIndex != m_LrcScrollInfo.iIndex && g_iLrcState == LRCSTATE_NORMAL)
             {
@@ -592,7 +583,7 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
                 else
                     m_LrcScrollInfo.bWndSizeChangedFlag = FALSE;
 
-                KillTimer(g_hMainWnd, IDT_ANIMATION);
+                KillTimer(g_hLrcWnd, IDT_ANIMATION);
                 if (DWTextMetrics.width > m_cxLrcRgn)
                 {
                     m_LrcScrollInfo.cx1 = DWTextMetrics.width;// 超长了，需要后续滚动
@@ -622,14 +613,14 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
             {
                 pDWTextLayout->Release();
                 m_pDWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-                m_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 重新创建文本布局
+                g_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 重新创建文本布局
             }
 
 			if (m_LrcScrollInfo.cx2 == -1)
 			{
 				pDWTextLayout2->Release();
 				m_pDWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-				m_pDWFactory->CreateTextLayout(pszLrc + p->iOrgLength + 1, uStr2Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout2);// 重新创建文本布局
+				g_pDWFactory->CreateTextLayout(pszLrc + p->iOrgLength + 1, uStr2Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout2);// 重新创建文本布局
 			}
 
 			if (m_LrcScrollInfo.cx1 != -1 || m_LrcScrollInfo.cx2 != -1)
@@ -651,7 +642,6 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
 			GradientBrushProp = { D2D1::Point2F(0,m_yLrcRgn),D2D1::Point2F(0,DWTextMetrics.height + DWTextMetrics2.height) };
             GradientStop[0] = { 0.0f,D2D1::ColorF(0x00FF00,1) };
             GradientStop[1] = { 1.0f,D2D1::ColorF(0x0000FF,1) };
-
             m_pD2DRenderTarget->CreateGradientStopCollection(GradientStop, 2, &pD2DGradientStopCollection);// 创建梯度点集合
 			m_pD2DRenderTarget->CreateLinearGradientBrush(GradientBrushProp, pD2DGradientStopCollection, &pD2DGradientBrush);// 创建线性渐变画刷
 			pD2DGradientStopCollection->Release();// 删除梯度点集合
@@ -683,7 +673,7 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
     {
         m_pDWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
         m_pDWTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);// 自动换行
-        m_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 重新创建文本布局
+        g_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 重新创建文本布局
         pDWTextLayout->GetMetrics(&DWTextMetrics);
         m_LrcScrollInfo.cx1 = -1;
         goto NotShowingLrc;

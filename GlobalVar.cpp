@@ -1,5 +1,7 @@
 #include <Windows.h>
 #include <Shobjidl.h>
+#include <d2d1.h>
+#include <dwrite.h>
 
 #include "bass.h"
 
@@ -25,6 +27,8 @@ SETTINGS		GS;
 HFONT           g_hFontDrawing;
 HFONT			g_hFont;
 HFONT			g_hFontCenterLrc;
+IDWriteFactory* g_pDWFactory;
+ID2D1Factory*	g_pD2DFactory;
 int				WM_TASKBARBUTTONCREATED;
 UINT			g_uMyClipBoardFmt;
 ITaskbarList4*	g_pITaskbarList			= NULL;
