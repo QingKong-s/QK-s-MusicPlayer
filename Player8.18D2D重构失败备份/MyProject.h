@@ -4,8 +4,7 @@
 #include <Shobjidl.h>
 #include <ole2.h>
 #include <shlwapi.h>
-#include <wincodec.h>
-#include <d2d1.h>
+#include  <wincodec.h>
 
 #include "bass.h"
 
@@ -436,10 +435,10 @@ struct GLOBALCONTEXT
 #define SIZE_CYSTLISTNAME		22
 #define SIZE_CXTIME				100
 #define SIZE_CXWAVESLINE		2
-#define SIZE_CYTOPTITLE			30
+#define SIZE_CYTOPTITLE			26
 #define SIZE_CXTOPTIP			50
 #define SIZE_CYTOPTIP			18
-#define SIZE_GAPTOPTIP			6
+#define SIZE_GAPTOPTIP			8
 #define SIZE_CXABOUTPIC			300
 #define SIZE_CYABOUTPIC			148
 #define SIZE_LVTEXTSPACE		5
@@ -509,12 +508,7 @@ struct SETTINGS
 	PWSTR pszDTLrcSpaceLine;
 };
 
-const D2D_COLOR_F c_D2DClrCyanDeeper = { 0,0.3764,0.7529,1 };// 易语言青蓝
-
-#define DPI(i) i * g_iDPI / USER_DEFAULT_SCREEN_DPI					// 将尺寸按DPI放大
-#define DPIF(f) f * (float)g_iDPI / (float)USER_DEFAULT_SCREEN_DPI	// 将尺寸按DPI放大（浮点版）
-#define RDPI(i) i * USER_DEFAULT_SCREEN_DPI / g_iDPI				// 将尺寸按DPI缩小
-#define SAFE_RELEASE(p) if(p){p->Release();p=NULL;}
+#define DPI(i) i * g_iDPI / USER_DEFAULT_SCREEN_DPI
 
 ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS = 0, DWORD dwFlagsHM = 0);
 BOOL BASS_FreeMusic(ULONG_PTR h);

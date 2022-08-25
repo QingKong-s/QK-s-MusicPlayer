@@ -99,7 +99,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), (void**)&g_pD2DFactory);
 	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&g_pDWFactory));
     ID3D11Device* pD3DDevice;
-    D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT| D3D11_CREATE_DEVICE_DEBUG, NULL, 0, D3D11_SDK_VERSION, &pD3DDevice, NULL, NULL);
+    D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT, NULL, 0, D3D11_SDK_VERSION, &pD3DDevice, NULL, NULL);
     pD3DDevice->QueryInterface(__uuidof(IDXGIDevice1), (void**)&g_pDXGIDevice);
     pD3DDevice->Release();
 
@@ -127,13 +127,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	g_hFont = QKCreateFont(L"Î¢ÈíÑÅºÚ", 9);
 	g_hFontDrawing = QKCreateFont(L"Î¢ÈíÑÅºÚ", 13);
 	g_hFontCenterLrc = QKCreateFont(L"Î¢ÈíÑÅºÚ", 15, 700);
-
-    g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        9, L"zh-cn", &g_pDWTFNormal);
-    g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        13, L"zh-cn", &g_pDWTFBig);
-    g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        15, L"zh-cn", &g_pDWTFBig2);
 	//////////////±£´æÔËÐÐÄ¿Â¼
 	PWSTR p = new WCHAR[MAX_PATH];
 	GetModuleFileNameW(NULL, p, MAX_PATH);
@@ -333,17 +326,6 @@ void UI_UpdateDPISize()
 	GC.iIconSize = DPI(16);
 	GC.cyBT = GC.iIconSize * 10 / 5;
     GC.cxBKBtm = DPIS_CXTIME + BTMBKBTNCOUNT * GC.cyBT;
-
-    SAFE_RELEASE(g_pDWTFNormal);
-    SAFE_RELEASE(g_pDWTFBig);
-    SAFE_RELEASE(g_pDWTFBig2);
-
-    g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        DPI(12), L"zh-cn", &g_pDWTFNormal);
-    g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_SEMI_LIGHT, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        DPI(18), L"zh-cn", &g_pDWTFBig);
-    g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        DPI(15), L"zh-cn", &g_pDWTFBig2);
 }
 void Res_Free()
 {

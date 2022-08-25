@@ -53,9 +53,6 @@ extern ID2D1Device*		g_pD2DDevice;
 extern IDXGIDevice1*	g_pDXGIDevice;
 extern IWICImagingFactory* g_pWICFactory;
 extern IDXGIFactory2*	g_pDXGIFactory;
-extern IDWriteTextFormat* g_pDWTFNormal;
-extern IDWriteTextFormat* g_pDWTFBig;
-extern IDWriteTextFormat* g_pDWTFBig2;
 // Bass与播放类
 extern QKARRAY			g_Lrc;                  // 全局歌词数据
 extern int				g_iLrcState;            // 桌面歌词标志

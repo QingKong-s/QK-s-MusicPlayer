@@ -48,9 +48,6 @@ ID2D1Device*	g_pD2DDevice;
 IDXGIDevice1*	g_pDXGIDevice;
 IWICImagingFactory* g_pWICFactory;
 IDXGIFactory2*	g_pDXGIFactory;
-IDWriteTextFormat* g_pDWTFNormal;
-IDWriteTextFormat* g_pDWTFBig;
-IDWriteTextFormat* g_pDWTFBig2;
 
 QKARRAY			g_Lrc;
 int             g_iLrcState				= LRCSTATE_STOP;

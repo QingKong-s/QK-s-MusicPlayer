@@ -44,14 +44,10 @@ ID2D1DCRenderTarget* m_pD2DRTLeftBK2        = NULL;
 
 ID2D1DeviceContext*  m_pD2DDCLeftBK         = NULL;
 ID2D1Bitmap1* m_pD2DBmpLeftBK = NULL;
-ID2D1Bitmap1* m_pD2DBmpLeftBK2 = NULL;
 
 IDXGISurface1* m_pDXGISfceLeftBK = NULL;
 
 IDXGISwapChain1* m_pDXGIScLeftBK = NULL;
-
-ID2D1SolidColorBrush* m_pD2DBrMyBlue = NULL;
-ID2D1SolidColorBrush* m_pD2DBrMyBlue2 = NULL;
 
 DWORD           m_uThreadFlagWaves          = THREADFLAG_STOP;  //线程工作状态标志
 HANDLE          m_htdWaves                  = NULL;         // 线程句柄
@@ -1122,88 +1118,77 @@ DWORD WINAPI Thread_GetWavesData(void* p)//调用前必须释放先前的内存
  *
  * 返回值：
  * 操作简述：
- * 备注：ＤＩＲＥＣＴ　２Ｄ！
+ * 备注：ＧＤＩＰＬＵＳ
  */
 void UI_UpdateLeftBK()
 {
     if (m_cxLeftBK <= 0 || m_cyLeftBK <= 0)
         return;
-    IWICBitmap* pWICBitmapOrg = m_CurrSongInfo.mi.pWICBitmap;// 原始WIC位图
-    pWICBitmapOrg->AddRef();
-    ////////////////////绘制内存位图
     m_pD2DDCLeftBK->BeginDraw();
-    HRESULT hr;
-    m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK2);
+
     m_pD2DDCLeftBK->Clear();
-    
     UINT cx0, cy0;
     float cxRgn, cyRgn, cx, cy;
+    IWICBitmap* pWICBitmapOrg = m_CurrSongInfo.mi.pWICBitmap;
+    //pWICBitmapOrg->AddRef();
     D2D_RECT_F D2DRectF;
-
-    ID2D1SolidColorBrush* pD2DBrush;
     if (pWICBitmapOrg)
     {
-        ID2D1Bitmap1* pD2DBitmapOrg;// 原始D2D位图
+        ID2D1Bitmap1* pD2DBitmapOrg;
         m_pD2DDCLeftBK->CreateBitmapFromWicBitmap(pWICBitmapOrg, &pD2DBitmapOrg);
-        /*
-        情况一，客户区宽为最大边
-        cxClient   cyClient
-        -------- = --------
-         cxPic      cyRgn
-        情况二，客户区高为最大边
-        cyClient   cxClient
-        -------- = --------
-         cyPic      cxRgn
-        */
-        ////////////////////处理缩放与截取（无论怎么改变窗口大小，用来模糊的封面图都要居中充满整个窗口）
-        D2D_POINT_2F D2DPtF;
+        ////////////////////处理截取（无论怎么改变窗口大小，用来模糊的封面图都要居中充满整个窗口）
         pWICBitmapOrg->GetSize(&cx0, &cy0);
-        cyRgn = (float)m_cyLeftBK / (float)m_cxLeftBK * (float)cx0;
-        if (cyRgn <= cy0)// 情况一
-        {
-            cx = m_cxLeftBK;
-            cy = cx * cy0 / cx0;
-            D2DPtF = { 0,(float)(m_cyLeftBK - cy) / 2 };
-        }
-        else// 情况二
+        if (cx0 >= cy0)
         {
             cy = m_cyLeftBK;
             cx = cx0 * cy / cy0;
-            D2DPtF = { (float)(m_cxLeftBK - cx) / 2,0 };
+            D2DRectF.left = (cx - m_cxLeftBK) / 2;
+            D2DRectF.top = 0;
+            D2DRectF.right = D2DRectF.left + m_cxLeftBK;
+            D2DRectF.bottom = D2DRectF.top + m_cyLeftBK;
         }
-        ////////////缩放
-        IWICBitmapScaler* pWICBitmapScaler;// WIC位图缩放器
+        else
+        {
+            cx = m_cxLeftBK;
+            cy = cx * cy0 / cx0;
+            D2DRectF.left = 0;
+            D2DRectF.top = (cy - m_cyLeftBK) / 2;
+            D2DRectF.right = D2DRectF.left + m_cxLeftBK;
+            D2DRectF.bottom = D2DRectF.top + m_cyLeftBK;
+        }
+
+
+        IWICBitmapScaler* pWICBitmapScaler;
         g_pWICFactory->CreateBitmapScaler(&pWICBitmapScaler);
-        pWICBitmapScaler->Initialize(pWICBitmapOrg, cx, cy, WICBitmapInterpolationModeCubic);// 缩放
-        IWICBitmap* pWICBmpScaled;// 缩放后的WIC位图
+
+        pWICBitmapScaler->Initialize(pWICBitmapOrg, cx, cy, WICBitmapInterpolationModeCubic);
+
+        IWICBitmap* pWICBmpScaled;
         g_pWICFactory->CreateBitmapFromSource(pWICBitmapScaler, WICBitmapNoCache, &pWICBmpScaled);
-        pWICBitmapScaler->Release();// 释放WIC位图缩放器
-        ID2D1Bitmap1* pD2DBmpScaled;// 缩放后的D2D位图
-        m_pD2DDCLeftBK->CreateBitmapFromWicBitmap(pWICBmpScaled, &pD2DBmpScaled);// 转换为D2D位图
-        pWICBmpScaled->Release();// 释放缩放后的WIC位图
-        ////////////模糊
+        pWICBitmapScaler->Release();
+
+        ID2D1Bitmap1* pD2DBmpScaled;
+
+        m_pD2DDCLeftBK->CreateBitmapFromWicBitmap(pWICBmpScaled, &pD2DBmpScaled);
+        pWICBmpScaled->Release();
+
+
+
+
         ID2D1Image* pD2DBmpBlurred;
         ID2D1Effect* pD2DEffect;
         m_pD2DDCLeftBK->CreateEffect(CLSID_D2D1GaussianBlur, &pD2DEffect);
         pD2DEffect->SetInput(0, pD2DBmpScaled);
-        pD2DEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, 50.0f);// 标准偏差
-        pD2DEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_BORDER_MODE, D2D1_BORDER_MODE_HARD);// 硬边缘
+        pD2DEffect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, 5.0f);
         pD2DEffect->GetOutput(&pD2DBmpBlurred);
+
         pD2DEffect->Release();
         pD2DBmpScaled->Release();
-        ////////////绘制
-        m_pD2DDCLeftBK->DrawImage(pD2DBmpBlurred, &D2DPtF);// 绘制模糊背景
 
-
-
-        pD2DBmpBlurred->Release();
-        m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.5), &pD2DBrush);
-        D2DRectF = { 0,0,(float)m_cxLeftBK,(float)m_cyLeftBK };
-        m_pD2DDCLeftBK->FillRectangle(&D2DRectF, pD2DBrush);
-        pD2DBrush->Release();
+        m_pD2DDCLeftBK->DrawImage(pD2DBmpBlurred, NULL, &D2DRectF);
         ////////////////////处理封面图位置
         ////////////制封面框矩形
-        if (m_bLrcShow)// 是否显示滚动歌词
+        if (m_bLrcShow)// 是否显示歌词秀？
         {
             cxRgn = DPIS_CXPIC + DPIS_EDGE * 2;
             cyRgn = cxRgn;
@@ -1253,95 +1238,87 @@ void UI_UpdateLeftBK()
 
 		m_pD2DDCLeftBK->DrawBitmap(pD2DBitmapOrg, &D2DRectF);
 
-        pD2DBitmapOrg->Release();// 销毁原始D2D位图
+        ID2D1SolidColorBrush* pD2DBrush;
+        m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &pD2DBrush);
+        D2DRectF = { 0,0,(float)m_cxLeftBK,(float)m_cyLeftBK };
+        m_pD2DDCLeftBK->FillRectangle(&D2DRectF, pD2DBrush);
+
 	}
     else
     {
+        ID2D1SolidColorBrush* pD2DBrush;
         m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &pD2DBrush);
         D2DRectF = { 0,0,(float)m_cxLeftBK,(float)m_cyLeftBK };
         m_pD2DDCLeftBK->FillRectangle(&D2DRectF, pD2DBrush);
-        pD2DBrush->Release();
     }
 	////////////////////画顶部提示信息
 	///////////画大标题
-    D2DRectF = { (float)DPIS_EDGE,(float)DPIS_GAPTOPTIP,(float)(m_cxLeftBK - DPIS_EDGE),(float)DPIS_CYTOPTITLE };
-    PCWSTR psz = m_CurrSongInfo.pszName ? m_CurrSongInfo.pszName : L"未播放";
-    DWRITE_TRIMMING DWTrimming =
-    {
-        DWRITE_TRIMMING_GRANULARITY_CHARACTER,// 按字符裁剪
-        0,
-        0
-    };
-    IDWriteInlineObject* pDWInlineObj;// 省略号裁剪内联对象
-    g_pDWFactory->CreateEllipsisTrimmingSign(g_pDWTFBig, &pDWInlineObj);
-    g_pDWTFBig->SetTrimming(&DWTrimming, pDWInlineObj);// 置溢出裁剪
-    g_pDWTFBig->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);// 不换行
-
-    g_pDWTFNormal->SetTrimming(&DWTrimming, pDWInlineObj);// 置溢出裁剪
-    g_pDWTFNormal->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);// 不换行
-    m_pD2DDCLeftBK->DrawTextW(psz, lstrlenW(psz), g_pDWTFBig, &D2DRectF, m_pD2DBrMyBlue);
-    g_pDWTFBig->SetTrimming(&DWTrimming, NULL);
+	SetTextColor(m_hcdcLeftBK, QKCOLOR_CYANDEEPER);
+	RECT rcText = { DPIS_EDGE, 5, m_cxLeftBK - DPIS_EDGE, DPIS_CYTOPTITLE };
+	if (!m_CurrSongInfo.pszName)
+		DrawTextW(m_hcdcLeftBK, L"未播放", -1, &rcText, DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
+	else
+		DrawTextW(m_hcdcLeftBK, m_CurrSongInfo.pszName, -1, &rcText, DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
 	///////////画其他信息
-    m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &pD2DBrush);// 创建一个黑色画刷
-    const static PCWSTR pszTip[4] =
-    {
-        L"标题：",
-        L"艺术家：",
-        L"专辑：",
-        L"备注："
-    };
+    //SelectObject(m_hcdcLeftBK, g_hFont);// 切换字体
+    //SetTextColor(m_hcdcLeftBK, QKCOLOR_BLACK);
 
-    PCWSTR pszTip2[4] =
-    {
-        m_CurrSongInfo.mi.pszTitle,
-        m_CurrSongInfo.mi.pszArtist,
-        m_CurrSongInfo.mi.pszAlbum,
-        m_CurrSongInfo.mi.pszComment
-	};
+    //rcText.left = DPIS_EDGE;
+    //rcText.top = DPIS_CYTOPTITLE + DPIS_GAPTOPTIP;
+    //rcText.right = rcText.left + DPIS_CXTOPTIP;
+    //rcText.bottom = rcText.top + DPIS_CYTOPTIP;
+    //DrawTextW(m_hcdcLeftBK, L"标题：", -1, &rcText, DT_VCENTER | DT_SINGLELINE);
 
-	D2DRectF.left = DPIS_EDGE;
-	D2DRectF.right = D2DRectF.left + DPIS_CXTOPTIP;
-	D2DRectF.top = DPIS_CYTOPTITLE + DPIS_GAPTOPTIP;
-	D2DRectF.bottom = D2DRectF.top + DPIS_CYTOPTIP;
+    //rcText.top += DPIS_CYTOPTIP;
+    //rcText.bottom = rcText.top + DPIS_CYTOPTIP;
+    //DrawTextW(m_hcdcLeftBK, L"艺术家：", -1, &rcText, DT_VCENTER | DT_SINGLELINE);
 
-	for (int i = 0; i < sizeof(pszTip) / sizeof(PCWSTR); ++i)
-    {
-        m_pD2DDCLeftBK->DrawTextW(pszTip[i], lstrlenW(pszTip[i]), g_pDWTFNormal, &D2DRectF, pD2DBrush);
-        if (pszTip2[i])
-        {
-            D2DRectF.left += DPIS_CXTOPTIP;
-            D2DRectF.right = m_cxLeftBK - DPIS_EDGE;
-            m_pD2DDCLeftBK->DrawTextW(pszTip2[i], lstrlenW(pszTip2[i]), g_pDWTFNormal, &D2DRectF, pD2DBrush);
-            D2DRectF.left = DPIS_EDGE;
-            D2DRectF.right = D2DRectF.left + DPIS_CXTOPTIP;
-        }
-        D2DRectF.top += DPIS_CYTOPTIP;
-        D2DRectF.bottom = D2DRectF.top + DPIS_CYTOPTIP;
-    }
-    pD2DBrush->Release();// 删除画刷
+    //rcText.top += DPIS_CYTOPTIP;
+    //rcText.bottom = rcText.top + DPIS_CYTOPTIP;
+    //DrawTextW(m_hcdcLeftBK, L"专辑：", -1, &rcText, DT_VCENTER | DT_SINGLELINE);
 
-    g_pDWTFNormal->SetTrimming(&DWTrimming, NULL);
-    pDWInlineObj->Release();// 释放裁剪内联对象
-    //ID2D1GdiInteropRenderTarget* pD2DGdiInteropRT;
-    //m_pD2DDCLeftBK->QueryInterface(__uuidof(ID2D1GdiInteropRenderTarget), (void**)&pD2DGdiInteropRT);
-    //HDC hDC;
-    //hr = pD2DGdiInteropRT->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
-    //BitBlt(m_hcdcLeftBK, 0, 0, m_cxLeftBK, m_cyLeftBK, hDC, 0, 0, SRCCOPY);
-    //hr = pD2DGdiInteropRT->ReleaseDC(NULL);
-    //pD2DGdiInteropRT->Release();
-    hr = m_pD2DDCLeftBK->EndDraw();
-    ////////////////////写到交换链
-    m_pD2DDCLeftBK->BeginDraw();
-    m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
-    //m_pD2DDCLeftBK->SetDpi(g_iDPI, g_iDPI);
-    m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2);
-    //m_pD2DDCLeftBK->SetDpi(96.0f, 96.0f);
-    m_pD2DDCLeftBK->EndDraw();
-    ////////////////////
-    m_pDXGIScLeftBK->Present(0, 0);// 上屏
+    //rcText.top += DPIS_CYTOPTIP;
+    //rcText.bottom = rcText.top + DPIS_CYTOPTIP;
+    //DrawTextW(m_hcdcLeftBK, L"备注：", -1, &rcText, DT_VCENTER | DT_SINGLELINE);
+
+    //rcText.left = DPIS_CXTOPTIP + DPIS_EDGE;
+    //rcText.right = m_cxLeftBK - DPIS_EDGE;
+    //rcText.top = DPIS_CYTOPTITLE + DPIS_GAPTOPTIP;
+    //rcText.bottom = rcText.top + DPIS_CYTOPTIP;
+    //DrawTextW(m_hcdcLeftBK, m_CurrSongInfo.mi.pszTitle, -1, &rcText, DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
+
+    //rcText.top += DPIS_CYTOPTIP;
+    //rcText.bottom = rcText.top + DPIS_CYTOPTIP;
+    //DrawTextW(m_hcdcLeftBK, m_CurrSongInfo.mi.pszArtist, -1, &rcText, DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
+
+    //rcText.top += DPIS_CYTOPTIP;
+    //rcText.bottom = rcText.top + DPIS_CYTOPTIP;
+    //DrawTextW(m_hcdcLeftBK, m_CurrSongInfo.mi.pszAlbum, -1, &rcText, DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
+
+    //rcText.top += DPIS_CYTOPTIP;
+    //rcText.bottom = rcText.top + DPIS_CYTOPTIP;
+    //DrawTextW(m_hcdcLeftBK, m_CurrSongInfo.mi.pszComment, -1, &rcText, DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
+
+    //SelectObject(m_hcdcLeftBK, g_hFontDrawing);
+
+    HRESULT hr = m_pD2DDCLeftBK->EndDraw();
+
+    //BitBlt(m_hcdcLeftBK2, 0, 0, m_cxLeftBK, m_cyLeftBK, m_hcdcLeftBK, 0, 0, SRCCOPY);
+    //m_IsDraw[0] = m_IsDraw[1] = m_IsDraw[2] = TRUE;
+    //TimerProc(NULL, 0, IDT_DRAWING_LRC, 0);
+    //TimerProc(NULL, 0, IDT_DRAWING_SPE, 0);
+    //TimerProc(NULL, 0, IDT_DRAWING_WAVES, 0);
+    //InvalidateRect(g_hTBProgess, NULL, FALSE);
+    //UpdateWindow(g_hTBProgess);
+    //InvalidateRect(g_hBKBtm, NULL, FALSE);
+    //UpdateWindow(g_hBKBtm);
+    //SendMessageW(g_hBKLeft, LEFTBKM_REDRAWSB, FALSE, 0);
     InvalidateRect(g_hBKLeft, NULL, FALSE);
     UpdateWindow(g_hBKLeft);
-    pWICBitmapOrg->Release();
+
+    
+
+    //pWICBitmapOrg->Release();
 }
 void UI_SeparateListWnd(BOOL b)
 {
@@ -1400,187 +1377,6 @@ void UI_ShowList(BOOL b)
     }
     GetClientRect(g_hMainWnd, &rc);
     SendMessageW(g_hMainWnd, WM_SIZE, 0, MAKELONG(rc.right, rc.bottom));
-}
-void UI_VEDrawWaves(BOOL bImmdShow = TRUE)
-{
-    g_fTime = BASS_ChannelBytes2Seconds(
-        g_hStream,
-        BASS_ChannelGetPosition(g_hStream, BASS_POS_BYTE));
-
-    if (!m_IsDraw[0])
-        return;
-
-    RECT rc = { m_xWaves,m_yWaves,m_xWaves + DPIS_CXSPE,m_yWaves + DPIS_CYSPE };
-
-    D2D_RECT_F D2DRectF = { (float)m_xWaves,(float)m_yWaves,(float)(m_xWaves + DPIS_CXSPE),(float)(m_yWaves + DPIS_CYSPE) };
-    m_pD2DDCLeftBK->BeginDraw();
-    m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
-    m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &D2DRectF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRectF);// 刷背景
-
-    PCWSTR pszText = NULL;
-    if (m_uThreadFlagWaves == THREADFLAG_WORKING)// 正在加载
-        pszText = L"正在加载...";
-    else if (!g_hStream)// 已停止
-        pszText = L"未播放";
-    else if (m_uThreadFlagWaves == THREADFLAG_ERROR)// 出错
-        pszText = L"错误！";
-
-    if (pszText)// 应当显示提示
-    {
-        m_IsDraw[0] = FALSE;// 下次不要再更新
-        g_pDWTFBig->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-        g_pDWTFBig->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);// 水平垂直都居中
-        m_pD2DDCLeftBK->DrawTextW(pszText, lstrlenW(pszText), g_pDWTFBig, &D2DRectF, m_pD2DBrMyBlue);
-        m_pD2DDCLeftBK->EndDraw();
-        return;
-    }
-
-    if (m_uThreadFlagWaves == THREADFLAG_STOPED)
-    {
-        int iCurrIndex = (int)(g_fTime * 1000.0 / 20.0);// 算数组索引    20ms一单位
-        if (iCurrIndex < 0 || iCurrIndex > m_dwWavesDataCount - 1)
-        {
-            m_pD2DDCLeftBK->EndDraw();
-            return;
-        }
-
-        int i = iCurrIndex;
-        int x = m_xWaves + DPIS_CXSPEHALF,
-            y = m_yWaves + DPIS_CYSPEHALF;
-        D2D1_POINT_2F D2DPtF1, D2DPtF2;
-
-        ID2D1GdiInteropRenderTarget* pD2DGdiInteropRT;
-		m_pD2DDCLeftBK->QueryInterface(IID_PPV_ARGS(&pD2DGdiInteropRT));// 取GDI兼容渲染目标（鸣谢：福仔）
-        HDC hDC;
-        HRESULT hr = pD2DGdiInteropRT->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);// 取DC
-        
-        HRGN hRgn = CreateRectRgnIndirect(&rc);
-        SelectClipRgn(hDC, hRgn);// 置剪辑区，否则边上会有残留
-        DeleteObject(hRgn);
-
-        HGDIOBJ hOld = SelectObject(hDC, CreatePen(PS_SOLID, DPIS_CXWAVESLINE, 0xDA9E46));// 选入画笔
-        
-        // 上面是右声道，下面是左声道
-        while (true)// 向右画
-        {
-			MoveToEx(hDC, x, y - HIWORD(m_dwWavesData[i]) * DPIS_CYSPEHALF / 32768, NULL);
-            LineTo(hDC, x, y + LOWORD(m_dwWavesData[i]) * DPIS_CYSPEHALF / 32768);
-            x += DPIS_CXWAVESLINE;
-            i++;
-            if (i > m_dwWavesDataCount - 1 || x >= m_xWaves + DPIS_CXSPE)
-                break;
-		}
-		i = iCurrIndex;
-		x = m_xWaves + DPIS_CXSPEHALF;
-		while (true)// 向左画
-		{
-			MoveToEx(hDC, x, y - HIWORD(m_dwWavesData[i]) * DPIS_CYSPEHALF / 32768, NULL);
-			LineTo(hDC, x, y + LOWORD(m_dwWavesData[i]) * DPIS_CYSPEHALF / 32768);
-			x -= DPIS_CXWAVESLINE;
-			i--;
-            if (i < 0 || x < m_xWaves)
-                break;
-        }
-        x = m_xWaves + DPIS_CXSPEHALF;
-
-        DeleteObject(SelectObject(hDC, CreatePen(PS_SOLID, DPIS_CXWAVESLINE, QKCOLOR_RED)));// 红色画笔
-        MoveToEx(hDC, x, m_yWaves, NULL);
-        LineTo(hDC, x, m_yWaves + DPIS_CYSPE);// 画中线
-        DeleteObject(SelectObject(hDC, hOld));// 还原旧对象
-        SelectClipRgn(hDC, NULL);// 清除剪辑区
-        if (bImmdShow)
-        {
-            HDC hDCWnd = GetDC(g_hBKLeft);
-            BitBlt(hDCWnd, rc.left, rc.top, DPIS_CXSPE, DPIS_CYSPE, hDC, rc.left, rc.top, SRCCOPY);// 区域显示
-            ReleaseDC(g_hBKLeft, hDCWnd);
-        }
-        pD2DGdiInteropRT->ReleaseDC(&rc);// 释放兼容目标的DC
-        pD2DGdiInteropRT->Release();// 释放兼容目标
-    }
-    m_pD2DDCLeftBK->EndDraw();
-    // 如果用交换链上屏的话定时器频繁调用GPU占用太大，GDI区域显示可以降一下GPU占用，
-    // 同时避免了抗锯齿带来的一些视觉问题，而且GDI绘制内容写到交换链缓冲区中，再更新交换链也是一样的结果
-}
-void UI_VEDrawSpe(BOOL bImmdShow = TRUE)
-{
-    int iCount = SPECOUNT;
-    int m = DPIS_CXSPE - (DPIS_CXSPEBAR + DPIS_CXSPEBARDIV) * SPECOUNT;
-    if (m >= DPIS_CXSPEBAR)
-    {
-        iCount += m / (DPIS_CXSPEBAR + DPIS_CXSPEBARDIV);
-        if (iCount > 128)
-            iCount = 128;
-    }
-
-    static int cySpeOld[128] = { 0 }, cySpe[128] = { 0 }, yMaxMark[128] = { 0 };
-    static int iTime[128] = { 0 };
-    static float fData[128] = { 0 };
-    //BitBlt(m_hcdcLeftBK2, m_xSpe, m_ySpe, DPIS_CXSPE, DPIS_CYSPE, m_hcdcLeftBK, m_xSpe, m_ySpe, SRCCOPY);
-    if (BASS_ChannelGetData(g_hStream, fData, BASS_DATA_FFT256) == -1)
-    {
-        ZeroMemory(cySpeOld, sizeof(cySpeOld));
-        ZeroMemory(cySpe, sizeof(cySpe));
-    }
-    m_pD2DDCLeftBK->BeginDraw();
-    m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
-    D2D_RECT_F D2DRectF = { (float)m_xSpe,(float)m_ySpe,(float)(m_xSpe + DPIS_CXSPE),(float)(m_ySpe + DPIS_CYSPE) };
-    m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &D2DRectF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRectF);// 刷背景
-    for (int i = 0; i < iCount; i++)
-    {
-        ++iTime[i];
-        cySpe[i] = abs((int)(fData[i] * 300.0f));
-        //////////////////频谱条
-        if (cySpe[i] > DPIS_CYSPE)// 超高
-            cySpe[i] = DPIS_CYSPE;// 回来
-
-        if (cySpe[i] > cySpeOld[i])// 当前的大于先前的
-            cySpeOld[i] = cySpe[i];// 顶上去
-        else
-            cySpeOld[i] -= SPESTEP_BAR;// 如果不大于就继续落
-
-        if (cySpeOld[i] < 3)// 太低了
-            cySpeOld[i] = 3;// 回来
-        //////////////////峰值
-        if (iTime[i] > 10)// 时间已到
-            yMaxMark[i] -= SPESTEP_MAX;// 下落
-
-        if (cySpeOld[i] > yMaxMark[i])// 频谱条大于峰值
-        {
-            yMaxMark[i] = cySpeOld[i];// 峰值顶上去，重置时间
-            iTime[i] = 0;
-        }
-
-        if (yMaxMark[i] < 3)// 太低了
-            yMaxMark[i] = 3;// 回来
-        //////////////////绘制
-        //////////制频谱条矩形
-        D2DRectF.left = m_xSpe + (DPIS_CXSPEBAR + 1) * i;
-        D2DRectF.top = m_ySpe + DPIS_CYSPE - cySpeOld[i];
-        D2DRectF.right = D2DRectF.left + DPIS_CXSPEBAR;
-        D2DRectF.bottom = m_ySpe + DPIS_CYSPE;
-        m_pD2DDCLeftBK->FillRectangle(&D2DRectF, m_pD2DBrMyBlue2);
-        //////////制峰值指示矩形
-        D2DRectF.top = m_ySpe + DPIS_CYSPE - yMaxMark[i];
-        D2DRectF.bottom = D2DRectF.top + 3;
-        m_pD2DDCLeftBK->FillRectangle(&D2DRectF, m_pD2DBrMyBlue2);
-    }
-    if (bImmdShow)
-    {
-        ID2D1GdiInteropRenderTarget* pD2DGdiInteropRT;
-        m_pD2DDCLeftBK->QueryInterface(IID_PPV_ARGS(&pD2DGdiInteropRT));// 取GDI兼容渲染目标
-        HDC hDC;
-        HRESULT hr = pD2DGdiInteropRT->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
-        HDC hDCWnd = GetDC(g_hBKLeft);
-        BitBlt(hDCWnd, m_xSpe, m_ySpe, DPIS_CXSPE, DPIS_CYSPE, hDC, m_xSpe, m_ySpe, SRCCOPY);// 区域显示
-        ReleaseDC(g_hBKLeft, hDCWnd);
-        pD2DGdiInteropRT->ReleaseDC(NULL);
-        pD2DGdiInteropRT->Release();
-    }
-    m_pD2DDCLeftBK->EndDraw();
-}
-void UI_VEDrawLrc(int yCenter, BOOL bImmdShow = TRUE)
-{
-
 }
 LRESULT CALLBACK WndProc_TBGhost(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1751,7 +1547,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         ///////////////////////////创建用于支持任务栏操作的幽灵窗口（生命周期与主窗口相同）
         g_hMainWnd = hWnd;
         m_hTBGhost = CreateWindowExW(0, TBGHOSTWNDCLASS, ((CREATESTRUCTW*)lParam)->lpszName, 
-			WS_POPUP | WS_CAPTION, -32000, -32000, 10, 10, NULL, NULL, g_hInst, NULL);// WS_CAPTION是必须的，否则选项卡不会注册成功
+			WS_POPUP | WS_CAPTION, -32000, -32000, 10, 10, NULL, NULL, g_hInst, NULL);
         ///////////////////////////初始化.....
         g_iDPI = QKGetDPIForWindow(hWnd);
         UI_UpdateDPISize();
@@ -1759,56 +1555,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         
         HWND hCtrl, hCtrl2;
         ///////////////////////////左侧背景（剪辑子窗口）
-        hCtrl2 = CreateWindowExW(0, BKWNDCLASS, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN,
-            0, 0, 0, 0,
-            hWnd, (HMENU)IDC_BK_LEFT, g_hInst, NULL);
-        g_hBKLeft = hCtrl2;
-        RECT rc;
-        GetClientRect(g_hBKLeft, &rc);
-
         DXGI_SWAP_CHAIN_DESC1 DXGIScDesc =
         {
-            8,
-            8,
+            100,
+            100,
             DXGI_FORMAT_B8G8R8A8_UNORM,
             FALSE,
             {1, 0},
-            DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHARED,
+            DXGI_USAGE_RENDER_TARGET_OUTPUT,
             2,
             DXGI_SCALING_STRETCH,
             DXGI_SWAP_EFFECT_DISCARD,
             DXGI_ALPHA_MODE_UNSPECIFIED,
-            DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE
+            0
         };
-        HRESULT hr = g_pDXGIFactory->CreateSwapChainForHwnd(g_pDXGIDevice, g_hBKLeft, &DXGIScDesc, NULL, NULL, &m_pDXGIScLeftBK);
+        g_pDXGIFactory->CreateSwapChainForHwnd(g_pDXGIDevice, hWnd, &DXGIScDesc, NULL, NULL, &m_pDXGIScLeftBK);
 
-        hr = g_pD2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pD2DDCLeftBK);
-        m_pD2DDCLeftBK->CreateSolidColorBrush(c_D2DClrCyanDeeper, &m_pD2DBrMyBlue);
-        m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(0x469EDA), &m_pD2DBrMyBlue2);
+        g_pD2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pD2DDCLeftBK);
 
-        hr = m_pDXGIScLeftBK->GetBuffer(0, IID_PPV_ARGS(&m_pDXGISfceLeftBK));
+        IDXGISurface* pDXGISfce;
+        m_pDXGIScLeftBK->GetBuffer(0, IID_PPV_ARGS(&pDXGISfce));
         D2D1_BITMAP_PROPERTIES1 D2DBmpProp =
         {
             {DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED},
             96,
             96,
-            D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW| D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE,
+            D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
             NULL
         };
 
         //g_pD2DFactory->GetDesktopDpi(&D2DBmpProp.dpiX, &D2DBmpProp.dpiY);
-        hr = m_pD2DDCLeftBK->CreateBitmapFromDxgiSurface(m_pDXGISfceLeftBK, &D2DBmpProp, &m_pD2DBmpLeftBK);
+        m_pD2DDCLeftBK->CreateBitmapFromDxgiSurface(pDXGISfce, &D2DBmpProp, &m_pD2DBmpLeftBK);
 
-        D2D_SIZE_U D2DSizeU = { 8,8 };
-        D2DBmpProp.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE;
+        m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
 
-
-        m_pD2DDCLeftBK->CreateBitmap(D2DSizeU, NULL, 0, D2DBmpProp, &m_pD2DBmpLeftBK2);
-
-        //m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
-
-
-
+        hCtrl2 = CreateWindowExW(0, BKWNDCLASS, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN,
+            0, 0, 0, 0,
+            hWnd, (HMENU)IDC_BK_LEFT, g_hInst, NULL);
+        g_hBKLeft = hCtrl2;
         SetWindowLongPtrW(hCtrl2, GWLP_WNDPROC, (LONG_PTR)WndProc_LeftBK);
         ///////////////////////////进度滑块条
         hCtrl = CreateWindowExW(0, QKCCN_TRACKBAR, NULL, WS_CHILD | WS_VISIBLE,
@@ -1844,8 +1628,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 	case WM_DESTROY:
 	{
-        m_pD2DBrMyBlue->Release();
-        
         Playing_Stop();
         DestroyWindow(m_hTBGhost);
         if (IsWindow(g_hLrcWnd))
@@ -2360,22 +2142,48 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     static RECT rcLrcSBThumb = { 0 };
     static int iThumbSize = 80, iSBMax = 0;
     static BOOL bSBLBtnDown = FALSE;
-	static int iCursorOffest = 0;// 左键按下时，光标离滑块顶边的距离
-	switch (message)
-	{
-	case WM_PAINT:
-	{
-		ValidateRect(hWnd, NULL);
-		if (m_pDXGIScLeftBK)
-			m_pDXGIScLeftBK->Present(0, 0);
+    static int iCursorOffest = 0;// 左键按下时，光标离滑块顶边的距离
+    switch (message)
+    {
+    case WM_PAINT:
+    {
+        //PAINTSTRUCT ps;
+        //HDC hDC = BeginPaint(hWnd, &ps);
+        //HDC hDCDXGISfce;
+        //m_pDXGISfceLeftBK->GetDC(FALSE, &hDCDXGISfce);
+        ////BitBlt(hDC, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top,
+        ////    hDCDXGISfce, ps.rcPaint.left, ps.rcPaint.top, SRCCOPY);
+        //BitBlt(hDC, 0, 0, m_cxLeftBK, m_cyLeftBK, hDCDXGISfce, 0, 0, SRCCOPY);
+        //m_pDXGISfceLeftBK->ReleaseDC(NULL);
+        //EndPaint(hWnd, &ps);
 
-		//PAINTSTRUCT ps;
-		//HDC hDC = BeginPaint(hWnd, &ps);
-		//BitBlt(hDC, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top, 
-		//    m_hcdcLeftBK, ps.rcPaint.left, ps.rcPaint.top, SRCCOPY);
-		//EndPaint(hWnd, &ps);
-	}
-	return 0;
+        //ID2D1HwndRenderTarget* prt;
+
+        //D2D1_RENDER_TARGET_PROPERTIES DCRTProp =
+        //{
+        //    D2D1_RENDER_TARGET_TYPE_DEFAULT,
+        //    {DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED},
+        //    0,
+        //    0,
+        //    D2D1_RENDER_TARGET_USAGE_NONE,
+        //    D2D1_FEATURE_LEVEL_DEFAULT
+        //};
+
+        //D2D1_HWND_RENDER_TARGET_PROPERTIES pp =
+        //{
+        //    hWnd,
+        //    {m_cxLeftBK,m_cyLeftBK},
+        //    D2D1_PRESENT_OPTIONS_NONE
+        //};
+
+        //g_pD2DFactory->CreateHwndRenderTarget(&DCRTProp, &pp, &prt);
+
+        //prt->create
+        ValidateRect(hWnd, NULL);
+        if(m_pDXGIScLeftBK)
+            m_pDXGIScLeftBK->Present(0, 0);
+    }
+    return 0;
     case WM_SIZE:
     {
         m_cxLeftBK = LOWORD(lParam);
@@ -2456,7 +2264,6 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         SelectObject(m_hcdcLeftBK, m_hbmpLeftBK);
         SelectObject(m_hcdcLeftBK2, m_hbmpLeftBK2);
 
-        //SAFE_RELEASE(m_pD2DRTLeftBK);
         //D2D1_RENDER_TARGET_PROPERTIES DCRTProp =
         //{
         //    D2D1_RENDER_TARGET_TYPE_DEFAULT,
@@ -2467,14 +2274,18 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         //    D2D1_FEATURE_LEVEL_DEFAULT
         //};
         //RECT rc = { 0,0,m_cxLeftBK,m_cyLeftBK };
+
         //g_pD2DFactory->CreateDCRenderTarget(&DCRTProp, &m_pD2DRTLeftBK);
         //m_pD2DRTLeftBK->BindDC(m_hcdcLeftBK, &rc);
+
         //g_pD2DFactory->CreateDCRenderTarget(&DCRTProp, &m_pD2DRTLeftBK2);
         //m_pD2DRTLeftBK2->BindDC(m_hcdcLeftBK2, &rc);
-        //if (m_pD2DDCLeftBK)
-        //    m_pD2DDCLeftBK->Release();
-        //if (m_pD2DBmpLeftBK)
-        //    m_pD2DBmpLeftBK->Release();
+        if (m_pD2DDCLeftBK)
+            m_pD2DDCLeftBK->Release();
+        if (m_pD2DBmpLeftBK)
+            m_pD2DBmpLeftBK->Release();
+        D2D_SIZE_U Size = { m_cxLeftBK,m_cyLeftBK };
+
         //D2D1_BITMAP_PROPERTIES1 D2DBmpProp =
         //{
         //    {DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED},
@@ -2484,6 +2295,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         //    NULL
         //};
         //m_pD2DDCLeftBK->CreateBitmap(Size, NULL, 0, D2DBmpProp, &m_pD2DBmpLeftBK);
+        
   //      if (m_pDXGISfceLeftBK)
   //          m_pDXGISfceLeftBK->Release();
   //      DXGI_SURFACE_DESC DXGISfceDesc =
@@ -2496,8 +2308,11 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
   //      IDXGISurface* pDXGISurface;
   //      HRESULT hr = g_pDXGIDevice->CreateSurface(&DXGISfceDesc, 1, 
   //          DXGI_USAGE_RENDER_TARGET_OUTPUT, NULL, &pDXGISurface);
+
   //      pDXGISurface->QueryInterface(IID_PPV_ARGS(&m_pDXGISfceLeftBK));
   //      //pDXGISurface->Release();
+
+
 		//D2D1_BITMAP_PROPERTIES1 D2DBmpProp =
 		//{
 		//	{DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED},
@@ -2506,47 +2321,34 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
   //          D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 		//	NULL
 		//};
+
   //      g_pD2DFactory->GetDesktopDpi(&D2DBmpProp.dpiX, &D2DBmpProp.dpiY);
   //      hr = m_pD2DDCLeftBK->CreateBitmapFromDxgiSurface(m_pDXGISfceLeftBK, &D2DBmpProp, &m_pD2DBmpLeftBK);
         
         if (!m_pDXGIScLeftBK || !m_pD2DDCLeftBK)
             return 0;
 
-        m_pD2DDCLeftBK->SetTarget(NULL);
-        m_pD2DBmpLeftBK->Release();
-        m_pDXGISfceLeftBK->Release();
-        HRESULT hr = m_pDXGIScLeftBK->ResizeBuffers(0, m_cxLeftBK, m_cyLeftBK, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE);
+        //m_pD2DDCLeftBK->SetTarget(NULL);
 
-        hr = m_pDXGIScLeftBK->GetBuffer(0, IID_PPV_ARGS(&m_pDXGISfceLeftBK));
+        m_pDXGIScLeftBK->ResizeBuffers(0, m_cxLeftBK, m_cyLeftBK, DXGI_FORMAT_UNKNOWN, 0);
+
+        IDXGISurface* pDXGISfce;
+        m_pDXGIScLeftBK->GetBuffer(0, IID_PPV_ARGS(&pDXGISfce));
 		D2D1_BITMAP_PROPERTIES1 D2DBmpProp =
 		{
 			{DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED},
 			96,
 			96,
-		    D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE,
+		    D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 			NULL
 		};
 
 		//g_pD2DFactory->GetDesktopDpi(&D2DBmpProp.dpiX, &D2DBmpProp.dpiY);
-        hr = m_pD2DDCLeftBK->CreateBitmapFromDxgiSurface(m_pDXGISfceLeftBK, &D2DBmpProp, &m_pD2DBmpLeftBK);
+        m_pD2DDCLeftBK->CreateBitmapFromDxgiSurface(pDXGISfce, &D2DBmpProp, &m_pD2DBmpLeftBK);
 
-        //m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
+        m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
 
-        m_pD2DBmpLeftBK2->Release();
-
-        D2D_SIZE_U D2DSizeU = { m_cxLeftBK,m_cyLeftBK };
-        D2DBmpProp.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE;
-        //D2DBmpProp =
-        //{
-        //    { DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED },
-        //    96.0f,
-        //    96.0f,
-        //    D2D1_BITMAP_OPTIONS_TARGET,
-        //    NULL
-        //};
-
-        m_pD2DDCLeftBK->CreateBitmap(D2DSizeU, NULL, 0, D2DBmpProp, &m_pD2DBmpLeftBK2);
-
+		m_IsDraw[0] = m_IsDraw[1] = m_IsDraw[2] = TRUE;
         UI_UpdateLeftBK();
     }
     return 0;
@@ -2867,7 +2669,92 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
     {
     case IDT_DRAWING_WAVES:
     {
-        UI_VEDrawWaves();
+        g_fTime = BASS_ChannelBytes2Seconds(
+            g_hStream,
+            BASS_ChannelGetPosition(g_hStream, BASS_POS_BYTE)
+        );
+
+        if (!m_IsDraw[0])
+            return;
+
+        RECT rc = { m_xWaves,m_yWaves,m_xWaves + DPIS_CXSPE,m_yWaves + DPIS_CYSPE };
+
+        HDC hDC = GetDC(g_hBKLeft);
+        BitBlt(m_hcdcLeftBK2, m_xWaves, m_yWaves, DPIS_CXSPE, DPIS_CYSPE, m_hcdcLeftBK, m_xWaves, m_yWaves, SRCCOPY);
+        LPCWSTR pszText = NULL;
+        if (m_uThreadFlagWaves == THREADFLAG_WORKING)// 正在加载
+            pszText = L"正在加载...";
+        else if (!g_hStream)// 已停止
+            pszText = L"未播放";
+        else if (m_uThreadFlagWaves == THREADFLAG_ERROR)// 出错
+            pszText = L"错误！";
+
+        if (pszText)
+        {
+            m_IsDraw[0] = FALSE;
+            SetTextColor(m_hcdcLeftBK2, QKCOLOR_CYANDEEPER);// 蓝色
+            SelectObject(m_hcdcLeftBK2, g_hFontDrawing);
+            DrawTextW(m_hcdcLeftBK2, pszText, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);// 画错误提示
+            BitBlt(hDC, m_xWaves, m_yWaves, DPIS_CXSPE, DPIS_CYSPE, m_hcdcLeftBK2, m_xWaves, m_yWaves, SRCCOPY);// 显示
+            ReleaseDC(g_hBKLeft, hDC);
+            return;
+        }
+
+        if (m_uThreadFlagWaves == THREADFLAG_STOPED)
+        {
+            int iCurrIndex = (int)(g_fTime * 1000.0 / 20.0);// 算数组索引    20ms一单位
+            if (iCurrIndex < 0 || iCurrIndex > m_dwWavesDataCount - 1)
+            {
+                ReleaseDC(g_hBKLeft, hDC);
+                return;
+            }
+
+            int i = iCurrIndex;
+            int x = m_xWaves + DPIS_CXSPEHALF,
+                y = m_yWaves + DPIS_CYSPEHALF;
+            HGDIOBJ hOldPen = SelectObject(m_hcdcLeftBK2, CreatePen(PS_SOLID, DPIS_CXWAVESLINE, 0xDA9E46));
+
+            HRGN hRgn = CreateRectRgnIndirect(&rc);
+            SelectClipRgn(m_hcdcLeftBK2, hRgn);// 不剪辑的话画笔会越界...应该是设置了画笔宽度的原因
+            DeleteObject(hRgn);
+
+            // 上面是右声道，下面是左声道
+            while (true)// 向右画
+            {
+                MoveToEx(m_hcdcLeftBK2, x, y, NULL);
+                LineTo(m_hcdcLeftBK2, x, y - HIWORD(m_dwWavesData[i]) * DPIS_CYSPEHALF / 32768);
+                MoveToEx(m_hcdcLeftBK2, x, y, NULL);
+                LineTo(m_hcdcLeftBK2, x, y + LOWORD(m_dwWavesData[i]) * DPIS_CYSPEHALF / 32768);
+                x += DPIS_CXWAVESLINE;
+                i++;
+                if (i > m_dwWavesDataCount - 1 || x >= m_xWaves + DPIS_CXSPE)
+                    break;
+            }
+            i = iCurrIndex;
+            x = m_xWaves + DPIS_CXSPEHALF;
+            while (true)// 向左画
+            {
+                MoveToEx(m_hcdcLeftBK2, x, y, NULL);
+                LineTo(m_hcdcLeftBK2, x, y - (int)((float)HIWORD(m_dwWavesData[i]) / 32768.0f * (float)DPIS_CYSPEHALF));
+                MoveToEx(m_hcdcLeftBK2, x, y, NULL);
+                LineTo(m_hcdcLeftBK2, x, y + (int)((float)LOWORD(m_dwWavesData[i]) / 32768.0f * (float)DPIS_CYSPEHALF));
+                x -= DPIS_CXWAVESLINE;
+                i--;
+                if (i < 0 || x < m_xWaves)
+                    break;
+            }
+            x = m_xWaves + DPIS_CXSPEHALF;
+
+            DeleteObject(SelectObject(m_hcdcLeftBK2, CreatePen(PS_SOLID, DPIS_CXWAVESLINE, QKCOLOR_RED)));
+            MoveToEx(m_hcdcLeftBK2, x, m_yWaves, NULL);
+            LineTo(m_hcdcLeftBK2, x, m_yWaves + DPIS_CYSPE);
+            DeleteObject(SelectObject(m_hcdcLeftBK2, hOldPen));
+            SelectClipRgn(m_hcdcLeftBK2, NULL);
+        }
+        BitBlt(hDC, m_xWaves, m_yWaves, DPIS_CXSPE, DPIS_CYSPE, m_hcdcLeftBK2, m_xWaves, m_yWaves, SRCCOPY);//显示
+        ReleaseDC(g_hBKLeft, hDC);
+
+
     }
     return;
     case IDT_DRAWING_LRC:
@@ -3046,7 +2933,68 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
     return;
     case IDT_DRAWING_SPE:
     {
-        UI_VEDrawSpe();
+        int iCount = SPECOUNT;
+        int m = DPIS_CXSPE - (DPIS_CXSPEBAR + DPIS_CXSPEBARDIV) * SPECOUNT;
+        if (m >= DPIS_CXSPEBAR)
+        {
+            iCount += m / (DPIS_CXSPEBAR + DPIS_CXSPEBARDIV);
+            if (iCount > 128)
+                iCount = 128;
+        }
+
+        static int cySpeOld[128] = { 0 }, cySpe[128] = { 0 }, yMaxMark[128] = { 0 };
+        static int iTime[128] = { 0 };
+        static float fData[128] = { 0 };
+        BitBlt(m_hcdcLeftBK2, m_xSpe, m_ySpe, DPIS_CXSPE, DPIS_CYSPE, m_hcdcLeftBK, m_xSpe, m_ySpe, SRCCOPY);
+        if (BASS_ChannelGetData(g_hStream, fData, BASS_DATA_FFT256) == -1)
+        {
+            ZeroMemory(cySpeOld, sizeof(cySpeOld));
+            ZeroMemory(cySpe, sizeof(cySpe));
+        }
+
+        for (int i = 0; i < iCount; i++)
+        {
+            ++iTime[i];
+            cySpe[i] = abs((int)(fData[i] * 300.0f));
+            //////////////////频谱条
+            if (cySpe[i] > DPIS_CYSPE)// 超高
+                cySpe[i] = DPIS_CYSPE;// 回来
+
+            if (cySpe[i] > cySpeOld[i])// 当前的大于先前的
+                cySpeOld[i] = cySpe[i];// 顶上去
+            else
+                cySpeOld[i] -= SPESTEP_BAR;// 如果不大于就继续落
+
+            if (cySpeOld[i] < 3)// 太低了
+                cySpeOld[i] = 3;// 回来
+            //////////////////峰值
+            if (iTime[i] > 10)// 时间已到
+                yMaxMark[i] -= SPESTEP_MAX;// 下落
+
+            if (cySpeOld[i] > yMaxMark[i])// 频谱条大于峰值
+            {
+                yMaxMark[i] = cySpeOld[i];// 峰值顶上去，重置时间
+                iTime[i] = 0;
+            }
+
+            if (yMaxMark[i] < 3)// 太低了
+                yMaxMark[i] = 3;// 回来
+            //////////////////绘制
+            //////////制频谱条矩形
+            RECT rc;
+            rc.left = m_xSpe + (DPIS_CXSPEBAR + 1) * i;
+            rc.top = m_ySpe + DPIS_CYSPE - cySpeOld[i];
+            rc.right = rc.left + DPIS_CXSPEBAR;
+            rc.bottom = m_ySpe + DPIS_CYSPE;
+            FillRect(m_hcdcLeftBK2, &rc, GC.hbrMyBule);
+            //////////制峰值指示矩形
+            rc.top = m_ySpe + DPIS_CYSPE - yMaxMark[i];
+            rc.bottom = rc.top + 3;
+            FillRect(m_hcdcLeftBK2, &rc, GC.hbrMyBule);
+        }
+        HDC hDC = GetDC(g_hBKLeft);
+        BitBlt(hDC, m_xSpe, m_ySpe, DPIS_CXSPE, DPIS_CYSPE, m_hcdcLeftBK2, m_xSpe, m_ySpe, SRCCOPY);// 显示
+        ReleaseDC(g_hBKLeft, hDC);
     }
     return;
     case IDT_ANIMATION:
