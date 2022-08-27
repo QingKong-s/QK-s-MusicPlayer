@@ -343,7 +343,7 @@ void UI_UpdateDPISize()
     g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_SEMI_LIGHT, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
         DPI(18), L"zh-cn", &g_pDWTFBig);
     g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        DPI(15), L"zh-cn", &g_pDWTFBig2);
+        DPI(20), L"zh-cn", &g_pDWTFBig2);
 }
 void Res_Free()
 {

@@ -10,7 +10,8 @@ struct LRCDATA
 	int iOrgLength;		// 原文的字符数
 	int cy;				// 用于命中测试，歌词总高度
 	int iLastTop;		// 用于滚动歌词绘制，上次绘制时的顶边
-	int iDrawID;
+	int iDrawID;		// 用于区分项目是否显示
+	RECT rcItem;		// 用于命中测试，项目矩形
 };
 
 struct LRCHSCROLLINFO
@@ -156,7 +157,7 @@ const PCWSTR c_szBtmTip[] =
 #define SPESTEP_MAX				11
 
 #define LEFTBKM_SETMAX			WM_USER + 1// (Max, 0)
-#define LEFTBKM_REDRAWSB		WM_USER + 2// (是否擦除背景, 0)
+#define LEFTBKM_REDRAWSB		WM_USER + 2// (0, 0)
 
 #define BTMBKM_INIT				WM_USER + 1
 #define BTMBKM_GETREPEATMODE	WM_USER + 2
@@ -177,7 +178,7 @@ const PCWSTR c_szBtmTip[] =
 
 void MainWnd_ReleaseCurrInfo();
 void CALLBACK SyncProc_End(HSYNC handle, DWORD channel, DWORD data, void* user);
-int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow);
+int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BOOL bCenterLine = FALSE, int* yOut = NULL);
 void Playing_PlayFile(int iIndex);
 void Playing_Stop(BOOL bNoGap = FALSE);
 void Playing_PlayNext(BOOL bReverse = FALSE);
@@ -198,3 +199,6 @@ LRESULT CALLBACK QKCProc_TBPaint(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 void GDIObj_LeftBK(DWORD dwOpe = GDIOBJOPE_REFRESH);
 int HitTest_LrcShow(POINT pt);
 int HitTest_BtmBK(int x, int y);
+void UI_VEDrawWaves(BOOL bImmdShow = TRUE);
+void UI_VEDrawSpe(BOOL bImmdShow = TRUE);
+void UI_VEDrawLrc(int yCenter, BOOL bImmdShow = TRUE);

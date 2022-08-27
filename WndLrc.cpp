@@ -514,7 +514,7 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
                 else
                     m_LrcScrollInfo.bWndSizeChangedFlag = FALSE;
 
-                KillTimer(g_hMainWnd, IDT_ANIMATION);
+                KillTimer(g_hLrcWnd, IDT_ANIMATION);
                 if (DWTextMetrics.width > m_cxLrcRgn)
                 {
                     m_LrcScrollInfo.cx1 = DWTextMetrics.width;// 超长了，需要后续滚动
@@ -584,7 +584,7 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
                 else
                     m_LrcScrollInfo.bWndSizeChangedFlag = FALSE;
 
-                KillTimer(g_hMainWnd, IDT_ANIMATION);
+                KillTimer(g_hLrcWnd, IDT_ANIMATION);
                 if (DWTextMetrics.width > m_cxLrcRgn)
                 {
                     m_LrcScrollInfo.cx1 = DWTextMetrics.width;// 超长了，需要后续滚动
