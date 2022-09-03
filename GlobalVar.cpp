@@ -19,7 +19,7 @@ HWND			g_hLV;
 HWND			g_hTBProgess;
 HWND			g_hLrcWnd				= NULL;
 HWND			g_hBKLeft;
-HWND			g_hBKBtm;
+//HWND			g_hBKBtm;
 HWND			g_hBKRight;
 HWND			g_hSEB;
 HWND			g_hBKList;

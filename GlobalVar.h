@@ -24,7 +24,7 @@ extern HWND				g_hLV;                  // 列表ListView
 extern HWND				g_hTBProgess;           // 进度条
 extern HWND				g_hLrcWnd;              // 桌面歌词
 extern HWND				g_hBKLeft;              // 左侧背景
-extern HWND				g_hBKBtm;               // 下部按钮背景
+//extern HWND				g_hBKBtm;               // 下部按钮背景
 extern HWND				g_hBKRight;             // 列表工具背景
 extern HWND				g_hSEB;                 // 分隔条
 extern HWND				g_hBKList;              // 列表背景

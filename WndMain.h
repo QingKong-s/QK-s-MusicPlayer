@@ -158,6 +158,11 @@ const PCWSTR c_szBtmTip[] =
 
 #define LEFTBKM_SETMAX			WM_USER + 1// (Max, 0)
 #define LEFTBKM_REDRAWSB		WM_USER + 2// (0, 0)
+#define LEFTBKM_REDRAWBTMBT		WM_USER + 3// (0, 0)
+#define LEFTBKM_INIT			WM_USER + 4// (0, 0)
+#define LEFTBKM_GETREPEATMODE	WM_USER + 5// (0, 0)
+#define LEFTBKM_SETPLAYBTICON	WM_USER + 6// (0, 0)
+#define LEFTBKM_DOBTOPE			WM_USER + 7// (0, 0)
 
 #define BTMBKM_INIT				WM_USER + 1
 #define BTMBKM_GETREPEATMODE	WM_USER + 2
@@ -190,7 +195,7 @@ void UI_SeparateListWnd(BOOL b);
 void UI_ShowList(BOOL b);
 LRESULT CALLBACK WndProc_TBGhost(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+//LRESULT CALLBACK WndProc_BtmBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DlgProc_About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime);
@@ -198,7 +203,8 @@ LRESULT CALLBACK QKCProc_SEB(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT CALLBACK QKCProc_TBPaint(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 void GDIObj_LeftBK(DWORD dwOpe = GDIOBJOPE_REFRESH);
 int HitTest_LrcShow(POINT pt);
-int HitTest_BtmBK(int x, int y);
-void UI_VEDrawWaves(BOOL bImmdShow = TRUE);
-void UI_VEDrawSpe(BOOL bImmdShow = TRUE);
-void UI_VEDrawLrc(int yCenter, BOOL bImmdShow = TRUE);
+int HitTest_BtmBK(POINT pt);
+void UI_VEDrawWaves(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = FALSE);
+void UI_VEDrawSpe(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = FALSE);
+void UI_VEDrawLrc(int yCenter, BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = FALSE);
+void UI_VEProcLrcShowing(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = FALSE);

@@ -181,13 +181,13 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         switch (iRet)
         {
         case LRCHITTEST_LAST:
-            SendMessageW(g_hBKBtm, BTMBKM_DOBTOPE, 0, 0);
+            SendMessageW(g_hBKLeft, LEFTBKM_DOBTOPE, 0, 0);
             break;
         case LRCHITTEST_PLAY:
-            SendMessageW(g_hBKBtm, BTMBKM_DOBTOPE, 1, 0);
+            SendMessageW(g_hBKLeft, LEFTBKM_DOBTOPE, 1, 0);
             break;
         case LRCHITTEST_NEXT:
-            SendMessageW(g_hBKBtm, BTMBKM_DOBTOPE, 2, 0);
+            SendMessageW(g_hBKLeft, LEFTBKM_DOBTOPE, 2, 0);
             break;
         case LRCHITTEST_CLOSE:
             DestroyWindow(hWnd);
