@@ -63,22 +63,19 @@ BOOL            m_IsDraw[3]                 = { 0 };        // 绘制标志
 DRAWING_TIME    m_TimeStru_VU[2]            = { 0 };        // 延迟下落
 DRAWING_TIME    m_TimeStru_Spe[128]         = { 0 };        // 延迟下落
 
-RECT            m_LeftStaticRect            = { 0 };        // 右侧静态客户区
-
-
-
 BOOL            m_bLrcShow                  = TRUE;
-RECT            m_rcLrcShow                 = { 0 };
-RECT            m_rcBtmBK                   = { 0 };
 
+RECT            m_rcLrcShow                 = { 0 };// 滚动歌词区
+RECT            m_rcBtmBK                   = { 0 };// 底部按钮区
+RECT            m_rcWaves                   = { 0 };// 波形区
+RECT            m_rcSpe                     = { 0 };// 频谱区
 
-int             m_xSpe                      = 0,
-                m_ySpe                      = 0,
-                m_xBtmBK                    = 0,
-                m_yBtmBK                    = 0,
-                m_xWaves                    = 0,
-                m_yWaves                    = 0,
-                m_cxLeftBK                  = 0,
+D2D_RECT_F      m_D2DRcLrcShow              = { 0 };// 滚动歌词区
+D2D_RECT_F      m_D2DRcBtmBK                = { 0 };// 底部按钮区
+D2D_RECT_F      m_D2DRcWaves                = { 0 };// 波形区
+D2D_RECT_F      m_D2DRcSpe                  = { 0 };// 频谱区
+
+int             m_cxLeftBK                  = 0,
                 m_cyLeftBK                  = 0,
                 m_cxLrcShow                 = 0,
                 m_cyLrcShow                 = 0;
@@ -98,6 +95,10 @@ HWND            m_hTBGhost                  = NULL;
 int             m_iDrawingID                = 0;
 
 int             m_iLastLrcIndex[2]          = { -1,-1 };// 0：上次中心；1：上次高亮
+
+HDC             m_hdcLeftBK                 = NULL;
+
+BOOL            m_bWndMinimized             = FALSE;
 
 void Settings_Read()
 {
@@ -506,7 +507,7 @@ void MainWnd_ReleaseCurrInfo()
 }
 void CALLBACK SyncProc_End(HSYNC handle, DWORD channel, DWORD data, void* user)
 {
-    SendMessageW(g_hTBProgess, QKCTBM_SETPOS, TRUE, (LPARAM)SendMessageW(g_hTBProgess, QKCTBM_GETRANGE, 0, 0));
+    WndProc_LeftBK(g_hBKLeft, LEFTBKM_SETPROGBARPOS, WndProc_LeftBK(g_hBKLeft, LEFTBKM_GETPROGBARMAX, 0, 0), TRUE);
     Playing_AutoNext();
 }
 /*
@@ -549,7 +550,6 @@ int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BO
         pD2DBrush->AddRef();
     }
 
-    DWRITE_TEXT_METRICS Metrics1, Metrics2;
     D2D_RECT_F D2DRcF1, D2DRcF2;
 
     if (y == -1 && !bCenterLine)
@@ -571,14 +571,16 @@ int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BO
         {
             pDWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
             uStrLen1 = lstrlenW(p->pszLrc);
-            g_pDWFactory->CreateTextLayout(p->pszLrc, uStrLen1, pDWTextFormat, m_cxLrcShow, m_cyLrcShow, &pDWTextLayout1);
-            pDWTextLayout1->GetMetrics(&Metrics1);
-            pDWTextLayout1->Release();
-            cx1 = Metrics1.width;
+
             if (bCurr)
             {
                 if (iIndex != m_LrcHScrollInfo.iIndex)
                 {
+                    g_pDWFactory->CreateTextLayout(p->pszLrc, uStrLen1, pDWTextFormat, m_cxLrcShow, m_cyLrcShow, &pDWTextLayout1);
+					pDWTextLayout1->GetMetrics(&m_LrcHScrollInfo.Metrics1);
+                    pDWTextLayout1->Release();
+                    cx1 = m_LrcHScrollInfo.Metrics1.width;
+
                     m_LrcHScrollInfo.iIndex = iIndex;
                     if (!m_LrcHScrollInfo.bWndSizeChangedFlag)
                         m_LrcHScrollInfo.x1 = m_LrcHScrollInfo.x2 = 0;
@@ -588,24 +590,32 @@ int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BO
                     KillTimer(g_hMainWnd, IDT_ANIMATION);
                     if (cx1 > m_cxLrcShow)
                     {
-                        m_LrcHScrollInfo.cx1 = cx1;// 超长了，需要后续滚动
-                        m_LrcHScrollInfo.fNoScrollingTime1 = m_cxLrcShow * p->fDelay / m_LrcHScrollInfo.cx1 / 2;
-                        SetTimer(g_hMainWnd, IDT_ANIMATION, TIMERELAPSE_ANIMATION, TimerProc);
-                    }
-                    else
-                    {
-                        m_LrcHScrollInfo.cx1 = -1;
-                        m_LrcHScrollInfo.x1 = m_LrcHScrollInfo.x2 = 0;
-                    }
-                }
+						m_LrcHScrollInfo.cx1 = cx1;// 超长了，需要后续滚动
+						m_LrcHScrollInfo.fNoScrollingTime1 = m_cxLrcShow * p->fDelay / m_LrcHScrollInfo.cx1 / 2;
+						SetTimer(g_hMainWnd, IDT_ANIMATION, TIMERELAPSE_ANIMATION, TimerProc);
+					}
+					else
+					{
+						m_LrcHScrollInfo.cx1 = -1;
+						m_LrcHScrollInfo.x1 = m_LrcHScrollInfo.x2 = 0;
+					}
+				}
+			}
+            else
+            {
+                g_pDWFactory->CreateTextLayout(p->pszLrc, uStrLen1, pDWTextFormat, m_cxLrcShow, m_cyLrcShow, &pDWTextLayout1);
+                pDWTextLayout1->GetMetrics(&m_LrcHScrollInfo.Metrics1);
+                pDWTextLayout1->Release();
             }
+
+            cx1 = m_LrcHScrollInfo.Metrics1.width;
+            cy1 = m_LrcHScrollInfo.Metrics1.height;
 
             if (cx1 > m_cxLrcShow)
                 pDWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
             else
                 pDWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 
-            cy1 = Metrics1.height;
             p->cy = cy1;
 
             if (bCenterLine)
@@ -647,19 +657,20 @@ int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BO
             uStrLen1 = p->iOrgLength;
             uStrLen2 = lstrlenW(p->pszLrc + p->iOrgLength + 1);
 
-            g_pDWFactory->CreateTextLayout(p->pszLrc, uStrLen1, pDWTextFormat, m_cxLrcShow, m_cyLrcShow, &pDWTextLayout1);// 创建文本布局
-            g_pDWFactory->CreateTextLayout(p->pszLrc + p->iOrgLength + 1, uStrLen2, pDWTextFormat, m_cxLrcShow, m_cyLrcShow, &pDWTextLayout2);// 创建文本布局
-            pDWTextLayout1->GetMetrics(&Metrics1);
-            pDWTextLayout2->GetMetrics(&Metrics2);
-            pDWTextLayout1->Release();
-            pDWTextLayout2->Release();
-
-            cx1 = Metrics1.width;
-            cx2 = Metrics2.width;
             if (bCurr)
             {
                 if (iIndex != m_LrcHScrollInfo.iIndex)
                 {
+                    g_pDWFactory->CreateTextLayout(p->pszLrc, uStrLen1, pDWTextFormat, m_cxLrcShow, m_cyLrcShow, &pDWTextLayout1);// 创建文本布局
+                    g_pDWFactory->CreateTextLayout(p->pszLrc + p->iOrgLength + 1, uStrLen2, pDWTextFormat, m_cxLrcShow, m_cyLrcShow, &pDWTextLayout2);// 创建文本布局
+                    pDWTextLayout1->GetMetrics(&m_LrcHScrollInfo.Metrics1);
+                    pDWTextLayout2->GetMetrics(&m_LrcHScrollInfo.Metrics2);
+                    pDWTextLayout1->Release();
+                    pDWTextLayout2->Release();
+
+                    cx1 = m_LrcHScrollInfo.Metrics1.width;
+                    cx2 = m_LrcHScrollInfo.Metrics2.width;
+
                     m_LrcHScrollInfo.iIndex = iIndex;
                     if (!m_LrcHScrollInfo.bWndSizeChangedFlag)
                         m_LrcHScrollInfo.x1 = m_LrcHScrollInfo.x2 = 0;
@@ -692,9 +703,20 @@ int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BO
                     }
                 }
             }
+            else
+            {
+                g_pDWFactory->CreateTextLayout(p->pszLrc, uStrLen1, pDWTextFormat, m_cxLrcShow, m_cyLrcShow, &pDWTextLayout1);// 创建文本布局
+                g_pDWFactory->CreateTextLayout(p->pszLrc + p->iOrgLength + 1, uStrLen2, pDWTextFormat, m_cxLrcShow, m_cyLrcShow, &pDWTextLayout2);// 创建文本布局
+                pDWTextLayout1->GetMetrics(&m_LrcHScrollInfo.Metrics1);
+                pDWTextLayout2->GetMetrics(&m_LrcHScrollInfo.Metrics2);
+                pDWTextLayout1->Release();
+                pDWTextLayout2->Release();
+            }
 
-            cy1 = Metrics1.height;
-            cy2 = Metrics2.height;
+            cx1 = m_LrcHScrollInfo.Metrics1.width;
+            cx2 = m_LrcHScrollInfo.Metrics2.width;
+            cy1 = m_LrcHScrollInfo.Metrics1.height;
+            cy2 = m_LrcHScrollInfo.Metrics2.height;
             p->cy = cy1 + cy2;
 
             if (bCenterLine)
@@ -755,7 +777,6 @@ int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BO
             {
                 D2DRcF2 = { (float)m_rcLrcShow.left,(float)(y - p->cy),(float)m_rcLrcShow.right,(float)y };
 
-                
                 if (bImmdShow)
                 {
                     m_pD2DDCLeftBK->BeginDraw();
@@ -806,9 +827,9 @@ int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BO
         pDWTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);// 自动换行
         uStrLen1 = lstrlenW(p->pszLrc);
         g_pDWFactory->CreateTextLayout(p->pszLrc, uStrLen1, pDWTextFormat, m_cxLrcShow, m_cyLrcShow, &pDWTextLayout1);
-        pDWTextLayout1->GetMetrics(&Metrics1);
+        pDWTextLayout1->GetMetrics(&m_LrcHScrollInfo.Metrics1);
         pDWTextLayout1->Release();
-        cy1 = Metrics1.height;
+        cy1 = m_LrcHScrollInfo.Metrics1.height;
         p->cy = cy1;
 
         if (bCenterLine)
@@ -851,14 +872,15 @@ int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BO
 	if (bImmdShow)
 	{
 		m_pD2DDCLeftBK->PopAxisAlignedClip();
-        HDC hDC;
-        HRESULT hr = m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
-        HDC hDCWnd = GetDC(g_hBKLeft);
-        BitBlt(hDCWnd, p->rcItem.left, p->rcItem.top, p->rcItem.right - p->rcItem.left, p->rcItem.bottom - p->rcItem.top,
-            hDC, p->rcItem.left, p->rcItem.top, SRCCOPY);
-        ReleaseDC(g_hBKLeft, hDCWnd);
-        m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
+        //HDC hDC;
+        //HRESULT hr = m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
+        //HDC hDCWnd = GetDC(g_hBKLeft);
+        //BitBlt(hDCWnd, p->rcItem.left, p->rcItem.top, p->rcItem.right - p->rcItem.left, p->rcItem.bottom - p->rcItem.top,
+        //    hDC, p->rcItem.left, p->rcItem.top, SRCCOPY);
+        //ReleaseDC(g_hBKLeft, hDCWnd);
+        //m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
         m_pD2DDCLeftBK->EndDraw();
+        m_pDXGIScLeftBK->Present(0, 0);
 	}
 
     pDWTextFormat->Release();
@@ -948,7 +970,7 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
         g_hStream,
         BASS_ChannelGetLength(g_hStream, BASS_POS_BYTE)
     ) * 1000);
-    SendMessageW(g_hTBProgess, QKCTBM_SETRANGE, FALSE, (LPARAM)g_llLength / 10);// 设定最大位置
+    WndProc_LeftBK(g_hBKLeft, LEFTBKM_SETPROGBARMAX, g_llLength / 10, TRUE);
 
     if (g_fSpeedChanged != SBV_INVALIDVALUE)
         BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_FREQ, g_fSpeedChanged * g_fDefSpeed);
@@ -1010,9 +1032,9 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
     }
 
 	m_IsDraw[0] = m_IsDraw[1] = m_IsDraw[2] = TRUE;
-    SetTimer(g_hMainWnd, IDT_DRAWING_LRC, TIMERELAPSE_LRC, TimerProc);
-    SetTimer(g_hMainWnd, IDT_DRAWING_SPE, TIMERELAPSE_VU_SPE, TimerProc);
-    SetTimer(g_hMainWnd, IDT_DRAWING_WAVES, TIMERELAPSE_WAVES, TimerProc);
+    //SetTimer(g_hMainWnd, IDT_DRAWING_LRC, TIMERELAPSE_LRC, TimerProc);
+    //SetTimer(g_hMainWnd, IDT_DRAWING_SPE, TIMERELAPSE_VU_SPE, TimerProc);
+    //SetTimer(g_hMainWnd, IDT_DRAWING_WAVES, TIMERELAPSE_WAVES, TimerProc);
 }
 void Playing_Stop(BOOL bNoGap)
 {
@@ -1380,7 +1402,7 @@ void UI_UpdateLeftBK()
 	UI_VEDrawWaves(FALSE);
 	UI_VEDrawSpe(FALSE);
 	TimerProc(NULL, IDT_DRAWING_LRC, 0, 0);
-	WndProc_LeftBK(g_hBKLeft, LEFTBKM_REDRAWBTMBT, 0, 0);
+	WndProc_LeftBK(g_hBKLeft, LEFTBKM_REDRAWBTMBT, FALSE, TRUE);
 	////////////////////显示
 	m_pDXGIScLeftBK->Present(0, 0);// 上屏
 	pWICBitmapOrg->Release();
@@ -1443,22 +1465,19 @@ void UI_ShowList(BOOL b)
 	GetClientRect(g_hMainWnd, &rc);
 	SendMessageW(g_hMainWnd, WM_SIZE, 0, MAKELONG(rc.right, rc.bottom));
 }
-void UI_VEDrawWaves(BOOL bImmdShow, BOOL bIndependlyDrawing)
+BOOL UI_VEDrawWaves(BOOL bImmdShow, BOOL bIndependlyDrawing)
 {
 	g_fTime = BASS_ChannelBytes2Seconds(
 		g_hStream,
 		BASS_ChannelGetPosition(g_hStream, BASS_POS_BYTE));
 
 	if (!m_IsDraw[0])
-		return;
+		return FALSE;
 
-	RECT rc = { m_xWaves,m_yWaves,m_xWaves + DPIS_CXSPE,m_yWaves + DPIS_CYSPE };
-
-	D2D_RECT_F D2DRectF = { (float)m_xWaves,(float)m_yWaves,(float)(m_xWaves + DPIS_CXSPE),(float)(m_yWaves + DPIS_CYSPE) };
 	if (bIndependlyDrawing)
 		m_pD2DDCLeftBK->BeginDraw();
 
-	m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &D2DRectF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRectF);// 刷背景
+	m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &m_D2DRcWaves, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_D2DRcWaves);// 刷背景
 
 	PCWSTR pszText = NULL;
 	if (m_uThreadFlagWaves == THREADFLAG_WORKING)// 正在加载
@@ -1473,10 +1492,10 @@ void UI_VEDrawWaves(BOOL bImmdShow, BOOL bIndependlyDrawing)
 		m_IsDraw[0] = FALSE;// 下次不要再更新
 		g_pDWTFBig->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 		g_pDWTFBig->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);// 水平垂直都居中
-		m_pD2DDCLeftBK->DrawTextW(pszText, lstrlenW(pszText), g_pDWTFBig, &D2DRectF, m_pD2DBrMyBlue);
+		m_pD2DDCLeftBK->DrawTextW(pszText, lstrlenW(pszText), g_pDWTFBig, &m_D2DRcWaves, m_pD2DBrMyBlue);
 		if (bIndependlyDrawing)
 			m_pD2DDCLeftBK->EndDraw();
-		return;
+		return TRUE;
 	}
 
 	if (m_uThreadFlagWaves == THREADFLAG_STOPED)
@@ -1485,12 +1504,12 @@ void UI_VEDrawWaves(BOOL bImmdShow, BOOL bIndependlyDrawing)
 		if (iCurrIndex < 0 || iCurrIndex > m_dwWavesDataCount - 1)
 		{
 			m_pD2DDCLeftBK->EndDraw();
-			return;
+			return TRUE;
 		}
 
 		int i = iCurrIndex;
-		int x = m_xWaves + DPIS_CXSPEHALF,
-			y = m_yWaves + DPIS_CYSPEHALF;
+		int x = m_rcWaves.left + DPIS_CXSPEHALF,
+			y = m_rcWaves.top + DPIS_CYSPEHALF;
 		D2D1_POINT_2F D2DPtF1, D2DPtF2;
 
 		HDC hDC;
@@ -1503,11 +1522,11 @@ void UI_VEDrawWaves(BOOL bImmdShow, BOOL bIndependlyDrawing)
 			m_pD2DDCLeftBK->DrawLine(D2DPtF1, D2DPtF2, m_pD2DBrMyBlue2, DPIS_CXWAVESLINE);
 			x += DPIS_CXWAVESLINE;
 			i++;
-			if (i > m_dwWavesDataCount - 1 || x >= m_xWaves + DPIS_CXSPE)
+			if (i > m_dwWavesDataCount - 1 || x >= m_rcWaves.left + DPIS_CXSPE)
 				break;
 		}
 		i = iCurrIndex;
-		x = m_xWaves + DPIS_CXSPEHALF;
+		x = m_rcWaves.left + DPIS_CXSPEHALF;
 		while (true)// 向左画
 		{
 			D2DPtF1 = { (float)x, (float)(y - HIWORD(m_dwWavesData[i]) * DPIS_CYSPEHALF / 32768) };
@@ -1515,31 +1534,37 @@ void UI_VEDrawWaves(BOOL bImmdShow, BOOL bIndependlyDrawing)
 			m_pD2DDCLeftBK->DrawLine(D2DPtF1, D2DPtF2, m_pD2DBrMyBlue2, DPIS_CXWAVESLINE);
 			x -= DPIS_CXWAVESLINE;
 			i--;
-			if (i < 0 || x < m_xWaves)
+			if (i < 0 || x < m_rcWaves.left)
 				break;
 		}
-		x = m_xWaves + DPIS_CXSPEHALF;
+		x = m_rcWaves.left + DPIS_CXSPEHALF;
 
-		D2DPtF1 = { (float)x, (float)m_yWaves };
-		D2DPtF2 = { (float)x,  (float)(m_yWaves + DPIS_CYSPE) };
+		D2DPtF1 = { (float)x, (float)m_rcWaves.top };
+		D2DPtF2 = { (float)x,  (float)(m_rcWaves.top + DPIS_CYSPE) };
 		ID2D1SolidColorBrush* pD2DBrush;
 		m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &pD2DBrush);
 		m_pD2DDCLeftBK->DrawLine(D2DPtF1, D2DPtF2, pD2DBrush, DPIS_CXWAVESLINE);
 		pD2DBrush->Release();
 		m_pD2DDCLeftBK->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-		if (bImmdShow)
-		{
-			m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);// 取DC
-			HDC hDCWnd = GetDC(g_hBKLeft);
-			BitBlt(hDCWnd, rc.left, rc.top, DPIS_CXSPE, DPIS_CYSPE, hDC, rc.left, rc.top, SRCCOPY);// 区域显示
-			ReleaseDC(g_hBKLeft, hDCWnd);
-			m_pD2DGdiInteropRTLeftBK->ReleaseDC(&rc);
-		}
-
+		//if (bImmdShow)
+		//{
+		//	m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);// 取DC
+		//	HDC hDCWnd = GetDC(g_hBKLeft);
+		//	BitBlt(hDCWnd, m_rcWaves.left, m_rcWaves.top, DPIS_CXSPE, DPIS_CYSPE, hDC, m_rcWaves.left, m_rcWaves.top, SRCCOPY);// 区域显示
+		//	ReleaseDC(g_hBKLeft, hDCWnd);
+		//	m_pD2DGdiInteropRTLeftBK->ReleaseDC(&m_rcWaves);
+		//}
+        if (bIndependlyDrawing)
+            m_pD2DDCLeftBK->EndDraw();
+        if (bImmdShow)
+            m_pDXGIScLeftBK->Present(0, 0);
 	}
-	if (bIndependlyDrawing)
-		m_pD2DDCLeftBK->EndDraw();
-	// 如果用交换链上屏的话定时器频繁调用GPU占用太大，GDI区域显示可以降一下GPU占用，下面的做法跟这里相同（毕竟只是个音乐播放器嘛，还是CPU和GPU均衡一下）
+    else
+    {
+        if (bIndependlyDrawing)
+            m_pD2DDCLeftBK->EndDraw();
+    }
+    return TRUE;
 }
 void UI_VEDrawSpe(BOOL bImmdShow, BOOL bIndependlyDrawing)
 {
@@ -1564,8 +1589,7 @@ void UI_VEDrawSpe(BOOL bImmdShow, BOOL bIndependlyDrawing)
 	if (bIndependlyDrawing)
 		m_pD2DDCLeftBK->BeginDraw();
 
-	D2D_RECT_F D2DRectF = { (float)m_xSpe,(float)m_ySpe,(float)(m_xSpe + DPIS_CXSPE),(float)(m_ySpe + DPIS_CYSPE) };
-	m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &D2DRectF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRectF);// 刷背景
+	m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &m_D2DRcSpe, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_D2DRcSpe);// 刷背景
 	for (int i = 0; i < iCount; i++)
 	{
 		++iTime[i];
@@ -1595,27 +1619,30 @@ void UI_VEDrawSpe(BOOL bImmdShow, BOOL bIndependlyDrawing)
 			yMaxMark[i] = 3;// 回来
 		//////////////////绘制
 		//////////制频谱条矩形
-		D2DRectF.left = m_xSpe + (DPIS_CXSPEBAR + 1) * i;
-		D2DRectF.top = m_ySpe + DPIS_CYSPE - cySpeOld[i];
+        D2D_RECT_F D2DRectF;
+		D2DRectF.left = m_rcSpe.left + (DPIS_CXSPEBAR + 1) * i;
+		D2DRectF.top = m_rcSpe.top + DPIS_CYSPE - cySpeOld[i];
 		D2DRectF.right = D2DRectF.left + DPIS_CXSPEBAR;
-		D2DRectF.bottom = m_ySpe + DPIS_CYSPE;
+		D2DRectF.bottom = m_rcSpe.top + DPIS_CYSPE;
 		m_pD2DDCLeftBK->FillRectangle(&D2DRectF, m_pD2DBrMyBlue2);
 		//////////制峰值指示矩形
-		D2DRectF.top = m_ySpe + DPIS_CYSPE - yMaxMark[i];
+		D2DRectF.top = m_rcSpe.top + DPIS_CYSPE - yMaxMark[i];
 		D2DRectF.bottom = D2DRectF.top + 3;
 		m_pD2DDCLeftBK->FillRectangle(&D2DRectF, m_pD2DBrMyBlue2);
 	}
-	if (bImmdShow)
-	{
-		HDC hDC;
-		HRESULT hr = m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
-		HDC hDCWnd = GetDC(g_hBKLeft);
-		BitBlt(hDCWnd, m_xSpe, m_ySpe, DPIS_CXSPE, DPIS_CYSPE, hDC, m_xSpe, m_ySpe, SRCCOPY);// 区域显示
-		ReleaseDC(g_hBKLeft, hDCWnd);
-		m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
-	}
+	//if (bImmdShow)
+	//{
+	//	HDC hDC;
+	//	HRESULT hr = m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
+	//	HDC hDCWnd = GetDC(g_hBKLeft);
+	//	BitBlt(hDCWnd, m_rcSpe.left, m_rcSpe.top, DPIS_CXSPE, DPIS_CYSPE, hDC, m_rcSpe.left, m_rcSpe.top, SRCCOPY);// 区域显示
+	//	ReleaseDC(g_hBKLeft, hDCWnd);
+	//	m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
+	//}
 	if (bIndependlyDrawing)
 		m_pD2DDCLeftBK->EndDraw();
+    if (bImmdShow)
+        m_pDXGIScLeftBK->Present(0, 0);
 }
 void UI_VEDrawLrc(int yCenter, BOOL bImmdShow, BOOL bIndependlyDrawing)
 {
@@ -1651,20 +1678,22 @@ void UI_VEDrawLrc(int yCenter, BOOL bImmdShow, BOOL bIndependlyDrawing)
 	}
 
 	m_pD2DDCLeftBK->PopAxisAlignedClip();
-	if (bImmdShow)
-	{
-		HDC hDC;
-		HRESULT hr = m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
-		HDC hDCWnd = GetDC(g_hBKLeft);
-		BitBlt(hDCWnd, m_rcLrcShow.left, m_rcLrcShow.top, m_rcLrcShow.right - m_rcLrcShow.left, m_rcLrcShow.bottom - m_rcLrcShow.top,
-			hDC, m_rcLrcShow.left, m_rcLrcShow.top, SRCCOPY);// 区域显示
-		ReleaseDC(g_hBKLeft, hDCWnd);
-		m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
-	}
+	//if (bImmdShow)
+	//{
+	//	HDC hDC;
+	//	HRESULT hr = m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
+	//	HDC hDCWnd = GetDC(g_hBKLeft);
+	//	BitBlt(hDCWnd, m_rcLrcShow.left, m_rcLrcShow.top, m_rcLrcShow.right - m_rcLrcShow.left, m_rcLrcShow.bottom - m_rcLrcShow.top,
+	//		hDC, m_rcLrcShow.left, m_rcLrcShow.top, SRCCOPY);// 区域显示
+	//	ReleaseDC(g_hBKLeft, hDCWnd);
+	//	m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
+	//}
 	if (bIndependlyDrawing)
 		m_pD2DDCLeftBK->EndDraw();
+    if (bImmdShow)
+        m_pDXGIScLeftBK->Present(0, 0);
 }
-void UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing)
+BOOL UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing)
 {
 	RECT rc;
     HDC hDC;
@@ -1697,52 +1726,56 @@ void UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing)
             g_pDWTFBig->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
 
             m_pD2DDCLeftBK->DrawTextW(pszText, lstrlenW(pszText), g_pDWTFBig, &D2DRectF, m_pD2DBrMyBlue, D2D1_DRAW_TEXT_OPTIONS_CLIP);
-            if (bImmdShow)
-            {
-                HDC hDC;
-                HRESULT hr = m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
-                HDC hDCWnd = GetDC(g_hBKLeft);
-                BitBlt(hDCWnd, m_rcLrcShow.left, m_rcLrcShow.top, m_rcLrcShow.right - m_rcLrcShow.left, m_rcLrcShow.bottom - m_rcLrcShow.top,
-                    hDC, m_rcLrcShow.left, m_rcLrcShow.top, SRCCOPY);// 区域显示
-                ReleaseDC(g_hBKLeft, hDCWnd);
-                m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
-            }
+            //if (bImmdShow)
+            //{
+            //    HDC hDC;
+            //    HRESULT hr = m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
+            //    HDC hDCWnd = GetDC(g_hBKLeft);
+            //    BitBlt(hDCWnd, m_rcLrcShow.left, m_rcLrcShow.top, m_rcLrcShow.right - m_rcLrcShow.left, m_rcLrcShow.bottom - m_rcLrcShow.top,
+            //        hDC, m_rcLrcShow.left, m_rcLrcShow.top, SRCCOPY);// 区域显示
+            //    ReleaseDC(g_hBKLeft, hDCWnd);
+            //    m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
+            //}
             if (bIndependlyDrawing)
                 m_pD2DDCLeftBK->EndDraw();
-            return;
+            if (bImmdShow)
+                m_pDXGIScLeftBK->Present(0, 0);
+            return TRUE;
         }
     }
 
     m_iLrcCenter = -1;
-    g_iCurrLrcIndex = -2;
-    if (g_Lrc->iCount)
-    {
-        int iArrayCount = g_Lrc->iCount;
-        for (int i = 0; i < iArrayCount; i++)//遍历歌词数组
-        {
-            float fTempTime = ((LRCDATA*)QKArray_Get(g_Lrc, i))->fTime;
-            if (g_fTime < ((LRCDATA*)QKArray_Get(g_Lrc, 0))->fTime)//还没播到第一句
-            {
-                m_iLrcCenter = 0;
-                g_iCurrLrcIndex = -1;
-                break;
-            }
-            else if (i == iArrayCount - 1)//最后一句
-            {
-                if (g_fTime >= fTempTime)
-                {
-                    m_iLrcCenter = g_iCurrLrcIndex = i;
-                    break;
-                }
-            }
-            else if (g_fTime >= fTempTime && g_fTime < ((LRCDATA*)QKArray_Get(g_Lrc, i + 1))->fTime)//左闭右开，判断歌词区间
-            {
-                m_iLrcCenter = g_iCurrLrcIndex = i;
-                break;
-            }
-        }
-        if (m_iLrcSBPos != -1)
-            m_iLrcCenter = m_iLrcSBPos;
+	g_iCurrLrcIndex = -2;
+	if (g_Lrc->iCount)
+	{
+		int iArrayCount = g_Lrc->iCount;
+		float fTempTime;
+
+		for (int i = 0; i < iArrayCount; i++)// 遍历歌词数组
+		{
+			fTempTime = ((LRCDATA*)QKArray_Get(g_Lrc, i))->fTime;
+			if (g_fTime < ((LRCDATA*)QKArray_Get(g_Lrc, 0))->fTime)// 还没播到第一句
+			{
+				m_iLrcCenter = 0;
+				g_iCurrLrcIndex = -1;
+				break;
+			}
+			else if (i == iArrayCount - 1)// 最后一句
+			{
+				if (g_fTime >= fTempTime)
+				{
+					m_iLrcCenter = g_iCurrLrcIndex = i;
+					break;
+				}
+			}
+			else if (g_fTime >= fTempTime && g_fTime < ((LRCDATA*)QKArray_Get(g_Lrc, i + 1))->fTime)// 左闭右开，判断歌词区间
+			{
+				m_iLrcCenter = g_iCurrLrcIndex = i;
+				break;
+			}
+		}
+		if (m_iLrcSBPos != -1)
+			m_iLrcCenter = m_iLrcSBPos;
         if (m_iLrcFixedIndex != -1)
             m_iLrcCenter = m_iLrcFixedIndex;
         // 索引查找完毕
@@ -1817,16 +1850,19 @@ void UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing)
             m_iLastLrcIndex[0] = m_iLrcCenter;
             m_iLastLrcIndex[1] = g_iCurrLrcIndex;
             m_IsDraw[2] = FALSE;
-            return;
+            return TRUE;
         }
 
         m_iLastLrcIndex[0] = m_iLrcCenter;
         m_iLastLrcIndex[1] = g_iCurrLrcIndex;
-        m_IsDraw[2] = FALSE;// 如果歌词没有变化，下一次周期事件就不要再画了
+        m_IsDraw[2] = FALSE;
 
         LrcWnd_DrawLrc();
         UI_VEDrawLrc(m_rcLrcShow.top + m_cyLrcShow / 2, bImmdShow, bIndependlyDrawing);
+        return TRUE;
     }
+    else
+        return FALSE;
 }
 LRESULT CALLBACK WndProc_TBGhost(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1841,75 +1877,75 @@ LRESULT CALLBACK WndProc_TBGhost(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
         DwmSetWindowAttribute(hWnd, DWMWA_FORCE_ICONIC_REPRESENTATION, &b, sizeof(b));
     }
     return 0;
-    //case WM_DWMSENDICONICTHUMBNAIL:
-    //{
-    //    if (!m_CurrSongInfo.mi.pWICBitmap)
-    //        return 0;
+    case WM_DWMSENDICONICTHUMBNAIL:
+    {
+        if (!m_CurrSongInfo.mi.pWICBitmap)
+            return 0;
 
-    //    IWICBitmap* pWICBitmapOrg = m_CurrSongInfo.mi.pWICBitmap;
-    //    pWICBitmapOrg->AddRef();
+        IWICBitmap* pWICBitmapOrg = m_CurrSongInfo.mi.pWICBitmap;
+        pWICBitmapOrg->AddRef();
 
-    //    HBITMAP hBitmap;
-    //    UINT cx0, cy0, cx, cy, cxMax = HIWORD(lParam), cyMax = LOWORD(lParam);
+        UINT cx0, cy0, cx, cy, cxMax = HIWORD(lParam), cyMax = LOWORD(lParam);
 
-    //    pWICBitmapOrg->GetSize(&cx0, &cy0);
-    //    if ((float)cxMax / (float)cyMax > (float)cx0 / (float)cy0)// y对齐
-    //    {
-    //        cy = cyMax;
-    //        cx = cx0 * cy / cy0;
-    //    }
-    //    else// x对齐
-    //    {
-    //        cx = cxMax;
-    //        cy = cx * cy0 / cx0;
-    //    }
+        IWICBitmapLock* pWICBmpLock;
+        WICRect WICRc = { 0 };
+        pWICBitmapOrg->GetSize((UINT*)&WICRc.Width, (UINT*)&WICRc.Height);
+        pWICBitmapOrg->Lock(&WICRc, WICBitmapLockRead, &pWICBmpLock);// 取位图锁
 
-    //    IWICBitmap* pWICBmpScaled;
-    //    IWICBitmapScaler* pWICBitmapScaler;
+        UINT uBufSize;
+        BYTE* pPicData;
+        pWICBmpLock->GetDataPointer(&uBufSize, &pPicData);// 取数据指针
+        UINT uStride;
+        pWICBmpLock->GetStride(&uStride);// 取跨步
+        pWICBmpLock->GetSize(&cx0, &cy0);// 取尺寸
 
-    //    g_pWICFactory->CreateBitmapScaler(&pWICBitmapScaler);
-    //    pWICBitmapScaler->Initialize(pWICBitmapOrg, cx, cy, WICBitmapInterpolationModeCubic);
-    //    g_pWICFactory->CreateBitmapFromSource(pWICBitmapScaler, WICBitmapNoCache, &pWICBmpScaled);
-    //    pWICBitmapScaler->Release();
+        GpBitmap* pGdipBitmap;
+        GdipCreateBitmapFromScan0(cx0, cy0, uStride, PixelFormat32bppArgb, pPicData, &pGdipBitmap);// WIC位图转GP位图
 
-    //    IWICBitmap* pWICBmpResult;
+        HBITMAP hBitmap;
+        if ((float)cxMax / (float)cyMax > (float)cx0 / (float)cy0)// y对齐
+        {
+            cy = cyMax;
+            cx = cx0 * cy / cy0;
+        }
+        else// x对齐
+        {
+            cx = cxMax;
+            cy = cx * cy0 / cx0;
+        }
+        GpBitmap* pGdipBitmapBK;
+        GpGraphics* pGdipGraphics;
+        GdipCreateBitmapFromScan0(cxMax, cyMax, 0, PixelFormat32bppArgb, NULL, &pGdipBitmapBK);// 建背景位图
+        GdipGetImageGraphicsContext(pGdipBitmapBK, &pGdipGraphics);// 取背景图GP图形
+        GdipGraphicsClear(pGdipGraphics, 0x00000000);
+        GdipDrawImageRectRect(pGdipGraphics, pGdipBitmap,
+            (cxMax - cx) / 2, (cyMax - cy) / 2, (float)cx, (float)cy,
+            0, 0, (float)cx0, (float)cy0,
+            UnitPixel, NULL, NULL, NULL);// 原始图缩放到背景图上
+        GdipDeleteGraphics(pGdipGraphics);// 释放GP图形
+        GdipCreateHBITMAPFromBitmap(pGdipBitmapBK, &hBitmap, 0x00000000);// GP位图转GDI位图
+        DwmSetIconicThumbnail(hWnd, hBitmap, 0);// 置缩略图
 
-    //    g_pWICFactory->CreateBitmap(cxMax, cyMax, GUID_WICPixelFormat32bppPBGRA, WICBitmapNoCache, &pWICBmpResult);
-    //    WICRect WICrc=;
-
-    //    pWICBmpScaled->CopyPixels(,)
-    //    
-
-    //    GpBitmap* pGdipImage;
-    //    GpGraphics* pGdipGraphics;
-    //    GdipCreateBitmapFromScan0(cxMax, cyMax, 0, PixelFormat32bppArgb, NULL, &pGdipImage);
-    //    GdipGetImageGraphicsContext(pGdipImage, &pGdipGraphics);
-    //    GdipDrawImageRectRect(pGdipGraphics, m_CurrSongInfo.mi.pGdipImage,
-    //        (cxMax - cx) / 2, (cyMax - cy) / 2, (float)cx, (float)cy,
-    //        0, 0, (float)cx0, (float)cy0,
-    //        UnitPixel, NULL, NULL, NULL);
-    //    GdipDeleteGraphics(pGdipGraphics);
-    //    GdipCreateHBITMAPFromBitmap(pGdipImage, &hBitmap, 0x00000000);
-    //    DwmSetIconicThumbnail(hWnd, hBitmap, 0);
-    //    GdipDisposeImage(pGdipImage);
-    //    DeleteObject(hBitmap);
-
-    //    pWICBitmapOrg->Release();
-    //}
-    //return 0;
+        GdipDisposeImage(pGdipBitmap);
+        GdipDisposeImage(pGdipBitmapBK);// 删除GP位图
+        DeleteObject(hBitmap);// 删除GDI位图
+        pWICBmpLock->Release();// 释放WIC位图锁
+        pWICBitmapOrg->Release();
+    }
+    return 0;
     case WM_DWMSENDICONICLIVEPREVIEWBITMAP:
     {
         HBITMAP hBitmap;
         GpBitmap* pGdipImage;
-        GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppArgb, NULL, &pGdipImage);// 很小且全透明
-        POINT pt = {};
+        GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppArgb, NULL, &pGdipImage);// 1x1
+        POINT pt = { 0 };
         GdipCreateHBITMAPFromBitmap(pGdipImage, &hBitmap, 0x00000000);
         DwmSetIconicLivePreviewBitmap(m_hTBGhost, hBitmap, &pt, 0);
         GdipDisposeImage(pGdipImage);
         DeleteObject(hBitmap);
     }
 	return 0;
-    case WM_ACTIVATE:// 窗口激活，转发（就是点击缩略图激活的那个操作）
+    case WM_ACTIVATE:// 窗口激活，转发（点击缩略图激活）
     {
         SetForegroundWindow(g_hMainWnd);
         if (!g_pITaskbarList)
@@ -1929,9 +1965,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     static int cxClient, cyClient;
     if (message == WM_TASKBARBUTTONCREATED)
     {
+        if (!m_hTBGhost)
+        {
+            m_hTBGhost = CreateWindowExW(0, TBGHOSTWNDCLASS, NULL,
+                WS_POPUP | WS_CAPTION, -32000, -32000, 10, 10, NULL, NULL, g_hInst, NULL);// WS_CAPTION是必须的，否则选项卡不会注册成功
+        }
+
         g_pITaskbarList->UnregisterTab(m_hTBGhost);
         g_pITaskbarList->RegisterTab(m_hTBGhost, hWnd);
-        g_pITaskbarList->SetTabOrder(m_hTBGhost, NULL);
+        g_pITaskbarList->SetTabOrder(m_hTBGhost, hWnd);
 
         THUMBBUTTON tb[3];
         THUMBBUTTONMASK dwMask = THB_ICON | THB_TOOLTIP;
@@ -1996,11 +2038,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         g_Lrc = QKArray_Create(0);
         g_ItemData = QKArray_Create(0);
-        ///////////////////////////创建用于支持任务栏操作的幽灵窗口（生命周期与主窗口相同）
-        g_hMainWnd = hWnd;
-        m_hTBGhost = CreateWindowExW(0, TBGHOSTWNDCLASS, ((CREATESTRUCTW*)lParam)->lpszName, 
-			WS_POPUP | WS_CAPTION, -32000, -32000, 10, 10, NULL, NULL, g_hInst, NULL);// WS_CAPTION是必须的，否则选项卡不会注册成功
         ///////////////////////////初始化.....
+        g_hMainWnd = hWnd;
         g_iDPI = QKGetDPIForWindow(hWnd);
         UI_UpdateDPISize();
         g_cxBKList = DPIS_DEFCXLV;
@@ -2053,20 +2092,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         SetWindowLongPtrW(hCtrl2, GWLP_WNDPROC, (LONG_PTR)WndProc_LeftBK);
         SendMessageW(hCtrl2, LEFTBKM_INIT, 0, 0);
-        ///////////////////////////进度滑块条
-        hCtrl = CreateWindowExW(0, QKCCN_TRACKBAR, NULL, WS_CHILD | WS_VISIBLE,
-            0, 0, 0, 0,
-            hCtrl2, (HMENU)IDC_TB_PGS, g_hInst, NULL);
-        g_hTBProgess = hCtrl;
-        SendMessageW(hCtrl, QKCTBM_SETPROC, FALSE, (LPARAM)QKCProc_TBPaint);
-        SendMessageW(hCtrl, QKCTBM_GETRANGE, FALSE, MAKELONG(0, 10));
-        ///////////////////////////底部按钮容器
-        //hCtrl2 = CreateWindowExW(0, BKWNDCLASS, NULL, WS_CHILD | WS_VISIBLE,
-        //    0, 0, GC.cxBKBtm, GC.cyBT,
-        //    hCtrl2, (HMENU)IDC_BK_BOTTOMBTBK, g_hInst, NULL);
-        //g_hBKBtm = hCtrl2;
-        //SetWindowLongPtrW(hCtrl2, GWLP_WNDPROC, (LONG_PTR)WndProc_BtmBK);
-       
+        m_hdcLeftBK = GetDC(hCtrl2);    
         ///////////////////////////分隔条
         hCtrl = CreateWindowExW(0, QKCCN_SEPARATEBAR, NULL, WS_CHILD | WS_VISIBLE,
             0, 0, 0, 0, hWnd, (HMENU)IDC_SEB, g_hInst, NULL);
@@ -2081,7 +2107,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         g_hBKList = hCtrl;
 
         UI_PreProcessAlbumImage(&m_CurrSongInfo.mi.pWICBitmap);
-        //GdipLoadImageFromFile(g_pszDefPic, &m_CurrSongInfo.mi.pGdipImage);
         UI_UpdateLeftBK();
 	}
 	return 0;
@@ -2108,7 +2133,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
     {
         if (wParam == SIZE_MINIMIZED)
+        {
+            m_bWndMinimized = TRUE;
             return 0;
+        }
         cxClient = LOWORD(lParam);
         cyClient = HIWORD(lParam);
 
@@ -2280,6 +2308,13 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     static HWND hDlg = NULL;
     static int i;
     static D2D_RECT_F D2DRcTimeLabel = { (float)m_rcBtmBK.left,(float)m_rcBtmBK.top,(float)(m_rcBtmBK.left + DPIS_CXTIME),(float)m_rcBtmBK.bottom };
+    static RECT rcTimeLabel = { 0 };
+
+    static RECT rcTrackBar = { 0 };
+    static D2D_RECT_F D2DRcTrackBar = { 0 };
+    static BOOL bTBLBtnDown = FALSE;
+    static UINT uTBMax = 0;
+    static UINT uTBPos = 0;
 	switch (message)
 	{
 	case WM_PAINT:
@@ -2294,19 +2329,31 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         m_cxLeftBK = LOWORD(lParam);
         m_cyLeftBK = HIWORD(lParam);
         /////////////////////////调整窗口，更新绘制矩形
+        int xSpe, ySpe, xWaves, yWaves;
         if (m_bLrcShow)
         {
-            SetRect(&m_rcLrcShow,
+            ////////////////制滚动歌词区矩形
+            m_rcLrcShow = 
+            {
                 DPIS_CXPIC + DPIS_EDGE * 2,
                 DPIS_CYTOPBK + DPIS_EDGE,
                 m_cxLeftBK - DPIS_EDGE,
-                m_cyLeftBK - GC.cyBT - DPIS_CYPROGBAR);
+                m_cyLeftBK - GC.cyBT - DPIS_CYPROGBAR 
+            };
             m_cxLrcShow = m_rcLrcShow.right - m_rcLrcShow.left;
             m_cyLrcShow = m_rcLrcShow.bottom - m_rcLrcShow.top;
-            m_xSpe = DPIS_EDGE;
-            m_ySpe = DPIS_CYTOPBK + DPIS_EDGE + DPIS_CXPIC + DPIS_EDGE;
-            m_xWaves = DPIS_EDGE;
-            m_yWaves = m_ySpe + DPIS_EDGE + DPIS_CYSPE;
+            m_D2DRcLrcShow = { (float)m_rcLrcShow.left,(float)m_rcLrcShow.top,(float)m_rcLrcShow.right,(float)m_rcLrcShow.bottom };
+            ////////////////制频谱区矩形
+            xSpe = DPIS_EDGE;
+            ySpe = DPIS_CYTOPBK + DPIS_EDGE + DPIS_CXPIC + DPIS_EDGE;
+            m_rcSpe = { xSpe,ySpe,xSpe + DPIS_CXSPE,ySpe + DPIS_CYSPE };
+            m_D2DRcSpe = { (float)m_rcSpe.left,(float)m_rcSpe.top,(float)m_rcSpe.right,(float)m_rcSpe.bottom };
+            ////////////////制波形区矩形
+            xWaves = DPIS_EDGE;
+            yWaves = m_rcSpe.top + DPIS_EDGE + DPIS_CYSPE;
+            m_rcWaves = { xWaves,yWaves,xWaves + DPIS_CXSPE,yWaves + DPIS_CYSPE };
+            m_D2DRcWaves = { (float)m_rcWaves.left,(float)m_rcWaves.top,(float)m_rcWaves.right,(float)m_rcWaves.bottom };
+
             m_LrcHScrollInfo.iIndex = -1;
             m_LrcHScrollInfo.bWndSizeChangedFlag = TRUE;
         }
@@ -2315,25 +2362,31 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             int cxSpe = (m_cxLeftBK - DPIS_EDGE * 2) / (DPIS_CXSPEBAR + DPIS_CXSPEBARDIV) * (DPIS_CXSPEBAR + DPIS_CXSPEBARDIV);
             if (cxSpe > DPIS_CXSPE)
                 cxSpe = DPIS_CXSPE;
-            SetRect(&m_rcLrcShow, 0, 0, 0, 0);
+            ////////////////清零滚动歌词区矩形
+            m_rcLrcShow = { 0 };
             m_cxLrcShow = 0;
             m_cyLrcShow = 0;
-            m_xSpe = (m_cxLeftBK - (cxSpe * 2 + DPIS_EDGE)) / 2;
-            m_ySpe = m_cyLeftBK - GC.cyBT - DPIS_CYPROGBAR - DPIS_CYSPE;
-            m_xWaves = m_xSpe + DPIS_EDGE + DPIS_CXSPE;
-            m_yWaves = m_ySpe;
+            m_D2DRcLrcShow = { 0 };
+            ////////////////制频谱区矩形
+            xSpe = (m_cxLeftBK - (cxSpe * 2 + DPIS_EDGE)) / 2;
+            ySpe = m_cyLeftBK - GC.cyBT - DPIS_CYPROGBAR - DPIS_CYSPE;
+            m_rcSpe = { xSpe,ySpe,xSpe + DPIS_CXSPE,ySpe + DPIS_CYSPE };
+            m_D2DRcSpe = { (float)m_rcSpe.left,(float)m_rcSpe.top,(float)m_rcSpe.right,(float)m_rcSpe.bottom };
+            ////////////////制波形区矩形
+            xWaves = m_rcSpe.left + DPIS_EDGE + DPIS_CXSPE;
+            yWaves = m_rcSpe.top;
+            m_rcWaves = { xWaves,yWaves,xWaves + DPIS_CXSPE,yWaves + DPIS_CYSPE };
+            m_D2DRcWaves = { (float)m_rcWaves.left,(float)m_rcWaves.top,(float)m_rcWaves.right,(float)m_rcWaves.bottom };
         }
 
-        SetWindowPos(g_hTBProgess, 0,
-            0,
-            m_cyLeftBK - GC.cyBT - DPIS_CYPROGBAR,
-            m_cxLeftBK,
-            DPIS_CYPROGBAR,
-            SWP_NOZORDER);//进度条
-        m_xBtmBK = (m_cxLeftBK - GC.cxBKBtm) / 2;
-        m_yBtmBK = m_cyLeftBK - GC.cyBT;
+        rcTrackBar = { DPI(6),m_cyLeftBK - GC.cyBT - DPIS_CYPROGBAR,m_cxLeftBK - DPI(6),0 };
+        rcTrackBar.bottom = rcTrackBar.top + DPIS_CYPROGBAR;
+        D2DRcTrackBar = { (float)rcTrackBar.left,(float)rcTrackBar.top,(float)rcTrackBar.right,(float)rcTrackBar.bottom };
 
-        m_rcBtmBK = { m_xBtmBK ,m_yBtmBK ,m_xBtmBK + GC.cxBKBtm,m_yBtmBK + GC.cyBT };
+        int xBtmBK = (m_cxLeftBK - GC.cxBKBtm) / 2;
+        int yBtmBK = m_cyLeftBK - GC.cyBT;
+
+        m_rcBtmBK = { xBtmBK,yBtmBK,xBtmBK + GC.cxBKBtm,yBtmBK + GC.cyBT };
 
         rcLrcSB =
         {
@@ -2351,8 +2404,6 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             rcLrcSBThumb.bottom = rcLrcSBThumb.top + iThumbSize;
         }
         /////////////////////////重建内存DC
-
-
         DeleteDC(m_hcdcLeftBK);
         DeleteDC(m_hcdcLeftBK2);
         DeleteObject(m_hbmpLeftBK);
@@ -2371,10 +2422,10 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         if (!m_pDXGIScLeftBK || !m_pD2DDCLeftBK)
             return 0;
 
-        m_pD2DDCLeftBK->SetTarget(NULL);
+        m_pD2DDCLeftBK->SetTarget(NULL);// 移除引用
         m_pD2DBmpLeftBK->Release();
         m_pDXGISfceLeftBK->Release();
-        HRESULT hr = m_pDXGIScLeftBK->ResizeBuffers(0, m_cxLeftBK, m_cyLeftBK, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE);
+        HRESULT hr = m_pDXGIScLeftBK->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE);
 
         hr = m_pDXGIScLeftBK->GetBuffer(0, IID_PPV_ARGS(&m_pDXGISfceLeftBK));
 		D2D1_BITMAP_PROPERTIES1 D2DBmpProp =
@@ -2395,33 +2446,13 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         UI_UpdateLeftBK();
     }
     return 0;
-    case WM_HSCROLL:// 进度滑块条
-    {
-        switch (LOWORD(wParam))
-        {
-        case TB_THUMBTRACK:
-            KillTimer(g_hMainWnd, IDT_PGS);
-            return 0;
-        case TB_THUMBPOSITION:
-            BASS_ChannelSetPosition(
-                g_hStream,
-                BASS_ChannelSeconds2Bytes(
-                    g_hStream,
-                    SendMessageW(g_hTBProgess, QKCTBM_GETPOS, 0, 0) / 100),
-                BASS_POS_BYTE
-            );// 设置位置
-            SetTimer(g_hMainWnd, IDT_PGS, TIMERELAPSE_PGS, TimerProc);
-            return 0;
-        }
-    }
-    return 0;
-    case WM_LBUTTONDOWN:// 左键按下得焦点
+    case WM_LBUTTONDOWN:
     {
         iDelayTime = 5;
         POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-        if (PtInRect(&m_rcLrcShow, pt))
+        if (PtInRect(&m_rcLrcShow, pt))// 在滚动歌词区
             SetFocus(hWnd);
-        else if (PtInRect(&rcLrcSB, pt))
+        else if (PtInRect(&rcLrcSB, pt))// 在歌词滚动条区
         {
             if (PtInRect(&rcLrcSBThumb, pt))
             {
@@ -2430,7 +2461,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
                 SetCapture(hWnd);
             }
         }
-        else if (PtInRect(&m_rcBtmBK, pt))
+        else if (PtInRect(&m_rcBtmBK, pt))// 在底部按钮区
         {
             POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
             SetCapture(hWnd);
@@ -2438,149 +2469,179 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             if (iPushed == -1)
                 ReleaseCapture();
             else
-                WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, 0, 0);
+				WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
+        }
+        else if (PtInRect(&rcTrackBar, pt))// 在进度条区
+        {
+            bTBLBtnDown = TRUE;
+            SetCapture(hWnd);
         }
     }
     return 0;
     case WM_LBUTTONUP:
     {
-        bSBLBtnDown = FALSE;
-        ReleaseCapture();
-        if (iPushed == -1)
-            return 0;
-        i = iPushed;
-        iPushed = -1;
         static POINT pt;
         pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-        if (i != HitTest_BtmBK(pt))
-            return 0;
-        ti.lpszText = NULL;
-        SendMessageW(hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&ti);
-        SendMessageW(hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&ti);
-        WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, 0, 0);
-        switch (i)
+
+        if (bSBLBtnDown)
         {
-        case 0:// 上一曲
-        BTOpe_Last:
-        {
-            if (g_iCurrFileIndex == -1)
-                return 0;
-            Playing_PlayNext(TRUE);
+            bSBLBtnDown = FALSE;
+            ReleaseCapture();
         }
-        break;
-        case 1:// 播放/暂停
-        BTOpe_Play:
+        else if (bTBLBtnDown)
+		{
+			bTBLBtnDown = FALSE;
+			ReleaseCapture();
+			if (PtInRect(&rcTrackBar, pt))
+			{
+				BASS_ChannelSetPosition(
+					g_hStream,
+					BASS_ChannelSeconds2Bytes(
+						g_hStream,
+						(float)(pt.x - rcTrackBar.left) * (float)uTBMax / (float)(rcTrackBar.right - rcTrackBar.left) / 100.0f),
+					BASS_POS_BYTE
+				);// 设置位置
+			}
+		}
+        else if (PtInRect(&m_rcBtmBK, pt))
         {
-            if (g_iCurrFileIndex == -1)
+            if (iPushed == -1)
                 return 0;
-            DWORD dwState = BASS_ChannelIsActive(g_hStream);
-            if (dwState == BASS_ACTIVE_PLAYING)
-                WndProc_LeftBK(hWnd, LEFTBKM_SETPLAYBTICON, TRUE, 0);
-            else if (dwState == BASS_ACTIVE_PAUSED)
-                WndProc_LeftBK(hWnd, LEFTBKM_SETPLAYBTICON, FALSE, 0);
-        }
-        break;
-        case 2:// 停止
-            if (g_iCurrFileIndex == -1)
+            i = iPushed;
+            iPushed = -1;
+
+            ReleaseCapture();
+
+            if (i != HitTest_BtmBK(pt))
                 return 0;
-            Playing_Stop();
-            break;
-        case 3:// 下一曲
-        BTOpe_Next:
-            if (g_iCurrFileIndex == -1)
-                return 0;
-            Playing_PlayNext();
-            break;
-        case 4:// 歌词
-        {
-            HMENU hMenu = CreatePopupMenu();
-            AppendMenuW(hMenu, IsWindow(g_hLrcWnd) ? MF_CHECKED : 0, IDMI_LRC_SHOW, L"桌面歌词");
-            AppendMenuW(hMenu, m_bLrcShow ? MF_CHECKED : 0, IDMI_LRC_LRCSHOW, L"滚动歌词");
-            AppendMenuW(hMenu, GS.bForceTwoLines ? MF_CHECKED : 0, IDMI_LRC_FORCETWOLINES, L"禁止自动换行");
-            RECT rc;
-            GetWindowRect(hWnd, &rc);
-            int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, 
-                rc.left + D2DRcTimeLabel.right + GC.cyBT * 4, rc.top + D2DRcTimeLabel.bottom, 0, g_hMainWnd, NULL);
-            DestroyMenu(hMenu);
-            switch (iRet)
+            ti.lpszText = NULL;
+            SendMessageW(hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&ti);
+            SendMessageW(hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&ti);
+            WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
+            switch (i)
             {
-            case IDMI_LRC_SHOW:
+            case 0:// 上一曲
+            BTOpe_Last:
             {
-                LrcWnd_Show();
+                if (g_iCurrFileIndex == -1)
+                    return 0;
+                Playing_PlayNext(TRUE);
             }
             break;
-            case IDMI_LRC_LRCSHOW:
+            case 1:// 播放/暂停
+            BTOpe_Play:
             {
-                m_bLrcShow = !m_bLrcShow;
+                if (g_iCurrFileIndex == -1)
+                    return 0;
+                DWORD dwState = BASS_ChannelIsActive(g_hStream);
+                if (dwState == BASS_ACTIVE_PLAYING)
+                    WndProc_LeftBK(hWnd, LEFTBKM_SETPLAYBTICON, TRUE, 0);
+                else if (dwState == BASS_ACTIVE_PAUSED)
+                    WndProc_LeftBK(hWnd, LEFTBKM_SETPLAYBTICON, FALSE, 0);
+            }
+            break;
+            case 2:// 停止
+                if (g_iCurrFileIndex == -1)
+                    return 0;
+                Playing_Stop();
+                break;
+            case 3:// 下一曲
+            BTOpe_Next:
+                if (g_iCurrFileIndex == -1)
+                    return 0;
+                Playing_PlayNext();
+                break;
+            case 4:// 歌词
+            {
+                HMENU hMenu = CreatePopupMenu();
+                AppendMenuW(hMenu, IsWindow(g_hLrcWnd) ? MF_CHECKED : 0, IDMI_LRC_SHOW, L"桌面歌词");
+                AppendMenuW(hMenu, m_bLrcShow ? MF_CHECKED : 0, IDMI_LRC_LRCSHOW, L"滚动歌词");
+                AppendMenuW(hMenu, GS.bForceTwoLines ? MF_CHECKED : 0, IDMI_LRC_FORCETWOLINES, L"禁止自动换行");
                 RECT rc;
-                GetClientRect(g_hBKLeft, &rc);
-                SendMessageW(g_hBKLeft, WM_SIZE, 0, MAKELONG(rc.right, rc.bottom));
+                GetWindowRect(hWnd, &rc);
+                int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD,
+                    rc.left + D2DRcTimeLabel.right + GC.cyBT * 4, rc.top + D2DRcTimeLabel.bottom, 0, g_hMainWnd, NULL);
+                DestroyMenu(hMenu);
+                switch (iRet)
+                {
+                case IDMI_LRC_SHOW:
+                {
+                    LrcWnd_Show();
+                }
+                break;
+                case IDMI_LRC_LRCSHOW:
+                {
+                    m_bLrcShow = !m_bLrcShow;
+                    RECT rc;
+                    GetClientRect(g_hBKLeft, &rc);
+                    SendMessageW(g_hBKLeft, WM_SIZE, 0, MAKELONG(rc.right, rc.bottom));
+                }
+                break;
+                case IDMI_LRC_FORCETWOLINES:
+                {
+                    if (GS.bForceTwoLines)
+                    {
+                        GS.bForceTwoLines = FALSE;
+                        KillTimer(g_hMainWnd, IDT_ANIMATION);
+                    }
+                    else
+                        GS.bForceTwoLines = TRUE;
+
+                    m_IsDraw[2] = TRUE;
+                    TimerProc(NULL, 0, IDT_DRAWING_LRC, 0);
+                }
+                break;
+                }
             }
             break;
-            case IDMI_LRC_FORCETWOLINES:
-            {
-                if (GS.bForceTwoLines)
+            case 5:// 循环方式
+                iRepeatMode++;
+                if (iRepeatMode > 4)
+                    iRepeatMode %= 5;
+                WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
+                goto ShowToolTip;
+                break;
+            case 6:// 播放设置
+                if (!IsWindow(hDlg))
                 {
-                    GS.bForceTwoLines = FALSE;
-                    KillTimer(g_hMainWnd, IDT_ANIMATION);
+                    hDlg = CreateDialogParamW(g_hInst, MAKEINTRESOURCEW(IDD_EFFECT), hWnd, DlgProc_Effect, 0);
+                    ShowWindow(hDlg, SW_SHOW);
                 }
                 else
-                    GS.bForceTwoLines = TRUE;
-
-                m_IsDraw[2] = TRUE;
-                TimerProc(NULL, 0, IDT_DRAWING_LRC, 0);
-            }
-            break;
-            }
-        }
-        break;
-        case 5:// 循环方式
-            iRepeatMode++;
-            if (iRepeatMode > 4)
-                iRepeatMode %= 5;
-            InvalidateRect(hWnd, NULL, FALSE);
-            goto ShowToolTip;
-            break;
-        case 6:// 播放设置
-            if (!IsWindow(hDlg))
-            {
-                hDlg = CreateDialogParamW(g_hInst, MAKEINTRESOURCEW(IDD_EFFECT), hWnd, DlgProc_Effect, 0);
-                ShowWindow(hDlg, SW_SHOW);
-            }
-            else
-                SetFocus(hDlg);
-            break;
-        case 7:// 播放列表
-        {
-            HMENU hMenu = CreatePopupMenu();
-            AppendMenuW(hMenu, g_bListSeped ? MF_CHECKED : 0, IDMI_PL_SEPARATE, L"将列表从主窗口拆离");//MF_STRING缺省
-            AppendMenuW(hMenu, g_bListHidden ? 0 : MF_CHECKED, IDMI_PL_SHOW, L"显示播放列表");
-            RECT rc;
-            GetWindowRect(hWnd, &rc);
-            int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, 
-                rc.left + D2DRcTimeLabel.right + GC.cyBT * 7, rc.top + D2DRcTimeLabel.bottom, 0, g_hMainWnd, NULL);
-            DestroyMenu(hMenu);
-            switch (iRet)
-            {
-            case IDMI_PL_SEPARATE:
-                UI_SeparateListWnd(!g_bListSeped);
+                    SetFocus(hDlg);
                 break;
-            case IDMI_PL_SHOW:
-                UI_ShowList(g_bListHidden);
+            case 7:// 播放列表
+            {
+                HMENU hMenu = CreatePopupMenu();
+                AppendMenuW(hMenu, g_bListSeped ? MF_CHECKED : 0, IDMI_PL_SEPARATE, L"将列表从主窗口拆离");//MF_STRING缺省
+                AppendMenuW(hMenu, g_bListHidden ? 0 : MF_CHECKED, IDMI_PL_SHOW, L"显示播放列表");
+                RECT rc;
+                GetWindowRect(hWnd, &rc);
+                int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD,
+                    rc.left + D2DRcTimeLabel.right + GC.cyBT * 7, rc.top + D2DRcTimeLabel.bottom, 0, g_hMainWnd, NULL);
+                DestroyMenu(hMenu);
+                switch (iRet)
+                {
+                case IDMI_PL_SEPARATE:
+                    UI_SeparateListWnd(!g_bListSeped);
+                    break;
+                case IDMI_PL_SHOW:
+                    UI_ShowList(g_bListHidden);
+                    break;
+                }
+            }
+            break;
+            case 8:// 设置
+                DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_OPTIONS), g_hMainWnd, DlgProc_Settings, 0);
+                break;
+            case 9:// 关于
+                DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_ABOUT), g_hMainWnd, DlgProc_About, 0);
                 break;
             }
-        }
-        break;
-        case 8:// 设置
-            DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_OPTIONS), g_hMainWnd, DlgProc_Settings, 0);
-            break;
-        case 9:// 关于
-            DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_ABOUT), g_hMainWnd, DlgProc_About, 0);
-            break;
         }
     }
     return 0;
-    case WM_MOUSEWHEEL:// 鼠标滚轮滚动
+    case WM_MOUSEWHEEL:
     {
         if (!g_Lrc->iCount)
             return 0;
@@ -2596,13 +2657,13 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             m_iLrcSBPos = iSBMax;
         else
             m_iLrcSBPos = m_iLrcSBPos + iDistance;
-        WndProc_LeftBK(hWnd, LEFTBKM_REDRAWSB, TRUE, 0);
+        WndProc_LeftBK(hWnd, LEFTBKM_REDRAWSB, FALSE, TRUE);
         m_IsDraw[2] = TRUE;
-        TimerProc(NULL, 0, IDT_DRAWING_LRC, 0);
+        UI_VEProcLrcShowing();
         SetTimer(hWnd, IDT_LRCSCROLL, TIMERELAPSE_LRCSCROLL, NULL);
     }
     return 0;
-	case WM_TIMER:// 延时隐藏滑块条
+	case WM_TIMER:
 	{
 		switch (wParam)
 		{
@@ -2613,7 +2674,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			{
 				KillTimer(hWnd, IDT_LRCSCROLL);
 				m_iLrcSBPos = -1;
-				WndProc_LeftBK(hWnd, LEFTBKM_REDRAWSB, TRUE, 0);
+				WndProc_LeftBK(hWnd, LEFTBKM_REDRAWSB, TRUE, TRUE);
 			}
 		}
         return 0;
@@ -2628,43 +2689,57 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				return 0;
 			}
 
-            m_pD2DDCLeftBK->BeginDraw();
-
-            static int iMinOld = -1, iMin2Old = -1;
-
-			int iMin = g_fTime / 60,
-				iMin2 = g_llLength / 1000 / 60;
-            if (iMin != iMinOld || iMin2 != iMin2Old)
+            if (!m_bWndMinimized)
             {
-                wsprintfW(szTime, L"%02d:%02d/%02d:%02d",
-                    iMin,
-                    (int)g_fTime - iMin * 60,
-                    iMin2,
-                    (int)(g_llLength / 1000) - iMin2 * 60);
+                m_pD2DDCLeftBK->BeginDraw();
 
-                m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &D2DRcTimeLabel, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRcTimeLabel);
-                ID2D1SolidColorBrush* pD2DBrush;
-                m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &pD2DBrush);
-                g_pDWTFNormal->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-                g_pDWTFNormal->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-                m_pD2DDCLeftBK->DrawTextW(szTime, lstrlenW(szTime), g_pDWTFNormal, &D2DRcTimeLabel, pD2DBrush, D2D1_DRAW_TEXT_OPTIONS_CLIP);
-                pD2DBrush->Release();
+                //////////////////////////画进度提示
+                static int iMinOld = -1, iMin2Old = -1;
 
+                int iMin = g_fTime / 60,
+                    iMin2 = g_llLength / 1000 / 60;
+                if (iMin != iMinOld || iMin2 != iMin2Old)
+                {
+                    wsprintfW(szTime, L"%02d:%02d/%02d:%02d",
+                        iMin,
+                        (int)g_fTime - iMin * 60,
+                        iMin2,
+                        (int)(g_llLength / 1000) - iMin2 * 60);
 
-                HDC hDC;
-                m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
-                HDC hDCWnd = GetDC(hWnd);
-                BitBlt(hDCWnd, D2DRcTimeLabel.left, D2DRcTimeLabel.top, DPIS_CXTIME, GC.cyBT, hDC, D2DRcTimeLabel.left, D2DRcTimeLabel.top, SRCCOPY);
-                ReleaseDC(hWnd, hDCWnd);
-                m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
+                    m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &D2DRcTimeLabel, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRcTimeLabel);
+                    ID2D1SolidColorBrush* pD2DBrush;
+                    m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &pD2DBrush);
+                    g_pDWTFNormal->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+                    g_pDWTFNormal->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+                    m_pD2DDCLeftBK->DrawTextW(szTime, lstrlenW(szTime), g_pDWTFNormal, &D2DRcTimeLabel, pD2DBrush, D2D1_DRAW_TEXT_OPTIONS_CLIP);
+                    pD2DBrush->Release();
+                }
+                //////////////////////////画波形
+                BOOL bWavesDraw = UI_VEDrawWaves(FALSE, FALSE);
+                //////////////////////////画频谱
+                UI_VEDrawSpe(FALSE, FALSE);
+                //////////////////////////画歌词
+                BOOL bLrcDraw = UI_VEProcLrcShowing(FALSE, FALSE);
+                //////////////////////////画进度条
+                uTBPos = g_fTime * 100;
+                WndProc_LeftBK(hWnd, LEFTBKM_REDRAWTRACKBAR, FALSE, FALSE);
+                //GDI上屏狗都不用
+                //HDC hDC;
+                //m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
+                //HDC hDCWnd = GetDC(hWnd);
+                //HDC hDCWnd = m_hdcLeftBK;
+                //
+                //if (bWavesDraw)
+                //	BitBlt(hDCWnd, m_rcWaves.left, m_rcWaves.top, DPIS_CXSPE, DPIS_CYSPE, hDC, m_rcWaves.left, m_rcWaves.top, SRCCOPY);// 显示波形
+                //BitBlt(hDCWnd, m_rcSpe.left, m_rcSpe.top, DPIS_CXSPE, DPIS_CYSPE, hDC, m_rcSpe.left, m_rcSpe.top, SRCCOPY);// 显示频谱
+                //BitBlt(hDCWnd, rcTimeLabel.left, rcTimeLabel.top, DPIS_CXTIME, GC.cyBT, hDC, rcTimeLabel.left, rcTimeLabel.top, SRCCOPY);// 显示进度提示
+                //if (bLrcDraw)
+                //	BitBlt(hDCWnd, m_rcLrcShow.left, m_rcLrcShow.top, m_cxLrcShow, m_cyLrcShow, hDC, m_rcLrcShow.left, m_rcLrcShow.top, SRCCOPY);// 显示歌词
+                ////ReleaseDC(hWnd, hDCWnd);
+                //m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
+                m_pD2DDCLeftBK->EndDraw();
+                m_pDXGIScLeftBK->Present(0, 0);
             }
-
-
-
-
-			m_pD2DDCLeftBK->EndDraw();
-
-			SendMessageW(g_hTBProgess, QKCTBM_SETPOS, TRUE, (LPARAM)g_fTime * 100);
 			if (g_pITaskbarList)
 				g_pITaskbarList->SetProgressValue(g_hMainWnd, (ULONGLONG)g_fTime * 100, (ULONGLONG)g_llLength / 10);
 
@@ -2696,7 +2771,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             if (iLastPos != i)
             {
                 iLastPos = m_iLrcSBPos = i;
-                WndProc_LeftBK(hWnd, LEFTBKM_REDRAWSB, TRUE, 0);
+                WndProc_LeftBK(hWnd, LEFTBKM_REDRAWSB, FALSE, TRUE);
                 UI_VEDrawLrc(m_rcLrcShow.top + m_cyLeftBK / 2);
             }
         }
@@ -2751,7 +2826,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
                     SendMessageW(hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&ti);
                     SendMessageW(hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&ti);
                     iLastHot = iHot;
-                    WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, 0, 0);
+                    WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
                 }
                 TRACKMOUSEEVENT tme;
                 tme.cbSize = sizeof(tme);
@@ -2766,7 +2841,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             if (bInBTBK)
             {
                 bInBTBK = FALSE;
-                WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, 0, 0);
+                WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
             }
         }
     }
@@ -2779,7 +2854,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             SendMessageW(hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&ti);
             SendMessageW(hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&ti);
             iLastHot = iHot = -1;
-            WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, 0, 0);
+            WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
         }
 
         if (m_iLrcFixedIndex != -1)
@@ -2870,50 +2945,45 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     return 0;
     case LEFTBKM_REDRAWSB:
     {
-        if (iSBMax)
-        {
-            rcLrcSBThumb.left = rcLrcSB.left;
-            rcLrcSBThumb.top = m_rcLrcShow.top + m_iLrcSBPos * (rcLrcSB.bottom - rcLrcSB.top - iThumbSize) / iSBMax;
-            rcLrcSBThumb.right = rcLrcSB.right;
-            rcLrcSBThumb.bottom = rcLrcSBThumb.top + iThumbSize;
+		if (iSBMax)
+		{
+			rcLrcSBThumb.left = rcLrcSB.left;
+			rcLrcSBThumb.top = m_rcLrcShow.top + m_iLrcSBPos * (rcLrcSB.bottom - rcLrcSB.top - iThumbSize) / iSBMax;
+			rcLrcSBThumb.right = rcLrcSB.right;
+			rcLrcSBThumb.bottom = rcLrcSBThumb.top + iThumbSize;
 
-            m_pD2DDCLeftBK->BeginDraw();
+			if (lParam)
+				m_pD2DDCLeftBK->BeginDraw();
 
-            D2D_RECT_F D2DRectF1 = { rcLrcSB.left,rcLrcSB.top,rcLrcSB.right,rcLrcSB.bottom },
-                D2DRectF2 = { rcLrcSBThumb.left,rcLrcSBThumb.top,rcLrcSBThumb.right,rcLrcSBThumb.bottom };
+			D2D_RECT_F D2DRectF1 = { rcLrcSB.left,rcLrcSB.top,rcLrcSB.right,rcLrcSB.bottom },
+				D2DRectF2 = { rcLrcSBThumb.left,rcLrcSBThumb.top,rcLrcSBThumb.right,rcLrcSBThumb.bottom };
+			m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &D2DRectF1, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRectF1);
 
-            if (wParam)
-                m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &D2DRectF1, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRectF1);
-                //BitBlt(m_hcdcLeftBK2, rcLrcSB.left, rcLrcSB.top, rcLrcSB.right - rcLrcSB.left, rcLrcSB.bottom - rcLrcSB.top,
-                //    m_hcdcLeftBK, rcLrcSB.left, rcLrcSB.top, SRCCOPY);
-
-            if (m_iLrcSBPos != -1)
-                m_pD2DDCLeftBK->FillRectangle(&D2DRectF2, m_pD2DBrMyBlue);
+			if (m_iLrcSBPos != -1)
+				m_pD2DDCLeftBK->FillRectangle(&D2DRectF2, m_pD2DBrMyBlue);
 
 
-            ID2D1GdiInteropRenderTarget* pD2DGdiInteropRT;
-            m_pD2DDCLeftBK->QueryInterface(IID_PPV_ARGS(&pD2DGdiInteropRT));// 取GDI兼容渲染目标
-            HDC hDC;
-            HRESULT hr = pD2DGdiInteropRT->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
-            HDC hDCWnd = GetDC(g_hBKLeft);
-            BitBlt(hDCWnd, rcLrcSB.left, rcLrcSB.top, rcLrcSB.right - rcLrcSB.left, rcLrcSB.bottom - rcLrcSB.top,
-                hDC, rcLrcSB.left, rcLrcSB.top, SRCCOPY);// 区域显示
-            ReleaseDC(g_hBKLeft, hDCWnd);
-            pD2DGdiInteropRT->ReleaseDC(NULL);
-            pD2DGdiInteropRT->Release();
-
-            //HDC hDC = GetDC(hWnd);
-            //BitBlt(hDC, rcLrcSB.left, rcLrcSB.top, rcLrcSB.right - rcLrcSB.left, rcLrcSB.bottom - rcLrcSB.top,
-            //    m_hcdcLeftBK2, rcLrcSB.left, rcLrcSB.top, SRCCOPY);
-            //ReleaseDC(hWnd, hDC);
-            m_pD2DDCLeftBK->EndDraw();
-        }
+			//ID2D1GdiInteropRenderTarget* pD2DGdiInteropRT;
+			//m_pD2DDCLeftBK->QueryInterface(IID_PPV_ARGS(&pD2DGdiInteropRT));// 取GDI兼容渲染目标
+			//HDC hDC;
+			//HRESULT hr = pD2DGdiInteropRT->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
+			//HDC hDCWnd = GetDC(g_hBKLeft);
+			//BitBlt(hDCWnd, rcLrcSB.left, rcLrcSB.top, rcLrcSB.right - rcLrcSB.left, rcLrcSB.bottom - rcLrcSB.top,
+			//    hDC, rcLrcSB.left, rcLrcSB.top, SRCCOPY);// 区域显示
+			//ReleaseDC(g_hBKLeft, hDCWnd);
+			//pD2DGdiInteropRT->ReleaseDC(NULL);
+			//pD2DGdiInteropRT->Release();
+			if (lParam)
+				m_pD2DDCLeftBK->EndDraw();
+			if (wParam)
+				m_pDXGIScLeftBK->Present(0, 0);
+		}
     }
     return 0;
     case LEFTBKM_SETMAX:
     {
         iSBMax = wParam;
-        WndProc_LeftBK(hWnd, LEFTBKM_REDRAWSB, TRUE, 0);
+        WndProc_LeftBK(hWnd, LEFTBKM_REDRAWSB, TRUE, TRUE);
     }
     return 0;
     case WM_KEYDOWN:
@@ -2922,15 +2992,16 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         {
             KillTimer(hWnd, IDT_LRCSCROLL);
             m_iLrcSBPos = -1;
-            WndProc_LeftBK(hWnd, LEFTBKM_REDRAWSB, TRUE, 0);
+            WndProc_LeftBK(hWnd, LEFTBKM_REDRAWSB, TRUE, TRUE);
             return 0;
         }
     }
     break;
     case LEFTBKM_REDRAWBTMBT:
     {
-        HDC hDC;
-        m_pD2DDCLeftBK->BeginDraw();
+		HDC hDC;
+		if (lParam)
+			m_pD2DDCLeftBK->BeginDraw();
 
         D2D_RECT_F D2DRectF = { (float)m_rcBtmBK.left, (float)m_rcBtmBK.top ,(float)m_rcBtmBK.right, (float)m_rcBtmBK.bottom };
         m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &D2DRectF, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRectF);
@@ -2940,6 +3011,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         g_pDWTFNormal->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
         g_pDWTFNormal->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
         D2DRcTimeLabel = { (float)m_rcBtmBK.left,(float)m_rcBtmBK.top,(float)(m_rcBtmBK.left + DPIS_CXTIME),(float)m_rcBtmBK.bottom };
+        rcTimeLabel = { m_rcBtmBK.left,m_rcBtmBK.top,m_rcBtmBK.left + DPIS_CXTIME,m_rcBtmBK.bottom };
         m_pD2DDCLeftBK->DrawTextW(szTime, lstrlenW(szTime), g_pDWTFNormal, &D2DRcTimeLabel, pD2DBrush, D2D1_DRAW_TEXT_OPTIONS_CLIP);
 
         D2D_RECT_F D2DRectF2;
@@ -3031,14 +3103,61 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
         DrawIconEx(hDC, x + iIconOffest, y, GR.hiInfo, 0, 0, 0, NULL, DI_NORMAL);// 10 关于
         x += GC.cyBT;
-
-        HDC hDCWnd = GetDC(g_hBKLeft);
-        BitBlt(hDCWnd, m_rcBtmBK.left, m_rcBtmBK.top, GC.cxBKBtm, GC.cyBT, hDC, m_rcBtmBK.left, m_rcBtmBK.top, SRCCOPY);
-        ReleaseDC(g_hBKLeft, hDCWnd);
-        m_pD2DGdiInteropRTLeftBK->ReleaseDC(&m_rcBtmBK);
-        m_pD2DDCLeftBK->EndDraw();
+        if (wParam)
+        {
+            HDC hDCWnd = GetDC(g_hBKLeft);
+            BitBlt(hDCWnd, m_rcBtmBK.left, m_rcBtmBK.top, GC.cxBKBtm, GC.cyBT, hDC, m_rcBtmBK.left, m_rcBtmBK.top, SRCCOPY);
+            ReleaseDC(g_hBKLeft, hDCWnd);
+        }
+		m_pD2DGdiInteropRTLeftBK->ReleaseDC(&m_rcBtmBK);
+		if (lParam)
+			m_pD2DDCLeftBK->EndDraw();
     }
     return 0;
+    case LEFTBKM_REDRAWTRACKBAR:
+    {
+        if (lParam)
+            m_pD2DDCLeftBK->BeginDraw();
+        m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, D2DRcTrackBar, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &D2DRcTrackBar);
+        if (uTBMax)
+        {
+            D2D_RECT_F D2DRcF;
+            D2DRcF.left = D2DRcTrackBar.left;
+            D2DRcF.top = D2DRcTrackBar.top + (DPIS_CYPROGBAR - GC.DS_CYPROGBARCORE) / 2;
+            D2DRcF.bottom = D2DRcF.top + GC.DS_CYPROGBARCORE;
+            D2DRcF.right = D2DRcF.left + uTBPos * (D2DRcTrackBar.right - D2DRcTrackBar.left) / uTBMax;
+            m_pD2DDCLeftBK->FillRectangle(&D2DRcF, m_pD2DBrMyBlue);
+            D2DRcF.left = D2DRcF.right;
+            D2DRcF.right = D2DRcTrackBar.right;
+            ID2D1SolidColorBrush* pD2DBrush;
+            m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 0.7f), &pD2DBrush);
+            m_pD2DDCLeftBK->FillRectangle(&D2DRcF, pD2DBrush);
+            pD2DBrush->Release();
+        }
+        if (lParam)
+            m_pD2DDCLeftBK->EndDraw();
+        if (wParam)
+            m_pDXGIScLeftBK->Present(0, 0);
+    }
+    return 0;
+    case LEFTBKM_SETPROGBARPOS:
+    {
+        uTBPos = wParam;
+        if (lParam)
+            WndProc_LeftBK(hWnd, LEFTBKM_REDRAWTRACKBAR, TRUE, TRUE);
+    }
+    return 0;
+    case LEFTBKM_GETPROGBARPOS:
+        return uTBPos;
+    case LEFTBKM_SETPROGBARMAX:
+    {
+        uTBMax = wParam;
+        if (lParam)
+            WndProc_LeftBK(hWnd, LEFTBKM_REDRAWTRACKBAR, TRUE, TRUE);
+    }
+    return 0;
+    case LEFTBKM_GETPROGBARMAX:
+        return uTBMax;
     case LEFTBKM_INIT:
     {
         hToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0, 0, 0, 0, 0, hWnd, NULL, NULL, NULL);
@@ -3089,9 +3208,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             SetTimer(g_hMainWnd, IDT_DRAWING_WAVES, TIMERELAPSE_WAVES, TimerProc);
             SetTimer(hWnd, IDT_PGS, TIMERELAPSE_PGS, NULL);
         }
-
-        InvalidateRect(hWnd, NULL, FALSE);
-        UpdateWindow(hWnd);
+        WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
         LrcWnd_DrawLrc();
     }
     return 0;
@@ -3175,21 +3292,6 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
 	switch (idEvent)
 	{
-	case IDT_DRAWING_WAVES:
-	{
-		UI_VEDrawWaves();
-	}
-	return;
-	case IDT_DRAWING_LRC:
-	{
-		UI_VEProcLrcShowing();
-	}
-	return;
-	case IDT_DRAWING_SPE:
-	{
-		UI_VEDrawSpe();
-	}
-	return;
 	case IDT_ANIMATION:
     {
 		if (m_LrcHScrollInfo.iIndex == -1 || g_iCurrLrcIndex < 0)
@@ -3274,7 +3376,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
         if (m_iLrcSBPos != -1 || m_iLrcCenter == -1)
         {
             m_IsDraw[2] = TRUE;
-            TimerProc(NULL, 0, IDT_DRAWING_LRC, 0);
+            UI_VEProcLrcShowing();
             KillTimer(g_hMainWnd, IDT_ANIMATION2);
             return;
         }
@@ -3287,7 +3389,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
             if (iTop <= m_LrcVScrollInfo.iDestTop)
             {
                 m_IsDraw[2] = TRUE;
-                TimerProc(NULL, 0, IDT_DRAWING_LRC, 0);
+                UI_VEProcLrcShowing();
                 KillTimer(g_hMainWnd, IDT_ANIMATION2);
                 return;
             }
@@ -3304,7 +3406,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
             if (iTop >= m_LrcVScrollInfo.iDestTop)
             {
                 m_IsDraw[2] = TRUE;
-                TimerProc(NULL, 0, IDT_DRAWING_LRC, 0);
+                UI_VEProcLrcShowing();
                 KillTimer(g_hMainWnd, IDT_ANIMATION2);
                 return;
             }

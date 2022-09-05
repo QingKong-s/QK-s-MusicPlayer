@@ -1,5 +1,7 @@
 #pragma once
 #include <Windows.h>
+#include <dwrite.h>
+
 #include "MyProject.h"
 
 struct LRCDATA
@@ -25,6 +27,8 @@ struct LRCHSCROLLINFO
 	float fNoScrollingTime2;	// 停滞时间2
 	BOOL bWndSizeChangedFlag;	// 窗口已被改变标志
 	BOOL bShowCurr;				// 指示现行项目是否可见
+	DWRITE_TEXT_METRICS Metrics1;	// 上次测高结果1
+	DWRITE_TEXT_METRICS Metrics2;	// 上次测高结果2
 };
 
 struct LRCVSCROLLINFO
@@ -157,17 +161,17 @@ const PCWSTR c_szBtmTip[] =
 #define SPESTEP_MAX				11
 
 #define LEFTBKM_SETMAX			WM_USER + 1// (Max, 0)
-#define LEFTBKM_REDRAWSB		WM_USER + 2// (0, 0)
-#define LEFTBKM_REDRAWBTMBT		WM_USER + 3// (0, 0)
+#define LEFTBKM_REDRAWSB		WM_USER + 2// (bImmdShow, bIndependlyDrawing)
+#define LEFTBKM_REDRAWBTMBT		WM_USER + 3// (bImmdShow, bIndependlyDrawing)
 #define LEFTBKM_INIT			WM_USER + 4// (0, 0)
 #define LEFTBKM_GETREPEATMODE	WM_USER + 5// (0, 0)
 #define LEFTBKM_SETPLAYBTICON	WM_USER + 6// (0, 0)
 #define LEFTBKM_DOBTOPE			WM_USER + 7// (0, 0)
-
-#define BTMBKM_INIT				WM_USER + 1
-#define BTMBKM_GETREPEATMODE	WM_USER + 2
-#define BTMBKM_SETPLAYBTICON	WM_USER + 3
-#define BTMBKM_DOBTOPE			WM_USER + 4
+#define LEFTBKM_REDRAWTRACKBAR	WM_USER + 8// (bImmdShow, bIndependlyDrawing)
+#define LEFTBKM_SETPROGBARPOS	WM_USER + 9// (uPos, bRedraw)
+#define LEFTBKM_GETPROGBARPOS	WM_USER + 10// (0, 0)
+#define LEFTBKM_SETPROGBARMAX	WM_USER + 11// (uMax, bRedraw)
+#define LEFTBKM_GETPROGBARMAX	WM_USER + 12// (0, 0)
 
 #define REPEATMODE_TOTALLOOP	0// 整体循环
 #define REPEATMODE_RADOM		1// 随机播放
@@ -204,7 +208,7 @@ LRESULT CALLBACK QKCProc_TBPaint(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lPa
 void GDIObj_LeftBK(DWORD dwOpe = GDIOBJOPE_REFRESH);
 int HitTest_LrcShow(POINT pt);
 int HitTest_BtmBK(POINT pt);
-void UI_VEDrawWaves(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = FALSE);
-void UI_VEDrawSpe(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = FALSE);
-void UI_VEDrawLrc(int yCenter, BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = FALSE);
-void UI_VEProcLrcShowing(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = FALSE);
+BOOL UI_VEDrawWaves(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE);
+void UI_VEDrawSpe(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE);
+void UI_VEDrawLrc(int yCenter, BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE);
+BOOL UI_VEProcLrcShowing(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE);

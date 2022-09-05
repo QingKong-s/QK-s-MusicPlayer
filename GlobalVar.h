@@ -21,7 +21,7 @@
 // 窗口句柄类
 extern HWND				g_hMainWnd;             // 主窗口
 extern HWND				g_hLV;                  // 列表ListView
-extern HWND				g_hTBProgess;           // 进度条
+//extern HWND				g_hTBProgess;           // 进度条
 extern HWND				g_hLrcWnd;              // 桌面歌词
 extern HWND				g_hBKLeft;              // 左侧背景
 //extern HWND				g_hBKBtm;               // 下部按钮背景

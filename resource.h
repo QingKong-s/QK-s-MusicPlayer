@@ -14,7 +14,6 @@
 #define IDI_SLIENT                      153
 #define IDI_SPEED                       154
 #define IDI_VOL                         155
-
 #define IDD_LIST                        161
 #define IDD_ABOUT                       175
 #define IDI_SEARCH                      178
@@ -61,7 +60,6 @@
 #define IDI_THREETRACKBARS              241
 #define IDI_TICK2                       243
 #define IDI_VOLSLIENT                   245
-
 #define IDC_LB_FILE                     1031
 #define IDC_ED_NEW                      1032
 #define IDC_ED_FILE                     1032
@@ -167,6 +165,7 @@
 #define IDC_CB_DEVICES                  1138
 #define IDC_RICHEDIT21                  1139
 #define IDC_RE_LRCMAKER                 1139
+#define IDC_CHECK1                      1140
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -176,7 +175,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        246
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         1140
+#define _APS_NEXT_CONTROL_VALUE         1141
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

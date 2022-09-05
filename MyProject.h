@@ -9,8 +9,6 @@
 
 #include "bass.h"
 
-//#define _WIN32_WINNT 0x0603
-//#define _CHICAGO_
 ////////////////////GDI+Flat定义
 enum GpStatus {
 	Ok,
@@ -292,7 +290,7 @@ struct CURRMUSICINFO
 #define IDT_ANIMATION2				110
 #define IDT_LISTBKDRAG				111
 
-#define TIMERELAPSE_PGS				500
+#define TIMERELAPSE_PGS				20
 #define TIMERELAPSE_WAVES			20
 #define TIMERELAPSE_VU_SPE			50
 #define TIMERELAPSE_LRC				200
@@ -367,6 +365,7 @@ struct GLOBALCONTEXT
 	HBRUSH hbrMyBule;
 	UINT uLrcDTFlags;		// 强制双行标志
 	int DS_CYPROGBAR;		// 进度条高度
+	int DS_CYPROGBARCORE;
 
 	int DS_CYBTBK;			// 
 	int DS_CYSPE;			// 
@@ -416,7 +415,8 @@ struct GLOBALCONTEXT
 	int cxBKBtm;			// 底部背景宽度
 	int iIconSize;			// 图标大小
 };
-#define SIZE_CYPROGBAR			35
+#define SIZE_CYPROGBAR			16
+#define SIZE_CYPROGBARCORE		6
 #define SIZE_CYBTBK				40
 #define SIZE_CYSPE				80
 #define SIZE_CYSPEHALF			SIZE_CYSPE / 2

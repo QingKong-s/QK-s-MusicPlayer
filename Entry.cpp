@@ -192,6 +192,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     bSuccessful = RegisterClassExW(&wcex) && bSuccessful;
     /////////×¢²áÍ¨ÓÃ±³¾°
 	wcex.hIcon = NULL;
+    wcex.style |= CS_OWNDC;
 	wcex.lpfnWndProc = (WNDPROC)GetProcAddress(hLib, "DefWindowProcW");
 	wcex.lpszClassName = BKWNDCLASS;
 	bSuccessful = RegisterClassExW(&wcex) && bSuccessful;
@@ -296,6 +297,7 @@ BOOL BASS_FreeMusic(ULONG_PTR h)
 void UI_UpdateDPISize()
 {
     GC.DS_CYPROGBAR = DPI(SIZE_CYPROGBAR);
+    GC.DS_CYPROGBARCORE = DPI(SIZE_CYPROGBARCORE);
     GC.DS_CYBTBK = DPI(SIZE_CYBTBK);
     GC.DS_CYSPE = DPI(SIZE_CYSPE);
     GC.DS_CYSPEHALF = DPI(SIZE_CYSPEHALF);
