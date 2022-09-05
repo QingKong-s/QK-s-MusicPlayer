@@ -60,6 +60,9 @@
 #define IDI_THREETRACKBARS              241
 #define IDI_TICK2                       243
 #define IDI_VOLSLIENT                   245
+#define IDR_COMPILETIME                 248
+#define IDR_COMPILECOUNT                249
+#define IDD_LICENSE                     250
 #define IDC_LB_FILE                     1031
 #define IDC_ED_NEW                      1032
 #define IDC_ED_FILE                     1032
@@ -67,6 +70,7 @@
 #define IDC_BT_CANCEL                   1034
 #define IDC_BT_OK                       1036
 #define IDC_ST_TIP                      1037
+#define IDC_BT_LICENSE                  1037
 #define IDC_LV_LISTFILE                 1038
 #define IDC_ST_MAINICON                 1040
 #define IDC_TB_BANDWIDTH                1045
@@ -166,6 +170,13 @@
 #define IDC_RICHEDIT21                  1139
 #define IDC_RE_LRCMAKER                 1139
 #define IDC_CHECK1                      1140
+#define IDC_ED_MYQQ                     1141
+#define IDC_ED_BASSWEBSITE              1142
+#define IDC_ST_PROGVER                  1143
+#define IDC_ST_COMPILETIME              1144
+#define IDC_EDIT1                       1144
+#define IDC_ED_LICENSE                  1144
+#define IDC_ST_COMPILECOUNT             1145
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -173,9 +184,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        246
+#define _APS_NEXT_RESOURCE_VALUE        251
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         1141
+#define _APS_NEXT_CONTROL_VALUE         1145
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

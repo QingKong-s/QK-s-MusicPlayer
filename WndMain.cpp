@@ -3226,62 +3226,90 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     }
     return DefWindowProcW(hWnd, message, wParam, lParam);
 }
-INT_PTR CALLBACK DlgProc_About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_License(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static HBITMAP hBitmap;
     switch (message)
     {
     case WM_INITDIALOG:
     {
+        SetDlgItemTextW(hDlg, IDC_ED_LICENSE, L"");
+    }
+    return TRUE;
+    }
+    return FALSE;
+}
+INT_PTR CALLBACK DlgProc_About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static HBITMAP hBitmap;
+    static HDC hCDC;
+    static int cx0, cy0, cx, cy;
+    switch (message)
+    {
+    case WM_INITDIALOG:
+    {
+        //////////////////////初始化图片
         hBitmap = (HBITMAP)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDB_ABOUT), IMAGE_BITMAP, 0, 0, 0);
         BITMAP bmp;
         GetObjectW(hBitmap, sizeof(bmp), &bmp);
+        RECT rc;
+        GetClientRect(hDlg, &rc);
 
-        RECT rcClient, rcWnd;
-        GetWindowRect(hDlg, &rcWnd);
-        GetClientRect(hDlg, &rcClient);
-        int cx = bmp.bmWidth + rcWnd.right - rcWnd.left - rcClient.right,
-            cy = bmp.bmHeight + rcWnd.bottom - rcWnd.top - rcClient.bottom + 50;
+        cx0 = bmp.bmWidth;
+        cy0 = bmp.bmHeight;
+        cx = rc.right;
+		cy = cx * cy0 / cx0;
 
-        SetWindowPos(hDlg, NULL,
-            (GetSystemMetrics(SM_CXSCREEN) - cx) / 2,
-            (GetSystemMetrics(SM_CYSCREEN) - cy) / 2,
-            cx,
-            cy,
-            SWP_NOZORDER);
-        HWND hStatic = GetDlgItem(hDlg, IDC_ST_ABOUT);
-        SetWindowPos(hStatic, NULL, 0, 0, bmp.bmWidth, bmp.bmHeight, SWP_NOZORDER);
+		hCDC = CreateCompatibleDC(NULL);
+		SelectObject(hCDC, hBitmap);
+        //////////////////////初始化对话框内容
+        SetDlgItemTextW(hDlg, IDC_ED_MYQQ, L"639582106");
+        SetDlgItemTextW(hDlg, IDC_ED_BASSWEBSITE, L"www.un4seen.com");
 
-        SetWindowLongPtrW(hStatic, GWL_STYLE, GetWindowLongPtrW(hStatic, GWL_STYLE) | SS_BITMAP);
-        SendMessageW(hStatic, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBitmap);
+		HRSRC hResInfo = FindResourceW(g_hInst, MAKEINTRESOURCEW(IDR_COMPILETIME), L"BIN");
+		HGLOBAL hRes = LoadResource(g_hInst, hResInfo);
+		if (hRes)
+			SetDlgItemTextW(hDlg, IDC_ST_COMPILETIME, (PCWSTR)LockResource(hRes));
 
-        GetClientRect(GetDlgItem(hDlg, IDC_BT_OK), &rcClient);
-        SetWindowPos(GetDlgItem(hDlg, IDC_BT_OK), NULL,
-            (bmp.bmWidth - rcClient.right) / 2,
-            bmp.bmHeight,
-            rcClient.right, 50, SWP_NOZORDER | SWP_NOSIZE);
-    }
-    return FALSE;
-    case WM_CLOSE:
-    {
-        DeleteObject(hBitmap);
-        EndDialog(hDlg, NULL);
-    }
-    return TRUE;
-    case WM_COMMAND:
-    {
-        if (LOWORD(wParam) == IDC_BT_OK)
+		WCHAR szCompileCount[48];
+        hResInfo = FindResourceW(g_hInst, MAKEINTRESOURCEW(IDR_COMPILECOUNT), L"BIN");
+        hRes = LoadResource(g_hInst, hResInfo);
+        if (hRes)
+        {
+            wsprintfW(szCompileCount, L"%d", *(INT32*)LockResource(hRes));
+            SetDlgItemTextW(hDlg, IDC_ST_COMPILECOUNT, szCompileCount);
+        }
+
+        SetDlgItemTextW(hDlg, IDC_ST_PROGVER, CURRVER);
+	}
+	return FALSE;
+	case WM_CLOSE:
+		EndDialog(hDlg, NULL);
+		return TRUE;
+	case WM_DESTROY:
+		DeleteDC(hCDC);
+		DeleteObject(hBitmap);
+		return TRUE;
+	case WM_COMMAND:
+	{
+		if (LOWORD(wParam) == IDC_BT_OK)
         {
             EndDialog(hDlg, NULL);
             return TRUE;
         }
+        else if (LOWORD(wParam) == IDC_BT_LICENSE)
+        {
+            DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_LICENSE), hDlg, DlgProc_License, 0);
+            return TRUE;
+        }
+
     }
     return FALSE;
     case WM_PAINT:
     {
         PAINTSTRUCT ps;
         HDC hDC = BeginPaint(hDlg, &ps);
-        FillRect(hDC, &(ps.rcPaint), (HBRUSH)GetStockObject(WHITE_BRUSH));
+        SetStretchBltMode(hDC, HALFTONE);
+        StretchBlt(hDC, 0, 0, cx, cy, hCDC, 0, 0, cx0, cy0, SRCCOPY);
         EndPaint(hDlg, &ps);
     }
     return TRUE;

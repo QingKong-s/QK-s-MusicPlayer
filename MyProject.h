@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #pragma once
 #include <Windows.h>
 #include <Shobjidl.h>
@@ -8,7 +7,7 @@
 #include <d2d1.h>
 
 #include "bass.h"
-
+#define CURRVER L"0.3"
 ////////////////////GDI+Flat∂®“Â
 enum GpStatus {
 	Ok,
@@ -523,7 +522,6 @@ void Res_Free();
 void Res_Load(int iSize);
 
 void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc = ECODESRC_NONE, HWND hParent = NULL, DWORD dwOtherErrCode = 0);
-#define _CRT_SECURE_NO_WARNINGS
 
 typedef UINT(__stdcall* pFuncGetDpiForSystem)(void);
 typedef UINT(__stdcall* pFuncGetDpiForWindow)(HWND);

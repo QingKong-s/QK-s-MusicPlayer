@@ -193,4 +193,8 @@
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="CompileTime" />
+    <None Include="CompileCount" />
+  </ItemGroup>
 </Project>

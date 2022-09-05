@@ -105,6 +105,12 @@
       <InputResourceManifests>
       </InputResourceManifests>
     </Manifest>
+    <PreBuildEvent>
+      <Command>Before-Build-Process-Prog.exe</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>维护编译时间（预定义宏是英文）和编译总次数</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -224,6 +230,10 @@
     <Image Include="Res\Tick2.ico" />
     <Image Include="Res\Vol.ico" />
     <Image Include="Res\Vol_Slient.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CompileCount" />
+    <None Include="CompileTime" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
