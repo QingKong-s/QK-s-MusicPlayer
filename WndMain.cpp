@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 #include "bass.h"
+#include "bass_fx.h"
 
 #include "GlobalVar.h"
 #include "Function.h"
@@ -60,8 +61,6 @@ DWORD*          m_dwWavesData               = NULL;         // 指向波形信�
 DWORD           m_dwWavesDataCount          = 0;            // 波形计数
 
 BOOL            m_IsDraw[3]                 = { 0 };        // 绘制标志
-DRAWING_TIME    m_TimeStru_VU[2]            = { 0 };        // 延迟下落
-DRAWING_TIME    m_TimeStru_Spe[128]         = { 0 };        // 延迟下落
 
 BOOL            m_bLrcShow                  = TRUE;
 
@@ -99,6 +98,8 @@ int             m_iLastLrcIndex[2]          = { -1,-1 };// 0：上次中心；1�
 HDC             m_hdcLeftBK                 = NULL;
 
 BOOL            m_bWndMinimized             = FALSE;
+
+HSTREAM m_hs;
 
 void Settings_Read()
 {
@@ -537,7 +538,7 @@ int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BO
     ID2D1SolidColorBrush* pD2DBrush;
     IDWriteTextFormat* pDWTextFormat;
     if (iIndex == m_iLrcCenter)
-        pDWTextFormat = g_pDWTFBig2;
+        pDWTextFormat = g_pDWTFBig;
     else
         pDWTextFormat = g_pDWTFBig;
     pDWTextFormat->AddRef();
@@ -917,10 +918,11 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
     g_iCurrFileIndex = -1;
     if (iLastPlayingIndex != -1)
         SendMessageW(g_hLV, LVM_REDRAWITEMS, iLastPlayingIndex, iLastPlayingIndex);
-    //////开始播放
-    g_hStream = BASS_OpenMusic(g_pszFile, BASS_SAMPLE_FX, BASS_SAMPLE_FX | BASS_MUSIC_PRESCAN);
+	//////开始播放
+	g_hStream = BASS_OpenMusic(g_pszFile, BASS_SAMPLE_FX | BASS_STREAM_DECODE, BASS_SAMPLE_FX | BASS_MUSIC_PRESCAN | BASS_STREAM_DECODE);// 解码
+	g_hStream = BASS_FX_TempoCreate(g_hStream, BASS_SAMPLE_FX | BASS_FX_FREESOURCE);// 创建重采样流
     BASS_ChannelSetSync(g_hStream, BASS_SYNC_END | BASS_SYNC_ONETIME, 0, SyncProc_End, NULL);// 设置同步过程用来跟踪歌曲播放完毕的事件
-    // Bass这个结束判定跟闹弹似的，如果播到最后突然改变位置同步过程就不会触发，你真给我整不会了😅😅😅😅😅
+    
     if (!g_hStream)
     {
         g_iCurrFileIndex = -1;
@@ -980,7 +982,10 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
     if (g_bSlient)
         BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_VOL, 0);
     else if (g_fVolChanged != SBV_INVALIDVALUE)
-        BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_VOL, g_fVolChanged);
+		BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_VOL, g_fVolChanged);
+
+	if (g_GlobalEffect.fTempo != SBV_INVALIDVALUE)
+		BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_TEMPO, g_GlobalEffect.fTempo);
 
     if (g_GlobalEffect.hFXChorus)
     {
@@ -1032,15 +1037,11 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
     }
 
 	m_IsDraw[0] = m_IsDraw[1] = m_IsDraw[2] = TRUE;
-    //SetTimer(g_hMainWnd, IDT_DRAWING_LRC, TIMERELAPSE_LRC, TimerProc);
-    //SetTimer(g_hMainWnd, IDT_DRAWING_SPE, TIMERELAPSE_VU_SPE, TimerProc);
-    //SetTimer(g_hMainWnd, IDT_DRAWING_WAVES, TIMERELAPSE_WAVES, TimerProc);
+    SetTimer(g_hBKLeft, IDT_PGS, TIMERELAPSE_PGS, NULL);
 }
 void Playing_Stop(BOOL bNoGap)
 {
-    KillTimer(g_hMainWnd, IDT_DRAWING_LRC);
-    KillTimer(g_hMainWnd, IDT_DRAWING_SPE);
-    KillTimer(g_hMainWnd, IDT_DRAWING_WAVES);
+    KillTimer(g_hBKLeft, IDT_PGS);
     KillTimer(g_hMainWnd, IDT_ANIMATION);
     KillTimer(g_hMainWnd, IDT_ANIMATION2);
 
@@ -1197,7 +1198,6 @@ void UI_UpdateLeftBK()
 	if (m_cxLeftBK <= 0 || m_cyLeftBK <= 0)
 		return;
 	IWICBitmap* pWICBitmapOrg = m_CurrSongInfo.mi.pWICBitmap;// 原始WIC位图
-	pWICBitmapOrg->AddRef();
 	////////////////////绘制内存位图
 	m_pD2DDCLeftBK->BeginDraw();
 	HRESULT hr;
@@ -1396,16 +1396,16 @@ void UI_UpdateLeftBK()
     m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
 	////////////////////写到交换链
 	m_pD2DDCLeftBK->BeginDraw();
-	//m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
 	m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2);
 	m_pD2DDCLeftBK->EndDraw();
+    m_IsDraw[0] = m_IsDraw[1] = m_IsDraw[2] = TRUE;
 	UI_VEDrawWaves(FALSE);
 	UI_VEDrawSpe(FALSE);
-	TimerProc(NULL, IDT_DRAWING_LRC, 0, 0);
+    UI_VEProcLrcShowing(FALSE);
 	WndProc_LeftBK(g_hBKLeft, LEFTBKM_REDRAWBTMBT, FALSE, TRUE);
+    WndProc_LeftBK(g_hBKLeft, LEFTBKM_REDRAWTRACKBAR, FALSE, TRUE);
 	////////////////////显示
 	m_pDXGIScLeftBK->Present(0, 0);// 上屏
-	pWICBitmapOrg->Release();
 }
 void UI_SeparateListWnd(BOOL b)
 {
@@ -2742,13 +2742,6 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             }
 			if (g_pITaskbarList)
 				g_pITaskbarList->SetProgressValue(g_hMainWnd, (ULONGLONG)g_fTime * 100, (ULONGLONG)g_llLength / 10);
-
-			m_TimeStru_VU[1].uTime += 500;
-			if (m_TimeStru_VU[1].uTime >= 1000)
-			{
-				m_TimeStru_VU[1].bbool = TRUE;
-				m_TimeStru_VU[1].uTime = 0;
-			}
         }
         return 0;
 		}
@@ -3170,7 +3163,6 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         ti.lpszText = (PWSTR)L"11111";
         SendMessageW(hToolTip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
         //SendMessageW(hToolTip, TTM_POP, 0, 0);
-        SetTimer(hWnd, IDT_PGS, TIMERELAPSE_PGS, NULL);
     }
     return 0;
     case LEFTBKM_GETREPEATMODE:
@@ -3188,9 +3180,6 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             if (g_pITaskbarList)
                 g_pITaskbarList->ThumbBarUpdateButtons(m_hTBGhost, 1, &tb);
             BASS_ChannelPause(g_hStream);
-            KillTimer(g_hMainWnd, IDT_DRAWING_LRC);
-            KillTimer(g_hMainWnd, IDT_DRAWING_SPE);
-            KillTimer(g_hMainWnd, IDT_DRAWING_WAVES);
             KillTimer(hWnd, IDT_PGS);
         }
         else
@@ -3203,9 +3192,6 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             if (g_pITaskbarList)
                 g_pITaskbarList->ThumbBarUpdateButtons(m_hTBGhost, 1, &tb);
             BASS_ChannelPlay(g_hStream, FALSE);
-            SetTimer(g_hMainWnd, IDT_DRAWING_LRC, TIMERELAPSE_LRC, TimerProc);
-            SetTimer(g_hMainWnd, IDT_DRAWING_SPE, TIMERELAPSE_VU_SPE, TimerProc);
-            SetTimer(g_hMainWnd, IDT_DRAWING_WAVES, TIMERELAPSE_WAVES, TimerProc);
             SetTimer(hWnd, IDT_PGS, TIMERELAPSE_PGS, NULL);
         }
         WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
@@ -3231,12 +3217,36 @@ INT_PTR CALLBACK DlgProc_License(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
     switch (message)
     {
     case WM_INITDIALOG:
-    {
-        SetDlgItemTextW(hDlg, IDC_ED_LICENSE, L"");
-    }
-    return TRUE;
-    }
-    return FALSE;
+	{
+		HRSRC hResInfo = FindResourceW(g_hInst, MAKEINTRESOURCEW(IDR_LICENSE), L"BIN");
+		HGLOBAL hRes = LoadResource(g_hInst, hResInfo);
+		if (hRes)
+		{
+			PCCH p = (PCCH)LockResource(hRes);
+			DWORD dwLength = SizeofResource(g_hInst, hResInfo);
+			int iBufferSize = MultiByteToWideChar(CP_UTF8, 0, p, dwLength, NULL, 0);
+			if (!iBufferSize)
+				return NULL;
+			PWSTR pBuffer = new WCHAR[iBufferSize + 1];
+			MultiByteToWideChar(CP_UTF8, 0, p, dwLength, pBuffer, iBufferSize);
+			*(pBuffer + iBufferSize) = L'\0';
+			SetDlgItemTextW(hDlg, IDC_ED_LICENSE, pBuffer);
+			delete[] pBuffer;
+		}
+
+		RECT rc;
+		GetClientRect(hDlg, &rc);
+		SetWindowPos(GetDlgItem(hDlg, IDC_ED_LICENSE), NULL, 0, 0, rc.right, rc.bottom, SWP_NOZORDER);
+	}
+	return TRUE;
+	case WM_SIZE:
+		SetWindowPos(GetDlgItem(hDlg, IDC_ED_LICENSE), NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER);
+		return TRUE;
+    case WM_CLOSE:
+        EndDialog(hDlg, 0);
+        return TRUE;
+	}
+	return FALSE;
 }
 INT_PTR CALLBACK DlgProc_About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -3262,13 +3272,13 @@ INT_PTR CALLBACK DlgProc_About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		hCDC = CreateCompatibleDC(NULL);
 		SelectObject(hCDC, hBitmap);
         //////////////////////初始化对话框内容
-        SetDlgItemTextW(hDlg, IDC_ED_MYQQ, L"639582106");
-        SetDlgItemTextW(hDlg, IDC_ED_BASSWEBSITE, L"www.un4seen.com");
+        SetDlgItemTextW(hDlg, IDC_ED_MYQQ, L"639582106");// 我的QQ
+        SetDlgItemTextW(hDlg, IDC_ED_BASSWEBSITE, L"www.un4seen.com");// Un4seen网址
 
 		HRSRC hResInfo = FindResourceW(g_hInst, MAKEINTRESOURCEW(IDR_COMPILETIME), L"BIN");
 		HGLOBAL hRes = LoadResource(g_hInst, hResInfo);
 		if (hRes)
-			SetDlgItemTextW(hDlg, IDC_ST_COMPILETIME, (PCWSTR)LockResource(hRes));
+			SetDlgItemTextW(hDlg, IDC_ST_COMPILETIME, (PCWSTR)LockResource(hRes));// 编译时间
 
 		WCHAR szCompileCount[48];
         hResInfo = FindResourceW(g_hInst, MAKEINTRESOURCEW(IDR_COMPILECOUNT), L"BIN");
@@ -3276,10 +3286,10 @@ INT_PTR CALLBACK DlgProc_About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
         if (hRes)
         {
             wsprintfW(szCompileCount, L"%d", *(INT32*)LockResource(hRes));
-            SetDlgItemTextW(hDlg, IDC_ST_COMPILECOUNT, szCompileCount);
+            SetDlgItemTextW(hDlg, IDC_ST_COMPILECOUNT, szCompileCount);// 累计编译次数
         }
 
-        SetDlgItemTextW(hDlg, IDC_ST_PROGVER, CURRVER);
+        SetDlgItemTextW(hDlg, IDC_ST_PROGVER, CURRVER);// 当前版本
 	}
 	return FALSE;
 	case WM_CLOSE:
@@ -3291,17 +3301,18 @@ INT_PTR CALLBACK DlgProc_About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 		return TRUE;
 	case WM_COMMAND:
 	{
-		if (LOWORD(wParam) == IDC_BT_OK)
+        switch (LOWORD(wParam))
         {
+        case IDC_BT_OK:
             EndDialog(hDlg, NULL);
             return TRUE;
-        }
-        else if (LOWORD(wParam) == IDC_BT_LICENSE)
-        {
+        case IDC_BT_LICENSE:
             DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_LICENSE), hDlg, DlgProc_License, 0);
             return TRUE;
+        case IDC_BT_GITHUB:
+            ShellExecuteW(NULL, L"open", L"https://github.com/QingKong-s/Player/", NULL, NULL, SW_SHOW);
+            return TRUE;
         }
-
     }
     return FALSE;
     case WM_PAINT:

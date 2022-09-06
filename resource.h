@@ -63,6 +63,9 @@
 #define IDR_COMPILETIME                 248
 #define IDR_COMPILECOUNT                249
 #define IDD_LICENSE                     250
+#define IDR_LICENSE                     251
+#define IDD_ROTATE                      251
+#define IDI_TEMPO                       252
 #define IDC_LB_FILE                     1031
 #define IDC_ED_NEW                      1032
 #define IDC_ED_FILE                     1032
@@ -72,6 +75,7 @@
 #define IDC_ST_TIP                      1037
 #define IDC_BT_LICENSE                  1037
 #define IDC_LV_LISTFILE                 1038
+#define IDC_BT_GITHUB                   1038
 #define IDC_ST_MAINICON                 1040
 #define IDC_TB_BANDWIDTH                1045
 #define IDC_CB_EQ                       1046
@@ -103,8 +107,11 @@
 #define IDC_ST_VOL2                     1070
 #define IDC_ST_INPUT                    1070
 #define IDC_ST_ABOUT                    1071
+#define IDC_TB_TEMPO                    1071
 #define IDC_LV_BOOKMARK                 1072
+#define IDC_ST_TEMPO                    1072
 #define IDC_ED_BMNAME                   1073
+#define IDC_ST_TEMPO2                   1073
 #define IDC_ED_BMCOMMENT                1074
 #define IDC_ED_BMINDEX                  1075
 #define IDC_ED_BMCLR                    1076
@@ -174,9 +181,9 @@
 #define IDC_ED_BASSWEBSITE              1142
 #define IDC_ST_PROGVER                  1143
 #define IDC_ST_COMPILETIME              1144
-#define IDC_EDIT1                       1144
 #define IDC_ED_LICENSE                  1144
 #define IDC_ST_COMPILECOUNT             1145
+#define IDC_ED_ROTATECHANNEL            1145
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -184,9 +191,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        251
+#define _APS_NEXT_RESOURCE_VALUE        253
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         1145
+#define _APS_NEXT_CONTROL_VALUE         1149
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

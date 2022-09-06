@@ -6,6 +6,7 @@
 #include <Windows.h>
 
 #include "bass.h"
+#include "bass_fx.h"
 
 struct TPARAM_FILLTIMECLM
 {
@@ -14,6 +15,7 @@ struct TPARAM_FILLTIMECLM
 
 struct GLOBALEFFECT
 {
+	float fTempo;
 	HFX hFXChorus;
 	BASS_DX8_CHORUS Chorus;
 	HFX hFXCompressor;
@@ -32,6 +34,8 @@ struct GLOBALEFFECT
 	BASS_DX8_REVERB Reverb;
 	HFX hFXEQ[10];
 	BASS_DX8_PARAMEQ EQ[10];
+	HFX hFXRotate;
+	BASS_BFX_ROTATE Rotate;
 };
 
 struct// 抄的网易云
@@ -68,7 +72,7 @@ const c_EQSetting[23] =
 
 const float c_EQCenter[10] = { 31,62,125,250,500,1000,2000,4000,8000,16000 };// 也是抄的网易云
 
-#define EFFECTWNDTABCOUNT		10
+#define EFFECTWNDTABCOUNT		11
 #define SBV_INVALIDVALUE		-2
 
 #define EFFECT_CHORUS		0x00000001
@@ -80,6 +84,7 @@ const float c_EQCenter[10] = { 31,62,125,250,500,1000,2000,4000,8000,16000 };// 
 #define EFFECT_I3DL2REVERB	0x00000040
 #define EFFECT_REVERB		0x00000080
 #define EFFECT_EQ			0x00000100
+#define EFFECT_ROTATE		0x00000200
 #define EFFECT_ALL			0xFFFFFFFF
 
 void GlobalEffect_ResetToDefault(UINT i);

@@ -9,6 +9,9 @@
 
 #include <stdio.h>
 
+#include "bass.h"
+#include "bass_fx.h"
+
 #include "resource.h"
 #include "GlobalVar.h"
 
@@ -126,6 +129,12 @@ void GlobalEffect_ResetToDefault(UINT i)
             g_GlobalEffect.EQ[i].fBandwidth = 12;
             g_GlobalEffect.EQ[i].fGain = 0;
         }
+    }
+
+    if (i & EFFECT_ROTATE)
+    {
+        g_GlobalEffect.Rotate.lChannel = -1;
+        g_GlobalEffect.Rotate.fRate = 0;
     }
 }
 
@@ -258,10 +267,13 @@ INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
     static HWND hTBSpeed,
         hTBBlance,
         hTBVol,
+        hTBTempo,
         hSTSpeed,
         hSTBlance,
         hSTVol,
-        hSTVU;
+        hSTVU,
+        hSTTempo;
+
     static WCHAR szValue[10];
     static HDC hCDC;
     static HBITMAP hBitmap;
@@ -274,57 +286,79 @@ INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
         hTBSpeed = GetDlgItem(hDlg, IDC_TB_SPEED);
         hTBBlance = GetDlgItem(hDlg, IDC_TB_BLANCE);
         hTBVol = GetDlgItem(hDlg, IDC_TB_VOL);
+        hTBTempo = GetDlgItem(hDlg, IDC_TB_TEMPO);
+
         hSTSpeed = GetDlgItem(hDlg, IDC_ST_SPEED2);
         hSTBlance = GetDlgItem(hDlg, IDC_ST_BLANCE2);
         hSTVol = GetDlgItem(hDlg, IDC_ST_VOL2);
         hSTVU = GetDlgItem(hDlg, IDC_ST_VU);
+        hSTTempo = GetDlgItem(hDlg, IDC_ST_TEMPO2);
 
         float f;
         HWND hST;
         hST = GetDlgItem(hDlg, IDC_ST_SPEED);
-        hST = GetDlgItem(hDlg, IDC_ST_BLANCE);
+        SetWindowLongPtrW(hST, GWL_STYLE, GetWindowLongPtrW(hST, GWL_STYLE) | SS_REALSIZEIMAGE | SS_ICON);
+        SendMessageW(hST, STM_SETICON, (WPARAM)GR.hiSpeed, 0);
 
+        hST = GetDlgItem(hDlg, IDC_ST_TEMPO);
+        SetWindowLongPtrW(hST, GWL_STYLE, GetWindowLongPtrW(hST, GWL_STYLE) | SS_REALSIZEIMAGE | SS_ICON);
+        SendMessageW(hST, STM_SETICON, (WPARAM)GR.hiTempo, 0);
+
+        hST = GetDlgItem(hDlg, IDC_ST_BLANCE);
+        SetWindowLongPtrW(hST, GWL_STYLE, GetWindowLongPtrW(hST, GWL_STYLE) | SS_REALSIZEIMAGE | SS_ICON);
+        SendMessageW(hST, STM_SETICON, (WPARAM)GR.hiBlance, 0);
+        ////////////////////////////////ÀŸ∂»
         SendMessageW(hTBSpeed, TBM_SETRANGEMAX, TRUE, 500);
+        SendMessageW(hTBSpeed, TBM_SETPAGESIZE, 0, 1);
         if (g_fDefSpeed != 0)
         {
             f = 0;
             BASS_ChannelGetAttribute(g_hStream, BASS_ATTRIB_FREQ, &f);
             f = f / g_fDefSpeed;
             SendMessageW(hTBSpeed, TBM_SETPOS, TRUE, (LPARAM)(f * 100));
-            swprintf(szValue, 6, L"x%.2f", f);
+            swprintf(szValue, 10, L"x%.2f", f);
             SetWindowTextW(hSTSpeed, szValue);
         }
         else
             SetWindowTextW(hSTSpeed, L"x0.00");
-        SendMessageW(hTBSpeed, TBM_SETPAGESIZE, TRUE, 1);
-
+        ////////////////////////////////∆Ω∫‚
         f = 0;
         BASS_ChannelGetAttribute(g_hStream, BASS_ATTRIB_PAN, &f);
-        SendMessageW(hTBBlance, TBM_SETRANGEMAX, TRUE, 200);
+        SendMessageW(hTBBlance, TBM_SETRANGEMAX, TRUE, 100);
+        SendMessageW(hTBBlance, TBM_SETRANGEMIN, TRUE, -100);
+        SendMessageW(hTBBlance, TBM_SETPAGESIZE, 0, 1);
         f = f * 100;
-        SendMessageW(hTBBlance, TBM_SETPOS, TRUE, (LPARAM)(f + 100));
+        SendMessageW(hTBBlance, TBM_SETPOS, TRUE, (LPARAM)f);
         wsprintfW(szValue, L"%2d", (int)f);
         SetWindowTextW(hSTBlance, szValue);
-        SendMessageW(hTBBlance, TBM_SETPAGESIZE, TRUE, 1);
-
+        ////////////////////////////////“Ù¡ø
         f = 0;
         BASS_ChannelGetAttribute(g_hStream, BASS_ATTRIB_VOL, &f);
-        SendMessageW(hTBVol, TBM_SETRANGEMAX, TRUE, 100);
-        SendMessageW(hTBVol, TBM_SETPAGESIZE, TRUE, 1);
+        SendMessageW(hTBVol, TBM_SETRANGEMAX, FALSE, 200);
+        SendMessageW(hTBVol, TBM_SETPAGESIZE, 0, 1);
         if (g_bSlient)
         {
-            SetWindowTextW((HWND)lParam, L"æ≤“Ù");
+            SendDlgItemMessageW(hDlg, IDC_BT_VOL, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiSlient);
             EnableWindow(hTBVol, FALSE);
             f = g_fVolChanged;
         }
         else
         {
-            SetWindowTextW((HWND)lParam, L"“Ù¡ø£∫");
+            SendDlgItemMessageW(hDlg, IDC_BT_VOL, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiVol);
             f = f * 100;
         }
         SendMessageW(hTBVol, TBM_SETPOS, TRUE, (LPARAM)f);
         wsprintfW(szValue, L"%3d", (int)f);
         SetWindowTextW(hSTVol, szValue);
+        ////////////////////////////////Ω⁄≈ƒ(-95~5000)
+        f = 0;
+        BASS_ChannelGetAttribute(g_hStream, BASS_ATTRIB_TEMPO, &f);
+        SendMessageW(hTBTempo, TBM_SETRANGEMAX, TRUE, 400);
+        SendMessageW(hTBTempo, TBM_SETRANGEMIN, TRUE, -95);
+        SendMessageW(hTBTempo, TBM_SETPAGESIZE, 0, 1);
+        SendMessageW(hTBTempo, TBM_SETPOS, TRUE, (LPARAM)(f * 100.0f));
+		swprintf(szValue, 10, L"%.0f%%", f * 100.0f);
+        SetWindowTextW(hSTTempo, szValue);
 
         RECT rc;
         GetClientRect(hSTVU, &rc);
@@ -335,32 +369,46 @@ INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
         hCDC = CreateCompatibleDC(NULL);
         hBitmap = CreateCompatibleBitmap(hDC, cxVU, DPIS_CYSPE);
         SelectObject(hCDC, hBitmap);
-        ReleaseDC(hDlg, hDC);
+		ReleaseDC(hDlg, hDC);
 
         SetTimer(hDlg, IDT_DRAWING_VU, TIMERELAPSE_VU_SPE, NULL);
     }
     return FALSE;
     case WM_COMMAND:
-    {
-        if (LOWORD(wParam) == IDC_BT_VOL)
+	{
+		switch (LOWORD(wParam))
+		{
+		case IDC_BT_VOL:
+		{
+			g_bSlient = !g_bSlient;
+			if (g_bSlient)
+			{
+                SendMessageW((HWND)lParam, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiSlient);
+				BASS_ChannelGetAttribute(g_hStream, BASS_ATTRIB_VOL, &g_fVolChanged);
+				BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_VOL, 0);
+				EnableWindow(hTBVol, FALSE);
+			}
+			else
+			{
+                SendMessageW((HWND)lParam, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiVol);
+				BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_VOL, g_fVolChanged);
+				EnableWindow(hTBVol, TRUE);
+			}
+		}
+		return TRUE;
+        case IDC_BT_RESET:
         {
-            g_bSlient = !g_bSlient;
-            if (g_bSlient)
-            {
-                SetWindowTextW((HWND)lParam, L"æ≤“Ù");
-                BASS_ChannelGetAttribute(g_hStream, BASS_ATTRIB_VOL, &g_fVolChanged);
-                BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_VOL, 0);
-                EnableWindow(hTBVol, FALSE);
-            }
-            else
-            {
-                SetWindowTextW((HWND)lParam, L"“Ù¡ø£∫");
-                BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_VOL, g_fVolChanged);
-                EnableWindow(hTBVol, TRUE);
-            }
-
-            return TRUE;
+            SendMessageW(hTBSpeed, TBM_SETPOS, TRUE, 100);
+            SendMessageW(hTBBlance, TBM_SETPOS, TRUE, 0);
+            SendMessageW(hTBVol, TBM_SETPOS, TRUE, 100);
+            SendMessageW(hTBTempo, TBM_SETPOS, TRUE, 0);
+            DlgProc_SBV(hDlg, WM_HSCROLL, 0, (LPARAM)hTBSpeed);
+            DlgProc_SBV(hDlg, WM_HSCROLL, 0, (LPARAM)hTBBlance);
+            DlgProc_SBV(hDlg, WM_HSCROLL, 0, (LPARAM)hTBVol);
+            DlgProc_SBV(hDlg, WM_HSCROLL, 0, (LPARAM)hTBTempo);
         }
+        return TRUE;
+		}
     }
     return FALSE;
     case WM_TIMER:
@@ -489,7 +537,7 @@ INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
         }
         else if ((HWND)lParam == hTBBlance)
         {
-            g_fBlanceChanged = ((float)dwPos - 100.0f) / 100.0f;
+            g_fBlanceChanged = (float)((int)dwPos) / 100.0f;
             if (g_hStream)
                 BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_PAN, g_fBlanceChanged);
             wsprintfW(szValue, L"%2d", dwPos - 100);
@@ -500,10 +548,18 @@ INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
         {
             g_fVolChanged = (float)dwPos / 100.0f;
             if (g_hStream)
-                BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_VOL, g_fVolChanged);//∑∂Œß0~1
+                BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_VOL, g_fVolChanged);
             wsprintfW(szValue, L"%3d", dwPos);
             SetWindowTextW(hSTVol, szValue);
             return 0;
+        }
+        else if ((HWND)lParam == hTBTempo)
+        {
+            g_GlobalEffect.fTempo = (float)((int)dwPos);
+            if (g_hStream)
+                BASS_ChannelSetAttribute(g_hStream, BASS_ATTRIB_TEMPO, g_GlobalEffect.fTempo);
+            swprintf(szValue, 10, L"%.0f%%", g_GlobalEffect.fTempo);
+            SetWindowTextW(hSTTempo, szValue);
         }
     }
     return TRUE;
@@ -1239,6 +1295,62 @@ INT_PTR CALLBACK DlgProc_Reverb(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
     }
     return FALSE;
 }
+INT_PTR CALLBACK DlgProc_Rotate(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static BOOL bApply = FALSE;
+    switch (message)
+    {
+    case WM_INITDIALOG:
+    {
+        SendDlgItemMessageW(hDlg, IDC_TB_SPEED, TBM_SETRANGEMIN, TRUE, -250);// ¿©¥Û100±∂
+        SendDlgItemMessageW(hDlg, IDC_TB_SPEED, TBM_SETRANGEMAX, TRUE, 250);
+        SendDlgItemMessageW(hDlg, IDC_TB_SPEED, TBM_SETPOS, TRUE, g_GlobalEffect.Rotate.fRate * 100);
+    }
+    return FALSE;
+    case WM_COMMAND:
+    {
+        if (HIWORD(wParam) == BN_CLICKED)
+        {
+            if (LOWORD(wParam) == IDC_CB_ENABLE)// ∆Ù”√
+            {
+                bApply = (SendMessageW((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED);
+                if (!g_hStream)
+                    return TRUE;
+                if (bApply)
+                {
+                    if (g_GlobalEffect.hFXRotate)
+                        BASS_ChannelRemoveFX(g_hStream, g_GlobalEffect.hFXRotate);
+                    g_GlobalEffect.hFXRotate = BASS_ChannelSetFX(g_hStream, BASS_FX_BFX_ROTATE, 1);
+                    goto SetRotate;
+                }
+                else
+                {
+                    if (g_GlobalEffect.hFXRotate)
+                        BASS_ChannelRemoveFX(g_hStream, g_GlobalEffect.hFXRotate);
+                    g_GlobalEffect.hFXRotate = NULL;
+                }
+            }
+            else if (LOWORD(wParam) == IDC_BT_RESET)//÷ÿ÷√
+            {
+                GlobalEffect_ResetToDefault(EFFECT_REVERB);
+                DlgProc_Reverb(hDlg, WM_INITDIALOG, 0, 0);
+                goto SetRotate;
+            }
+        }
+    }
+    return FALSE;
+    case WM_HSCROLL:
+    {
+    SetRotate:
+        g_GlobalEffect.Rotate.fRate = (float)((int)SendDlgItemMessageW(hDlg, IDC_TB_SPEED, TBM_GETPOS, 0, 0)) / 100.0f;
+        if (!bApply || !g_hStream)
+            return TRUE;
+        BASS_FXSetParameters(g_GlobalEffect.hFXRotate, &g_GlobalEffect.Rotate);
+    }
+    return TRUE;
+    }
+    return FALSE;
+}
 INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static HWND hTab;
@@ -1290,12 +1402,15 @@ INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         tci.pszText = (LPWSTR)L"ªÏœÏ";
         SendMessageW(hTab, TCM_INSERTITEMW, 9, (LPARAM)&tci);
 
+        tci.pszText = (LPWSTR)L"ª∑»∆";
+        SendMessageW(hTab, TCM_INSERTITEMW, 10, (LPARAM)&tci);
+
         SendMessageW(hTab, TCM_SETCURSEL, 0, 0);
 
         SendMessageW(hTab, TCM_GETITEMRECT, 0, (LPARAM)&rc);
         GetClientRect(hTab, &rc2);
 
-        PWSTR DialogID[EFFECTWNDTABCOUNT] =
+        PWSTR DialogID[] =
         {
             MAKEINTRESOURCEW(IDD_SBV),
             MAKEINTRESOURCEW(IDD_EQ),
@@ -1306,9 +1421,10 @@ INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             MAKEINTRESOURCEW(IDD_FLANGER),
             MAKEINTRESOURCEW(IDD_GARGLE),
             MAKEINTRESOURCEW(IDD_I3DL2REVERB),
-            MAKEINTRESOURCEW(IDD_REVERB)
+            MAKEINTRESOURCEW(IDD_REVERB),
+            MAKEINTRESOURCEW(IDD_ROTATE)
         };
-        DLGPROC DialogProc[EFFECTWNDTABCOUNT] =
+        DLGPROC DialogProc[] =
         {
             DlgProc_SBV,
             DlgProc_EQ,
@@ -1319,10 +1435,11 @@ INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             DlgProc_Flanger,
             DlgProc_Gargle,
             DlgProc_I3DL2Reverb,
-            DlgProc_Reverb
+            DlgProc_Reverb,
+            DlgProc_Rotate
         };
         HWND hWnd;
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < EFFECTWNDTABCOUNT; ++i)
         {
             hChild[i] = CreateDialogParamW(g_hInst, DialogID[i], hDlg, DialogProc[i], 0);
             SetParent(hChild[i], hTab);

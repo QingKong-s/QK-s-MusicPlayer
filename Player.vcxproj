@@ -225,6 +225,7 @@
     <Image Include="Res\Settings.ico" />
     <Image Include="Res\Speed.ico" />
     <Image Include="Res\Stop.ico" />
+    <Image Include="Res\Tempo.ico" />
     <Image Include="Res\ThreeTrackbars.ico" />
     <Image Include="Res\Tick.ico" />
     <Image Include="Res\Tick2.ico" />
@@ -234,6 +235,7 @@
   <ItemGroup>
     <None Include="CompileCount" />
     <None Include="CompileTime" />
+    <None Include="LICENSE" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

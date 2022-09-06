@@ -1459,6 +1459,7 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
 }
 HRESULT WICCreateBitmap(PWSTR pszFile, IWICBitmap** ppWICBitmap)
 {
+    *ppWICBitmap = NULL;
     IWICFormatConverter* pWICConverter;
     g_pWICFactory->CreateFormatConverter(&pWICConverter);
 
@@ -1481,6 +1482,7 @@ HRESULT WICCreateBitmap(PWSTR pszFile, IWICBitmap** ppWICBitmap)
 }
 HRESULT WICCreateBitmap(IStream* pStream, IWICBitmap** ppWICBitmap)
 {
+    *ppWICBitmap = NULL;
     IWICFormatConverter* pWICConverter;
     g_pWICFactory->CreateFormatConverter(&pWICConverter);
 

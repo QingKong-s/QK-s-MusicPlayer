@@ -19,6 +19,7 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #pragma comment(lib,"dxguid.lib")
 
 #pragma comment(lib,"bass.lib")
+#pragma comment(lib,"bass_fx.lib")
 
 #include <Windows.h>
 #include <WinUser.h>
@@ -391,6 +392,12 @@ void Res_Load(int iSize)
         (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_PAUSE2), IMAGE_ICON, iSize, iSize, 0),
         (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_NEXT2), IMAGE_ICON, iSize, iSize, 0),
         (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_CROSS2), IMAGE_ICON, iSize, iSize, 0),
-        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_TICK), IMAGE_ICON, iSize, iSize, 0)
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_TICK), IMAGE_ICON, iSize, iSize, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_TICK2), IMAGE_ICON, iSize, iSize, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_SPEED), IMAGE_ICON, iSize, iSize, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_BLANCE), IMAGE_ICON, iSize, iSize, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_VOL), IMAGE_ICON, iSize, iSize, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_VOLSLIENT), IMAGE_ICON, iSize, iSize, 0),
+        (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_TEMPO), IMAGE_ICON, iSize, iSize, 0)
     };
 }

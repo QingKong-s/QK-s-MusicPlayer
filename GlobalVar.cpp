@@ -68,7 +68,7 @@ int				g_iCurrFileIndex		= -1;
 int				g_iCurrLrcIndex			= -2;
 int				g_iLaterPlay			= -1;
 
-GLOBALEFFECT    g_GlobalEffect			= { 0 };
+GLOBALEFFECT    g_GlobalEffect			= { SBV_INVALIDVALUE };
 BOOL            g_bSlient				= FALSE;
 float           g_fDefSpeed				= 0,
 				g_fSpeedChanged			= SBV_INVALIDVALUE,

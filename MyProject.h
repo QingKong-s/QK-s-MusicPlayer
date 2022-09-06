@@ -356,6 +356,12 @@ struct GLOBALRES
 	HICON hiNext2;
 	HICON hiCross2;
 	HICON hiTick;
+	HICON hiTick2;
+	HICON hiSpeed;
+	HICON hiBlance;
+	HICON hiVol;
+	HICON hiSlient;
+	HICON hiTempo;
 };
 
 struct GLOBALCONTEXT
