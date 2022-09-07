@@ -205,10 +205,9 @@ INT_PTR CALLBACK DlgProc_About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime);
 LRESULT CALLBACK QKCProc_SEB(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK QKCProc_TBPaint(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
-void GDIObj_LeftBK(DWORD dwOpe = GDIOBJOPE_REFRESH);
 int HitTest_LrcShow(POINT pt);
 int HitTest_BtmBK(POINT pt);
 BOOL UI_VEDrawWaves(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE);
 void UI_VEDrawSpe(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE);
 void UI_VEDrawLrc(int yCenter, BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE);
-BOOL UI_VEProcLrcShowing(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE);
+BOOL UI_VEProcLrcShowing(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE, BOOL bOnlyDrawDTLrc = FALSE);

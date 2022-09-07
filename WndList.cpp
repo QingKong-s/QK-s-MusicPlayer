@@ -253,6 +253,32 @@ void StopThread_MusicTime()
     g_iLrcState = LRCSTATE_NOLRC;
     m_htdMusicTime = NULL;//清空句柄
 }
+void Sort_End()
+{
+    if (g_iCurrFileIndex != -1)
+    {
+        int j;
+        BOOL b[2] = { 0 };
+        for (int i = 0; i < g_ItemData->iCount; ++i)
+        {
+            j = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort;
+            if (j == g_iCurrFileIndex)
+            {
+                g_iCurrFileIndex = i;// 转换现行播放索引
+                b[0] = TRUE;
+            }
+            if (j == g_iLaterPlay)// 这俩中间不能加else，因为现行播放和稍后播放可能是同一项
+            {
+                g_iLaterPlay = i;// 转换稍后播放索引
+                b[1] = TRUE;
+            }
+            if (b[0] && b[1])
+                break;
+        }
+    }
+    List_Redraw();
+    UI_RedrawBookMarkPos();
+}
 
 LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -699,11 +725,15 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 				// 这才是LV拖放正统触发方式，拖放不应该由WM_LBUTTONDOWN触发
 				if (((NMLISTVIEW*)lParam)->iItem != -1)
 				{
-					if (g_iSearchResult != -1 || g_bSort)
-						QKMessageBox(L"现在不可重排项目", L"可逆式排序或搜索状态下不可拖动", (HICON)TD_ERROR_ICON, L"错误");
-
+                    if (g_iSearchResult != -1 || g_bSort)
+                    {
+                        QKMessageBox(L"现在不可重排项目", L"可逆式排序或搜索状态下不可拖动", (HICON)TD_ERROR_ICON, L"错误");
+                        return 0;
+                    }
 					if (g_iCurrFileIndex != -1)
 						((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iCurrFileIndex))->dwFlags |= QKLIF_DRAGMARK_CURRFILE;
+                    if (g_iLaterPlay != -1)
+                        ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iLaterPlay))->dwFlags |= QKLIF_DRAGMARK_PLLATER;
 					//////////////////取选中项目
 					QKARRAY Files = QKArray_Create(0);// 文件名数组
 					QKARRAY Items = QKArray_Create(0);// 索引数组
@@ -846,7 +876,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             {
                 HMENU hMenu = CreatePopupMenu();
                 UINT uFlags = g_bSort || g_iSearchResult != -1 ? MF_GRAYED : 0;
-                AppendMenuW(hMenu, uFlags, IDMI_OPEN_FILE, L"打开文件");//MF_STRING缺省
+                AppendMenuW(hMenu, uFlags, IDMI_OPEN_FILE, L"打开文件");
                 AppendMenuW(hMenu, uFlags, IDMI_OPEN_FOLDER, L"打开文件夹");
 
                 RECT rc;
@@ -862,6 +892,9 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                         break;
                     }
                 }
+
+                if (iIndex < 0)
+                    iIndex = g_ItemData->iCount;
                 switch (iRet)
                 {
                 case IDMI_OPEN_FILE:
@@ -907,7 +940,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     else
                         dwExitCode = 0;
 
-                    if (iIndex <= g_iCurrFileIndex && g_iCurrFileIndex != -1 && cItem)
+					if (iIndex <= g_iCurrFileIndex && g_iCurrFileIndex != -1 && cItem)
                         g_iCurrFileIndex += cItem;
 
                     for (DWORD i = 0; i < cItem; i++)
@@ -1196,12 +1229,17 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 {
                     if (g_iSearchResult != -1)// 做现行播放项LV索引转换
                     {
+                        ///////还原现行播放索引和稍后播放索引
                         if (g_iCurrFileIndex < g_iSearchResult && g_iCurrFileIndex != -1)// 索引落在结果数之内，说明搜索时现行索引被转换，现在要转换回来
                             g_iCurrFileIndex = List_GetArrayItemIndex(g_iCurrFileIndex);
                         // 没有落在结果数之内，搜索时索引未转换，一切保持原状
+                        // 转换稍后播放，跟上面同理
+                        if (g_iLaterPlay < g_iSearchResult && g_iLaterPlay != -1)
+                            g_iLaterPlay = List_GetArrayItemIndex(g_iLaterPlay);
+                        ///////还原位置
                         g_iSearchResult = -1;
                         List_ResetLV();// 数目变了，不是List_Redraw而是List_ResetLV
-                        SendMessageW(g_hLV, LVM_ENSUREVISIBLE, iTopIndex + iVisibleItemCount - 1, TRUE);// 回到原来的位置（话说微软就不能搞个设置滚动条位置的消息？）
+                        SendMessageW(g_hLV, LVM_ENSUREVISIBLE, iTopIndex + iVisibleItemCount - 1, TRUE);// 回到原来的位置（话说微软就不能搞个设置LV滚动条位置的消息？）
                         UI_RedrawBookMarkPos();
                     }
                 }
@@ -1214,7 +1252,8 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     GetWindowTextW(GetDlgItem(g_hBKRight, IDC_ED_SEARCH), pszEdit, iLength + 1);// 取编辑框文本
                     g_iSearchResult = 0;// 搜索结果置0
                     int iIndex;
-                    BOOL b = (g_iCurrFileIndex != -1);// 是否要比对并转换现行索引
+                    BOOL b1 = (g_iCurrFileIndex != -1);// 是否要比对并转换现行索引
+                    BOOL b2 = (g_iLaterPlay != -1);
                     for (int i = 0; i < g_ItemData->iCount; ++i)
                     {
                         iIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort;
@@ -1224,12 +1263,20 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                         if (QKStrInStr(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iIndex))->pszName, pszEdit))// 比对文本
                         {
                             ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iSearchResult))->iMappingIndexSearch = iIndex;// 映射，这个要从列表的开头开始映射，顺次往下，使用g_iSearchResult做到这一点
-                            if (b)
+                            if (b1)
                             {
                                 if (i == g_iCurrFileIndex)
                                 {
-                                    g_iCurrFileIndex = g_iSearchResult;// 转换现行索引
-                                    b = FALSE;
+                                    g_iCurrFileIndex = g_iSearchResult;// 转换现行播放索引
+                                    b1 = FALSE;
+                                }
+                            }
+                            if (b2)
+                            {
+                                if (i == g_iLaterPlay)
+                                {
+                                    g_iLaterPlay = g_iSearchResult;// 转换稍后播放索引
+                                    b2 = FALSE;
                                 }
                             }
                             ++g_iSearchResult;// 结果数递增
@@ -1247,7 +1294,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             {
                 static BOOL bAscending = TRUE;// 升序：从小到大；降序：从大到小
                 HMENU hMenu = CreatePopupMenu();
-                UINT uFlags = g_iSearchResult == -1 ? 0 : MF_GRAYED;
+				UINT uFlags = ((g_iSearchResult != -1) || !g_ItemData->iCount) ? MF_GRAYED : 0;
                 AppendMenuW(hMenu, g_bSort ? uFlags : MF_GRAYED, IDMI_LM_SORT_DEF, L"默认排序");
                 AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_FILENAME, L"按文件名排序");
                 AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_NAME, L"按名称排序");
@@ -1277,6 +1324,9 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 {
                     if (g_iCurrFileIndex != -1)
                         g_iCurrFileIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iCurrFileIndex))->iMappingIndexSort;
+
+                    if (g_iLaterPlay != -1)
+                        g_iLaterPlay = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iLaterPlay))->iMappingIndexSort;
 
                     for (int i = 0; i < g_ItemData->iCount; ++i)
                         ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort = -1;
@@ -1312,19 +1362,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                             }
                         }
                     }
-                    if (g_iCurrFileIndex != -1)
-                    {
-                        for (int i = 0; i < iCount; ++i)
-                        {
-                            if (((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort == g_iCurrFileIndex)
-                            {
-                                g_iCurrFileIndex = i;// 转换现行索引
-                                break;
-                            }
-                        }
-                    }
-                    List_Redraw();
-                    UI_RedrawBookMarkPos();
+                    Sort_End();
                 }
                 return 0;
                 case IDMI_LM_SORT_NAME:// 按列表名称排序
@@ -1352,25 +1390,12 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                             }
                         }
                     }
-                    if (g_iCurrFileIndex != -1)
-                    {
-                        for (int i = 0; i < iCount; ++i)
-                        {
-                            if (((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort == g_iCurrFileIndex)
-                            {
-                                g_iCurrFileIndex = i;
-                                break;
-                            }
-                        }
-                    }
-                    List_Redraw();
-                    UI_RedrawBookMarkPos();
+                    Sort_End();
                 }
                 return 0;
                 case IDMI_LM_SORT_CTIME:// 按创建时间排序
                 case IDMI_LM_SORT_MTIME:// 按修改时间排序
                 {
-                    List_SetRedraw(FALSE);
                     g_bSort = TRUE;
                     int iCount = g_ItemData->iCount;
                     PLAYERLISTUNIT* p1, * p2;
@@ -1414,20 +1439,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                             }
                         }
                     }
-                    if (g_iCurrFileIndex != -1)
-                    {
-                        for (int i = 0; i < iCount; ++i)
-                        {
-                            if (((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort == g_iCurrFileIndex)
-                            {
-                                g_iCurrFileIndex = i;
-                                break;
-                            }
-                        }
-                    }
-                    List_SetRedraw(TRUE);
-                    List_Redraw();
-                    UI_RedrawBookMarkPos();
+                    Sort_End();
                 }
                 return 0;
                 case IDMI_LM_SORT_ASCENDING:// 升序
@@ -1456,7 +1468,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     List_Redraw();
                 }
                 return 0;
-                case IDMI_LM_DETAIL:// 查看列表文件详细信息
+                case IDMI_LM_DETAIL:// 查看列表详细信息
                 {
 
                 }

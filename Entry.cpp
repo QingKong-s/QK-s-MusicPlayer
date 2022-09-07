@@ -175,7 +175,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.hInstance = hInstance;
-    wcex.hIcon = (HICON)LoadImageW(hInstance, MAKEINTRESOURCEW(IDI_MAIN), IMAGE_ICON, 0, 0, LR_SHARED);
+    wcex.hIcon = (HICON)LoadImageW(hInstance, MAKEINTRESOURCEW(IDI_MAIN), IMAGE_ICON, 256, 256, LR_SHARED);
     wcex.hCursor = LoadCursorW(NULL, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
     /////////×¢²áÖ÷´°¿Ú

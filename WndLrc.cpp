@@ -163,7 +163,6 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     }
     case WM_LBUTTONDOWN:
     {
-        //SetCapture(hWnd);
         bLBTDown = TRUE;
         int iRet = LrcWnd_HitTest();
         if (iRet < 0)
@@ -175,7 +174,6 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     break;
     case WM_LBUTTONUP:
     {
-        //ReleaseCapture();
         bLBTDown = FALSE;
         int iRet = LrcWnd_HitTest();
         switch (iRet)
@@ -261,7 +259,7 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		g_pD2DFactory->CreateDCRenderTarget(&DCRTProp, &m_pD2DRenderTarget);
 		RECT rc = { 0,0,m_cxClient,m_cyClient };
 		m_pD2DRenderTarget->BindDC(m_hCDC_Lrc, &rc);
-        m_pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pD2DSolidBrush1);// ´´½¨µ¥É«»­Ë¢
+        m_pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pD2DSolidBrush1);
 		m_pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0, 0, 0, 0.4), &m_pD2DSolidBrush2);
 
 		m_LrcScrollInfo.iIndex = -1;
@@ -687,32 +685,32 @@ void LrcWnd_DrawLrc()//  £Ä£É£Ò£Å£Ã£Ô¡¡£Ø¡¡£²£Ä£¡£¡£¡
     BLENDFUNCTION bf;
     bf.BlendOp = AC_SRC_OVER;
     bf.BlendFlags = 0;
-    bf.SourceConstantAlpha = 255;
+    bf.SourceConstantAlpha = 0xFF;
     bf.AlphaFormat = AC_SRC_ALPHA;
     UpdateLayeredWindow(g_hLrcWnd, NULL, NULL, &size, m_hCDC_Lrc, &pt, 0, &bf, ULW_ALPHA);// ÏÔÊ¾
 }
-int LrcWnd_HitTest()//¸è´Ê´°¿ÚÃüÖÐ²âÊÔ
+int LrcWnd_HitTest()// ¸è´Ê´°¿ÚÃüÖÐ²âÊÔ
 {
     POINT pt;
     GetCursorPos(&pt);
     ScreenToClient(g_hLrcWnd, &pt);
     RECT rc;
     ///////////////////////////²âÊÔ±ß¿òÇøÓò
-    //×ó±ß
+    // ×ó±ß
     rc.left = 0;
     rc.top = 0;
     rc.right = DPIS_DTLRCFRAME;
     rc.bottom = m_cyClient;
-    if (PtInRect(&rc, pt))//×ó±ß
+    if (PtInRect(&rc, pt))// ×ó±ß
     {
         rc.top = 0;
         rc.bottom = DPIS_DTLRCFRAME;
-        if (PtInRect(&rc, pt))//×óÉÏ
+        if (PtInRect(&rc, pt))// ×óÉÏ
             return HTTOPLEFT;
 
         rc.top = m_cyClient - DPIS_DTLRCFRAME;
         rc.bottom = m_cyClient;
-        if (PtInRect(&rc, pt))//×óÏÂ
+        if (PtInRect(&rc, pt))// ×óÏÂ
             return HTBOTTOMLEFT;
         return HTLEFT;
     }
@@ -721,16 +719,16 @@ int LrcWnd_HitTest()//¸è´Ê´°¿ÚÃüÖÐ²âÊÔ
     rc.top = 0;
     rc.right = m_cxClient;
     rc.bottom = m_cyClient;
-    if (PtInRect(&rc, pt))//ÓÒ±ß
+    if (PtInRect(&rc, pt))// ÓÒ±ß
     {
         rc.top = 0;
         rc.bottom = DPIS_DTLRCFRAME;
-        if (PtInRect(&rc, pt))//ÓÒÉÏ
+        if (PtInRect(&rc, pt))// ÓÒÉÏ
             return HTTOPRIGHT;
 
         rc.top = m_cyClient - DPIS_DTLRCFRAME;
         rc.bottom = m_cyClient;
-        if (PtInRect(&rc, pt))//ÓÒÏÂ
+        if (PtInRect(&rc, pt))// ÓÒÏÂ
             return HTBOTTOMRIGHT;
         return HTRIGHT;
     }
@@ -739,14 +737,14 @@ int LrcWnd_HitTest()//¸è´Ê´°¿ÚÃüÖÐ²âÊÔ
     rc.top = 0;
     rc.right = m_cxClient - DPIS_DTLRCFRAME;
     rc.bottom = DPIS_DTLRCFRAME;
-    if (PtInRect(&rc, pt))//¶¥±ß
+    if (PtInRect(&rc, pt))// ¶¥±ß
         return HTTOP;
 
     rc.left = DPIS_DTLRCFRAME;
     rc.top = m_cyClient - DPIS_DTLRCFRAME;
 	rc.right = m_cxClient - DPIS_DTLRCFRAME;
 	rc.bottom = m_cyClient;
-	if (PtInRect(&rc, pt))//µ×±ß
+	if (PtInRect(&rc, pt))// µ×±ß
 		return HTBOTTOM;
 	///////////////////////////²âÊÔ°´Å¥ÇøÓò
 	int iLeft = (m_cxClient - GC.cyBT * DTLRCBTNCOUNT) / 2;
