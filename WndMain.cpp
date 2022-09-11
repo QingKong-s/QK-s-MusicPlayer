@@ -216,6 +216,16 @@ INT_PTR CALLBACK DlgProc_Settings2(HWND hDlg, UINT message, WPARAM wParam, LPARA
         SetDlgItemTextW(hDlg, IDC_ED_DTLRCSPACELINE, GS.pszDTLrcSpaceLine);
 
         DlgProc_Settings2(hDlg, WM_COMMAND, MAKEWPARAM(IDC_BT_REFRESHDEV, BN_CLICKED), 0);
+
+        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"均衡器");
+        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"合唱");
+        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"压缩");
+        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"失真");
+        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"镶边");
+        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"漱口");
+        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"3D混响");
+        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"混响");
+        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"环绕");
     }
     return FALSE;
     case WM_NCPAINT:

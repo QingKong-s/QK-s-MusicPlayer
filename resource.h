@@ -176,14 +176,16 @@
 #define IDC_CB_DEVICES                  1138
 #define IDC_RICHEDIT21                  1139
 #define IDC_RE_LRCMAKER                 1139
-#define IDC_CHECK1                      1140
 #define IDC_ED_MYQQ                     1141
 #define IDC_ED_BASSWEBSITE              1142
 #define IDC_ST_PROGVER                  1143
 #define IDC_ST_COMPILETIME              1144
 #define IDC_ED_LICENSE                  1144
 #define IDC_ST_COMPILECOUNT             1145
-#define IDC_ED_ROTATECHANNEL            1145
+#define IDC_LB_EFFECTPRI                1149
+#define IDC_BT_UP                       1150
+#define IDC_BUTTON2                     1151
+#define IDC_BT_DOWN                     1151
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -193,7 +195,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        253
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         1149
+#define _APS_NEXT_CONTROL_VALUE         1152
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif
