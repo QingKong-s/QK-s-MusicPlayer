@@ -322,8 +322,10 @@ struct CURRMUSICINFO
 #define PPF_KEY_DTLRCCLR2			L"DTLrcClr2"
 #define PPF_KEY_DTLRCTRANSPARENT	L"DTLrcTransparent"
 #define PPF_KEY_DTLRCSPACELINE		L"DTLrcSpaceLine"
-//#define PPF_KEY_
 
+#define MUSICTYPE_NORMAL			0
+#define MUSICTYPE_MOD				1
+#define MUSICTYPE_MIDI				2
 
 struct GLOBALRES
 {
@@ -521,7 +523,7 @@ const D2D_COLOR_F c_D2DClrCyanDeeper = { 0,0.3764,0.7529,1 };// 易语言青蓝
 #define RDPI(i) i * USER_DEFAULT_SCREEN_DPI / g_iDPI				// 将尺寸按DPI缩小
 #define SAFE_RELEASE(p) if(p){p->Release();p=NULL;}
 
-ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS = 0, DWORD dwFlagsHM = 0);
+ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS = 0, DWORD dwFlagsHM = 0, DWORD dwFlagsHMIDI = 0);
 BOOL BASS_FreeMusic(ULONG_PTR h);
 void UI_UpdateDPISize();
 void Res_Free();

@@ -137,6 +137,18 @@ void GlobalEffect_ResetToDefault(UINT i)
         g_GlobalEffect.Rotate.fRate = 0;
     }
 }
+void GlobalEffect_SetPriority(int* i)
+{
+    //g_GlobalEffect.iPriorityChorus = i[0];
+    //g_GlobalEffect.iPriorityCompressor = i[1];
+    //g_GlobalEffect.iPriorityDistortion = i[2];
+    //g_GlobalEffect.iPriorityEcho = i[3];
+    //g_GlobalEffect.iPriorityFlanger = i[4];
+    //g_GlobalEffect.iPriorityGargle = i[5];
+    //g_GlobalEffect.iPriorityI3DL2Reverb = i[6];
+    //g_GlobalEffect.iPriorityReverb = i[7];
+    //g_GlobalEffect.iPriorityRotate = i[8];
+}
 
 INT_PTR CALLBACK DlgProc_EQ(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

@@ -66,6 +66,9 @@
 #define IDR_LICENSE                     251
 #define IDD_ROTATE                      251
 #define IDI_TEMPO                       252
+#define IDI_MIDIFONT                    253
+#define IDI_ICON1                       255
+#define IDI_REVERSE                     255
 #define IDC_LB_FILE                     1031
 #define IDC_ED_NEW                      1032
 #define IDC_ED_FILE                     1032
@@ -182,10 +185,6 @@
 #define IDC_ST_COMPILETIME              1144
 #define IDC_ED_LICENSE                  1144
 #define IDC_ST_COMPILECOUNT             1145
-#define IDC_LB_EFFECTPRI                1149
-#define IDC_BT_UP                       1150
-#define IDC_BUTTON2                     1151
-#define IDC_BT_DOWN                     1151
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -193,7 +192,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        253
+#define _APS_NEXT_RESOURCE_VALUE        256
 #define _APS_NEXT_COMMAND_VALUE         32774
 #define _APS_NEXT_CONTROL_VALUE         1152
 #define _APS_NEXT_SYMED_VALUE           110

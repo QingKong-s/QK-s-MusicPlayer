@@ -16,24 +16,34 @@ struct TPARAM_FILLTIMECLM
 struct GLOBALEFFECT
 {
 	float fTempo;
+
 	HFX hFXChorus;
 	BASS_DX8_CHORUS Chorus;
+
 	HFX hFXCompressor;
 	BASS_DX8_COMPRESSOR Compressor;
+
 	HFX hFXDistortion;
 	BASS_DX8_DISTORTION Distortion;
+
 	HFX hFXEcho;
 	BASS_DX8_ECHO Echo;
+
 	HFX hFXFlanger;
 	BASS_DX8_FLANGER Flanger;
+
 	HFX hFXGargle;
 	BASS_DX8_GARGLE Gargle;
+
 	HFX hFXI3DL2Reverb;
 	BASS_DX8_I3DL2REVERB I3DL2Reverb;
+
 	HFX hFXReverb;
 	BASS_DX8_REVERB Reverb;
+
 	HFX hFXEQ[10];
 	BASS_DX8_PARAMEQ EQ[10];
+
 	HFX hFXRotate;
 	BASS_BFX_ROTATE Rotate;
 };
@@ -87,6 +97,15 @@ const float c_EQCenter[10] = { 31,62,125,250,500,1000,2000,4000,8000,16000 };// 
 #define EFFECT_ROTATE		0x00000200
 #define EFFECT_ALL			0xFFFFFFFF
 
+/*
+* 目标：将效果设置重置为默认
+*
+* 参数：
+* i 要重置的效果索引
+*
+* 返回值：
+* 备注：调用此函数并不应用效果
+*/
 void GlobalEffect_ResetToDefault(UINT i);
 
 INT_PTR CALLBACK DlgProc_EQ(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);

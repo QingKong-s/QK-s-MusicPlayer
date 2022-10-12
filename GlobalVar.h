@@ -62,7 +62,7 @@ extern int				g_iLrcState;            // 桌面歌词标志
 extern QKARRAY			g_ItemData;             // 全局列表数据
 
 extern HSTREAM			g_hStream;              // 全局播放流
-extern BOOL				g_bHMUSIC;              // 是否为MOD音乐
+extern int				g_iMusicType;			// 文件类型
 extern BOOL				g_bPlaying;				// 是否正在播放，用来判断是否播完
 
 extern ULONGLONG        g_llLength;             // 总长度，单位毫秒，进度条单位为百毫秒

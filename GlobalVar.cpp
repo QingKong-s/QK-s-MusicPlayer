@@ -57,7 +57,7 @@ int             g_iLrcState				= LRCSTATE_STOP;
 QKARRAY			g_ItemData;
 
 HSTREAM			g_hStream				= NULL;
-BOOL			g_bHMUSIC;
+int				g_iMusicType			= MUSICTYPE_NORMAL;
 BOOL			g_bPlaying				= FALSE;
 
 ULONGLONG       g_llLength = 0;

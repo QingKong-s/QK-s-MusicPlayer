@@ -93,6 +93,8 @@ BOOL            m_bWndMinimized             = FALSE;
 
 HSTREAM m_hs;
 
+HRESULT hr = S_OK;
+
 void Settings_Read()
 {
     WCHAR szBuffer[MAXPROFILEBUFFER];
@@ -216,16 +218,6 @@ INT_PTR CALLBACK DlgProc_Settings2(HWND hDlg, UINT message, WPARAM wParam, LPARA
         SetDlgItemTextW(hDlg, IDC_ED_DTLRCSPACELINE, GS.pszDTLrcSpaceLine);
 
         DlgProc_Settings2(hDlg, WM_COMMAND, MAKEWPARAM(IDC_BT_REFRESHDEV, BN_CLICKED), 0);
-
-        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"均衡器");
-        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"合唱");
-        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"压缩");
-        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"失真");
-        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"镶边");
-        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"漱口");
-        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"3D混响");
-        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"混响");
-        SendDlgItemMessageW(hDlg, IDC_LB_EFFECTPRI, LB_ADDSTRING, 0, (LPARAM)L"环绕");
     }
     return FALSE;
     case WM_NCPAINT:
@@ -1100,7 +1092,7 @@ void Playing_PlayNext(BOOL bReverse)
     if (g_iSearchResult != -1)
         iCount = g_iSearchResult;
     else
-        iCount = QKArray_GetCount(g_ItemData);
+        iCount = g_ItemData->iCount;
 
     if (!iCount)
         return;
@@ -1113,6 +1105,7 @@ void Playing_PlayNext(BOOL bReverse)
         SendMessageW(g_hLV, LVM_REDRAWITEMS, iIndex, iIndex);
         goto PlayFile;
     }
+
     if (bReverse)//倒序
     {
         for (int i = 0; i < g_ItemData->iCount; ++i)
@@ -1266,7 +1259,7 @@ void UI_UpdateLeftBK()
 		ID2D1Bitmap1* pD2DBmpScaled;// 缩放后的D2D位图
 		m_pD2DDCLeftBK->CreateBitmapFromWicBitmap(pWICBmpScaled, &pD2DBmpScaled);// 转换为D2D位图
 		pWICBmpScaled->Release();// 释放缩放后的WIC位图
-		////////////模糊
+		////////////模糊 
 		ID2D1Image* pD2DBmpBlurred;
 		ID2D1Effect* pD2DEffect;
 		m_pD2DDCLeftBK->CreateEffect(CLSID_D2D1GaussianBlur, &pD2DEffect);
@@ -1412,7 +1405,7 @@ void UI_UpdateLeftBK()
 
 	hr = m_pD2DDCLeftBK->EndDraw();
     m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
-	////////////////////写到交换链
+	////////////////////写到交换链缓冲区
 	m_pD2DDCLeftBK->BeginDraw();
 	m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2);
 	m_pD2DDCLeftBK->EndDraw();
@@ -1790,6 +1783,7 @@ BOOL UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing, BOOL bOnlyDraw
 				break;
 			}
 		}
+        
 		if (m_iLrcSBPos != -1)
 			m_iLrcCenter = m_iLrcSBPos;
         if (m_iLrcFixedIndex != -1)
@@ -2048,7 +2042,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         Settings_Read();
         GlobalEffect_ResetToDefault(EFFECT_ALL);
-
+        
         g_Lrc = QKArray_Create(0);
         g_ItemData = QKArray_Create(0);
         ///////////////////////////初始化.....
@@ -3130,20 +3124,24 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         if (uTBMax)
         {
             D2D_RECT_F D2DRcF;
-            D2DRcF.left = D2DRcTrackBar.left;
-            D2DRcF.top = D2DRcTrackBar.top + (DPIS_CYPROGBAR - GC.DS_CYPROGBARCORE) / 2;
-            D2DRcF.bottom = D2DRcF.top + GC.DS_CYPROGBARCORE;
-            D2DRcF.right = D2DRcF.left + uTBPos * (D2DRcTrackBar.right - D2DRcTrackBar.left) / uTBMax;
-            m_pD2DDCLeftBK->FillRectangle(&D2DRcF, m_pD2DBrMyBlue);
-            D2DRcF.left = D2DRcF.right;
-            D2DRcF.right = D2DRcTrackBar.right;
-            ID2D1SolidColorBrush* pD2DBrush;
-            m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 0.7f), &pD2DBrush);
-            m_pD2DDCLeftBK->FillRectangle(&D2DRcF, pD2DBrush);
-            pD2DBrush->Release();
-        }
-        else
+			D2DRcF.left = D2DRcTrackBar.left;
+			D2DRcF.top = D2DRcTrackBar.top + (DPIS_CYPROGBAR - GC.DS_CYPROGBARCORE) / 2;
+			D2DRcF.bottom = D2DRcF.top + GC.DS_CYPROGBARCORE;
+			float fWidth = D2DRcTrackBar.right - D2DRcTrackBar.left;
+			D2DRcF.right = D2DRcF.left + uTBPos * fWidth / uTBMax;
+			if (D2DRcF.right - D2DRcF.left > fWidth)
+				goto NoPgs;
+			m_pD2DDCLeftBK->FillRectangle(&D2DRcF, m_pD2DBrMyBlue);
+			D2DRcF.left = D2DRcF.right;
+			D2DRcF.right = D2DRcTrackBar.right;
+			ID2D1SolidColorBrush* pD2DBrush;
+			m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Gray, 0.7f), &pD2DBrush);
+			m_pD2DDCLeftBK->FillRectangle(&D2DRcF, pD2DBrush);
+			pD2DBrush->Release();
+		}
+		else
         {
+        NoPgs:
             D2D_RECT_F D2DRcF;
             D2DRcF.left = D2DRcTrackBar.left;
             D2DRcF.top = D2DRcTrackBar.top + (DPIS_CYPROGBAR - GC.DS_CYPROGBARCORE) / 2;
@@ -3258,7 +3256,7 @@ INT_PTR CALLBACK DlgProc_License(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 				return NULL;
 			PWSTR pBuffer = new WCHAR[iBufferSize + 1];
 			MultiByteToWideChar(CP_UTF8, 0, p, dwLength, pBuffer, iBufferSize);
-			*(pBuffer + iBufferSize) = L'\0';
+			*(pBuffer + iBufferSize) = L'\0';// 添加结尾NULL
 			SetDlgItemTextW(hDlg, IDC_ED_LICENSE, pBuffer);
 			delete[] pBuffer;
 		}
@@ -3296,7 +3294,7 @@ INT_PTR CALLBACK DlgProc_About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
         cx0 = bmp.bmWidth;
         cy0 = bmp.bmHeight;
         cx = rc.right;
-		cy = cx * cy0 / cx0;
+		cy = cx * cy0 / cx0;// 计算缩放尺寸
 
 		hCDC = CreateCompatibleDC(NULL);
 		SelectObject(hCDC, hBitmap);
@@ -3348,7 +3346,7 @@ INT_PTR CALLBACK DlgProc_About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
     {
         PAINTSTRUCT ps;
         HDC hDC = BeginPaint(hDlg, &ps);
-        SetStretchBltMode(hDC, HALFTONE);
+        SetStretchBltMode(hDC, HALFTONE);// 置拉伸模式
         StretchBlt(hDC, 0, 0, cx, cy, hCDC, 0, 0, cx0, cy0, SRCCOPY);
         EndPaint(hDlg, &ps);
     }
@@ -3500,43 +3498,6 @@ LRESULT CALLBACK QKCProc_SEB(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         g_cxBKList = rc.right - wParam - DPIS_GAP;
         UI_SetRitCtrlPos();
         SendMessageW(g_hMainWnd, WM_SIZE, 0, MAKELONG(rc.right, rc.bottom));
-    }
-    return 0;
-}
-LRESULT CALLBACK QKCProc_TBPaint(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam)//滑块条绘制过程
-{
-    if (iMsg == QKCTBN_PAINT)
-    {
-        QKCTBPAINT* Pnt = (QKCTBPAINT*)lParam;
-        RECT rc;
-        int cxClient, cyClient;
-        GetWindowRect(hWnd, &rc);
-        cxClient = rc.right - rc.left;
-        cyClient = rc.bottom - rc.top;
-        ScreenToClient(g_hBKLeft, (LPPOINT)&rc);
-        ScreenToClient(g_hBKLeft, (LPPOINT)&rc + 1);
-        HDC hDC;
-        m_pD2DDCLeftBK->BeginDraw();
-        m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK2);
-        m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
-        BitBlt(Pnt->hDC, 0, 0, cxClient, cyClient, hDC, rc.left, rc.top, SRCCOPY);// 画背景
-        m_pD2DGdiInteropRTLeftBK->ReleaseDC(NULL);
-        m_pD2DDCLeftBK->EndDraw();
-        m_pD2DDCLeftBK->SetTarget(m_pD2DBmpLeftBK);
-        rc.left = 6;
-        rc.top = Pnt->rcClient->bottom / 2 - 2;
-        rc.right = Pnt->rcClient->right - 6;
-        rc.bottom = rc.top + 4;
-        HBRUSH hBrush = CreateSolidBrush(MYCLR_TBTRACK);
-        FillRect(Pnt->hDC, &rc, hBrush);
-        DeleteObject(hBrush);
-
-        if (Pnt->byPressed == 1)
-            hBrush = CreateSolidBrush(MYCLR_BTPUSHED);
-        else
-            hBrush = CreateSolidBrush(MYCLR_BTHOT);
-        FillRect(Pnt->hDC, Pnt->rc, hBrush);
-        DeleteObject(hBrush);
     }
     return 0;
 }

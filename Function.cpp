@@ -9,6 +9,7 @@
 
 #include <math.h>
 
+#include "MyProject.h"
 #include "Function.h"
 #include "GlobalVar.h"
 #include "resource.h"
@@ -489,7 +490,11 @@ BOOL QKStrToBool(PCWSTR psz)
 }
 UINT32 QKByteStreamToBEUINT32(BYTE* p)
 {
-	return (UINT32)(*(p) << 24 | *(p + 1) << 16 | *(p + 2) << 8 | *(p + 3));
+	return (UINT32)((UINT32)p[0] << 24 | (UINT32)p[1] << 16 | (UINT32)p[2] << 8 | (UINT32)p[3]);
+}
+UINT32 QKSynchsafeUINT32ToUINT32(BYTE* p)
+{
+    return (UINT32)(((UINT32)p[0] & 0x7F) << 21) | (((UINT32)p[1] & 0x7F) << 14) | (((UINT32)p[2] & 0x7F) << 7) | ((UINT32)p[3] & 0x7F);
 }
 
 /*
@@ -570,131 +575,144 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
     if (memcmp(by, "ID3", 3) == 0)// ID3v2
     {
         ID3v2_Header Header = { 0 };
-        SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-        ReadFile(hFile, &Header, sizeof(Header), &dwLengthRead, NULL);// 读出标签头
-        if (dwLengthRead < sizeof(ID3v2_Header))
-            return;
-        if (Header.Ver == 3)// ID3v2.3标签(https://id3.org)
-        {
-            DWORD dwTotalSize =
-                ((Header.Size[0] & 0x7F) << 21) |
-                ((Header.Size[1] & 0x7F) << 14) |
-                ((Header.Size[2] & 0x7F) << 7) |
-                (Header.Size[3] & 0x7F);// 28位数据，包括标签头
-            HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, dwTotalSize, NULL);// 映射ID3v2到内存
-            BYTE* pFile = (BYTE*)MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, dwTotalSize);
-            if (pFile)
-            {
-                BYTE* pFrame;
-                DWORD dwOffest = sizeof(ID3v2_Header);
-                DWORD dwUnitSize;
-                CHAR FrameID[4];
-                while (true)
-                {
-                    pFrame = pFile + dwOffest;
-                    dwUnitSize =
-                        (((ID3v2_UnitHeader*)pFrame)->Size[0] << 24) |
-                        (((ID3v2_UnitHeader*)pFrame)->Size[1] << 16) |
-                        (((ID3v2_UnitHeader*)pFrame)->Size[2] << 8) |
-                        ((ID3v2_UnitHeader*)pFrame)->Size[3];// 32位数据，不包括帧头
-                    memcpy(FrameID, ((ID3v2_UnitHeader*)pFrame)->ID, 4);// 读帧标识
-                    pFrame += sizeof(ID3v2_UnitHeader);// 跳过帧头
-                    if (memcmp(FrameID, "TIT2", 4) == 0)// 标题
-                        pmi->pszTitle = GetMP3ID3v2_ProcString(pFrame, dwUnitSize);
-                    else if (memcmp(FrameID, "TPE1", 4) == 0)// 作者
-                        pmi->pszArtist = GetMP3ID3v2_ProcString(pFrame, dwUnitSize);
-                    else if (memcmp(FrameID, "TALB", 4) == 0)// 专辑
-                        pmi->pszAlbum = GetMP3ID3v2_ProcString(pFrame, dwUnitSize);
-                    else if (memcmp(FrameID, "USLT", 4) == 0)// 不同步歌词
-                    {
-                        /*
-                        <帧头>（帧标识为USLT）
-                        文本编码						$xx
-                        自然语言代码					$xx xx xx
-                        内容描述						<字符串> $00 (00)
-                        歌词							<字符串>
-                        */
-                        DWORD cb = dwUnitSize;
-                        BYTE byEncodeingType = *pFrame;// 读文本编码
-                        ++pFrame;// 跳过文本编码
-                        CHAR byLangCode[3];
-                        memcpy(byLangCode, pFrame, 3);// 读自然语言代码
-                        pFrame += 3;// 跳过自然语言代码
-                        int t;
-                        if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1或UTF-8
-                            t = lstrlenA((PCSTR)pFrame) + 1;
-                        else// UTF-16LE或UTF-16BE
-                            t = (lstrlenW((PCWSTR)pFrame) + 1) * sizeof(WCHAR);
-                        pFrame += t;// 跳过内容描述
-                        cb -= (t + 4);
-                        // 此时pFrame指向歌词文本
-                        pmi->pszLrc = GetMP3ID3v2_ProcString(pFrame, cb, byEncodeingType);
-                    }
-                    else if (memcmp(FrameID, "COMM", 4) == 0)// 备注
-                    {
-                        /*
-                        <帧头>（帧标识为COMM）
-                        文本编码						$xx
-                        自然语言代码					$xx xx xx
-                        备注摘要						<字符串> $00 (00)
-                        备注							<字符串>
-                        */
-                        DWORD cbComment = dwUnitSize;
-                        BYTE byEncodeingType = *pFrame;// 读文本编码
-                        ++pFrame;// 跳过文本编码
-                        CHAR byLangCode[3];
-                        memcpy(byLangCode, pFrame, 3);// 读自然语言代码
-                        pFrame += 3;// 跳过自然语言代码
-                        int t;
-                        if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1或UTF-8
-                            t = lstrlenA((PCSTR)pFrame) + 1;
-                        else// UTF-16LE或UTF-16BE
-                            t = (lstrlenW((PCWSTR)pFrame) + 1) * sizeof(WCHAR);
-                        pFrame += t;// 跳过备注摘要
-                        cbComment -= (t + 4);
-                        // 此时pFrame指向备注字符串
-                        pmi->pszComment = GetMP3ID3v2_ProcString(pFrame, cbComment, byEncodeingType);
-                    }
-                    else if (memcmp(FrameID, "APIC", 4) == 0)// 图片
-                    {
-                        /*
-                        <帧头>（帧标识为APIC）
-                        文本编码                        $xx
-                        MIME 类型                       <ASCII字符串>$00（如'image/bmp'）
-                        图片类型                        $xx
-                        描述                            <字符串>$00(00)
-                        <图片数据>
-                        */
-                        BYTE* pImageData = pFrame;
-                        BYTE byEncodeingType = *pImageData;// 读文本编码
-                        int t, cbImageSize = dwUnitSize;
-                        ++pImageData;// 跳过文本编码
-                        t = lstrlenA((PCSTR)pImageData);
-                        pImageData += t;// 跳过MIME类型字符串
-                        pImageData += 2;// 跳过MIME结尾NULL和图片类型
-                        cbImageSize -= (t + 3);
-                        if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1或UTF-8
-                            t = lstrlenA((PCSTR)pImageData) + 1;
-                        else// UTF-16LE或UTF-16BE
-                            t = lstrlenW((PCWSTR)pImageData) * sizeof(WCHAR) + 2;
-                        pImageData += t; cbImageSize -= t;// 跳过描述字符串和结尾NULL
+        ID3v2_ExtHeader ExtHeader = { 0 };
+		SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+		ReadFile(hFile, &Header, sizeof(Header), &dwLengthRead, NULL);// 读出标签头
+		if (dwLengthRead < sizeof(ID3v2_Header))
+			return;
 
-                        IStream* pPicStream = SHCreateMemStream(pImageData, cbImageSize);// 创建流对象
-                        if (pPicStream)
-                        {
-                            WICCreateBitmap(pPicStream, &pmi->pWICBitmap);
-                            pPicStream->Release();
-                        }
-                    }
-                    dwOffest += (dwUnitSize + sizeof(ID3v2_UnitHeader));
-                    if (dwOffest >= dwTotalSize)// 是否超界
-                        break;
-                }
-                UnmapViewOfFile(pFile);
+        DWORD dwTotalSize = QKSynchsafeUINT32ToUINT32(Header.Size);// 28位数据，包括标签头和扩展头
+		HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, dwTotalSize, NULL);// 映射ID3v2到内存
+		BYTE* pFile = (BYTE*)MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, dwTotalSize);
+		if (pFile)
+		{
+			BYTE* pFrame;
+			DWORD dwOffest;
+
+            if (Header.Ver == 3)// 2.3
+            {
+                if (Header.Flags & 0x20)// 有扩展头
+                    dwOffest = sizeof(ID3v2_Header) + 4 + QKByteStreamToBEUINT32(ExtHeader.ExtHeaderSize);
+                else
+                    dwOffest = sizeof(ID3v2_Header);
             }
-            CloseHandle(hMapping);
-        }
-    }
+            else if (Header.Ver = 4)// 2.4
+            {
+                if (Header.Flags & 0x20)// 有扩展头
+                    dwOffest = sizeof(ID3v2_Header) + QKSynchsafeUINT32ToUINT32(ExtHeader.ExtHeaderSize);// 2.4里变成了同步安全整数，而且这个尺寸包含了记录尺寸的四个字节
+                else
+                    dwOffest = sizeof(ID3v2_Header);
+            }
+
+			DWORD dwUnitSize;
+			CHAR FrameID[4];
+			while (true)
+			{
+				pFrame = pFile + dwOffest;
+
+				if (Header.Ver == 3)
+					dwUnitSize = QKByteStreamToBEUINT32(pFrame + 4);// 2.3：32位数据，不包括帧头（偏4B）
+				else if (Header.Ver = 4)
+					dwUnitSize = QKSynchsafeUINT32ToUINT32(pFrame + 4);//2.4：28位数据（同步安全整数）
+
+				memcpy(FrameID, ((ID3v2_UnitHeader*)pFrame)->ID, 4);// 读帧标识
+				pFrame += sizeof(ID3v2_UnitHeader);// 跳过帧头
+				if (memcmp(FrameID, "TIT2", 4) == 0)// 标题
+					pmi->pszTitle = GetMP3ID3v2_ProcString(pFrame, dwUnitSize);
+				else if (memcmp(FrameID, "TPE1", 4) == 0)// 作者
+					pmi->pszArtist = GetMP3ID3v2_ProcString(pFrame, dwUnitSize);
+				else if (memcmp(FrameID, "TALB", 4) == 0)// 专辑
+					pmi->pszAlbum = GetMP3ID3v2_ProcString(pFrame, dwUnitSize);
+				else if (memcmp(FrameID, "USLT", 4) == 0)// 不同步歌词
+				{
+					/*
+					<帧头>（帧标识为USLT）
+					文本编码						$xx
+					自然语言代码					$xx xx xx
+					内容描述						<字符串> $00 (00)
+					歌词							<字符串>
+					*/
+					DWORD cb = dwUnitSize;
+					BYTE byEncodeingType = *pFrame;// 读文本编码
+					++pFrame;// 跳过文本编码
+					CHAR byLangCode[3];
+					memcpy(byLangCode, pFrame, 3);// 读自然语言代码
+					pFrame += 3;// 跳过自然语言代码
+					int t;
+					if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1或UTF-8
+						t = lstrlenA((PCSTR)pFrame) + 1;
+					else// UTF-16LE或UTF-16BE
+						t = (lstrlenW((PCWSTR)pFrame) + 1) * sizeof(WCHAR);
+					pFrame += t;// 跳过内容描述
+					cb -= (t + 4);
+					// 此时pFrame指向歌词文本
+					pmi->pszLrc = GetMP3ID3v2_ProcString(pFrame, cb, byEncodeingType);
+				}
+				else if (memcmp(FrameID, "COMM", 4) == 0)// 备注
+				{
+					/*
+					<帧头>（帧标识为COMM）
+					文本编码						$xx
+					自然语言代码					$xx xx xx
+					备注摘要						<字符串> $00 (00)
+					备注							<字符串>
+					*/
+					DWORD cbComment = dwUnitSize;
+					BYTE byEncodeingType = *pFrame;// 读文本编码
+					++pFrame;// 跳过文本编码
+					CHAR byLangCode[3];
+					memcpy(byLangCode, pFrame, 3);// 读自然语言代码
+					pFrame += 3;// 跳过自然语言代码
+					int t;
+					if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1或UTF-8
+						t = lstrlenA((PCSTR)pFrame) + 1;
+					else// UTF-16LE或UTF-16BE
+						t = (lstrlenW((PCWSTR)pFrame) + 1) * sizeof(WCHAR);
+					pFrame += t;// 跳过备注摘要
+					cbComment -= (t + 4);
+					// 此时pFrame指向备注字符串
+					pmi->pszComment = GetMP3ID3v2_ProcString(pFrame, cbComment, byEncodeingType);
+				}
+				else if (memcmp(FrameID, "APIC", 4) == 0)// 图片
+				{
+					/*
+					<帧头>（帧标识为APIC）
+					文本编码                        $xx
+					MIME 类型                       <ASCII字符串>$00（如'image/bmp'）
+					图片类型                        $xx
+					描述                            <字符串>$00(00)
+					<图片数据>
+					*/
+					BYTE* pImageData = pFrame;
+					BYTE byEncodeingType = *pImageData;// 读文本编码
+					int t, cbImageSize = dwUnitSize;
+					++pImageData;// 跳过文本编码
+					t = lstrlenA((PCSTR)pImageData);
+					pImageData += t;// 跳过MIME类型字符串
+					pImageData += 2;// 跳过MIME结尾NULL和图片类型
+					cbImageSize -= (t + 3);
+					if (byEncodeingType == 0 || byEncodeingType == 3)// ISO-8859-1或UTF-8
+						t = lstrlenA((PCSTR)pImageData) + 1;
+					else// UTF-16LE或UTF-16BE
+						t = lstrlenW((PCWSTR)pImageData) * sizeof(WCHAR) + 2;
+					pImageData += t; cbImageSize -= t;// 跳过描述字符串和结尾NULL
+
+					IStream* pPicStream = SHCreateMemStream(pImageData, cbImageSize);// 创建流对象
+					if (pPicStream)
+					{
+						WICCreateBitmap(pPicStream, &pmi->pWICBitmap);
+						pPicStream->Release();
+					}
+				}
+				dwOffest += (dwUnitSize + sizeof(ID3v2_UnitHeader));
+				if (dwOffest >= dwTotalSize)// 是否超界
+					break;
+			}
+			UnmapViewOfFile(pFile);
+		}
+		CloseHandle(hMapping);
+
+	}
     else if (memcmp(by, "fLaC", 4) == 0)// Flac
     {
         FLAC_Header Header;
@@ -1046,7 +1064,7 @@ void Lrc_ParseLrcData(void* pStream, int iSize, BOOL bFileName, QKARRAY* IDResul
     {
         cHeader[0] = (CHAR)0xFE;
         cHeader[1] = (CHAR)0xFF;
-        if (memcmp(pBuffer, cHeader, 2) == 0)// UTF-16BE
+        if (memcmp(pBuffer, cHeader, 2) == 0)// UTF-16BE BOM:FE FF
         {
             iBufPtrOffest = 2;// 跳过BOM
 
@@ -1086,12 +1104,12 @@ void Lrc_ParseLrcData(void* pStream, int iSize, BOOL bFileName, QKARRAY* IDResul
                 {
                     int i = IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NULL_BYTES;
                     if (IsTextUnicode(pBuffer, dwBytes, &i))//  先测UTF-16BE，不然会出问题
-                        goto GetLrc_UTF16LE;
+                        goto GetLrc_UTF16BE;
                     else
                     {
                         i = IS_TEXT_UNICODE_UNICODE_MASK | IS_TEXT_UNICODE_NULL_BYTES;
                         if (IsTextUnicode(pBuffer, dwBytes, &i))
-                            goto GetLrc_UTF16BE;
+                            goto GetLrc_UTF16LE;
                         else if (QKIsTextUTF8((char*)pBuffer, dwBytes))
                             goto GetLrc_UTF8;
                         else
@@ -1184,7 +1202,7 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
     else
     {
         // 为什么要这么写？没错，有的歌词文件就是变态到几种换行符一起用.......
-        // 其实这部分逻辑是之后加上的，之前的解决方案是让用户快爬（bushi）
+        // 其实这部分逻辑是之后加上的，之前的解决方案是让用户快爬（bushi
         if (b1)// CRLF
         {
             // 思路：iStrPos1 = min(i1, i2, i3)
@@ -1217,7 +1235,6 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
             else// CR
                 iStrPos1 = i3;
         }
-
 
         while (iStrPos1)
         {
@@ -1283,7 +1300,7 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
             QKArray_Add(&LrcLines, pszLine);
         }
     }
-    HeapFree(GetProcessHeap(), 0, (BYTE*)pBuffer - iBufPtrOffest);//释放文件内容缓冲区
+    HeapFree(GetProcessHeap(), 0, (BYTE*)pBuffer - iBufPtrOffest);// 释放文件内容缓冲区
     //                                                                          文本行数组
     // 至此文件分割完毕
     ////////////////////////////处理每行标签

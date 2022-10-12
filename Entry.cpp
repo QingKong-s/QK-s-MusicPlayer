@@ -20,12 +20,17 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 #pragma comment(lib,"bass.lib")
 #pragma comment(lib,"bass_fx.lib")
+#pragma comment(lib,"bassmidi.lib")
 
 #include <Windows.h>
 #include <WinUser.h>
 #include <d2d1.h>
 #include <dwrite.h>
 #include <d3d11.h>
+
+#include "bass.h"
+#include "bass_fx.h"
+#include "bassmidi.h"
 
 #include "MyProject.h"
 #include "GlobalVar.h"
@@ -114,14 +119,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     pDXGIAdapter->GetParent(IID_PPV_ARGS(&g_pDXGIFactory));
     pDXGIAdapter->Release();
 
-
     g_pD2DFactory->CreateDevice(g_pDXGIDevice, &g_pD2DDevice);
     CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&g_pWICFactory));
     //////////////载入资源，填充全局上下文
     if (pGetDpiForSystem)
         Res_Load(pGetDpiForSystem() * 16 / 96);
     else
-        Res_Load(16);
+		Res_Load(QKGetDPIForWindow(NULL) * 16 / 96);
     GC =
 	{
 		CreateSolidBrush(QKCOLOR_CYANDEEPER),
@@ -273,27 +277,43 @@ void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc, HWND 
     }
 
 	QKMessageBox(pszTitle, psz, (HICON)TD_ERROR_ICON, L"错误", hParent);
-    delete[] psz;
+	delete[] psz;
 }
-ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS, DWORD dwFlagsHM)
+ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS, DWORD dwFlagsHM, DWORD dwFlagsHMIDI)
 {
-    ULONG_PTR h;
-    h = BASS_StreamCreateFile(FALSE, pszFile, 0, 0, BASS_UNICODE | dwFlagsHS);
-    g_bHMUSIC = FALSE;
-    if (!h && BASS_ErrorGetCode() == BASS_ERROR_FILEFORM)
-    {
-        h = BASS_MusicLoad(FALSE, pszFile, 0, 0, BASS_UNICODE | dwFlagsHM, 0);
-        g_bHMUSIC = TRUE;
-    }
+	ULONG_PTR h;
+	h = BASS_StreamCreateFile(FALSE, pszFile, 0, 0, BASS_UNICODE | dwFlagsHS);
+	g_iMusicType = MUSICTYPE_NORMAL;
+	if (!h && BASS_ErrorGetCode() == BASS_ERROR_FILEFORM)
+	{
+		h = BASS_MusicLoad(FALSE, pszFile, 0, 0, BASS_UNICODE | dwFlagsHM, 0);
+		g_iMusicType = MUSICTYPE_MOD;
+		if (!h && BASS_ErrorGetCode() == BASS_ERROR_FILEFORM)
+		{
+			h = BASS_MIDI_StreamCreateFile(FALSE, pszFile, 0, 0, dwFlagsHMIDI, 1);
+			g_iMusicType = MUSICTYPE_MIDI;
+		}
+		else
+			g_iMusicType = MUSICTYPE_NORMAL;
+	}
 
-    return h;
+	return h;
 }
 BOOL BASS_FreeMusic(ULONG_PTR h)
 {
-    if (g_bHMUSIC)
-        return BASS_MusicFree(h);
-    else
+    if (!h)
+        return FALSE;
+
+    switch (g_iMusicType)
+    {
+    case MUSICTYPE_NORMAL:
+    case MUSICTYPE_MIDI:
         return BASS_StreamFree(h);
+    case MUSICTYPE_MOD:
+        return BASS_MusicFree(h);
+    default:
+        return FALSE;
+    }
 }
 void UI_UpdateDPISize()
 {

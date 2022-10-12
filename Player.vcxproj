@@ -211,6 +211,7 @@
     <Image Include="Res\Locate.ico" />
     <Image Include="Res\Lrc.ico" />
     <Image Include="Res\Main.ico" />
+    <Image Include="Res\MIDIFont.ico" />
     <Image Include="Res\Next.ico" />
     <Image Include="Res\Next2.ico" />
     <Image Include="Res\Pause.ico" />
@@ -221,6 +222,7 @@
     <Image Include="Res\PlayList_Manage.ico" />
     <Image Include="Res\Plus.ico" />
     <Image Include="Res\ReadFile.ico" />
+    <Image Include="Res\Reverse.ico" />
     <Image Include="Res\Search.ico" />
     <Image Include="Res\Settings.ico" />
     <Image Include="Res\Speed.ico" />

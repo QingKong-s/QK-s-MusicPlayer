@@ -26,8 +26,15 @@ struct ID3v2_Header		//ID3v2标签头
     CHAR Header[3];		// "ID3"
     BYTE Ver;			// 版本号
     BYTE Revision;		// 副版本号
-    BYTE Flag;			// 标志
+    BYTE Flags;			// 标志
     BYTE Size[4];		// 标签大小，28位数据，每个字节最高位不使用，包括标签头的10个字节和所有的标签帧
+};
+
+struct ID3v2_ExtHeader
+{
+    BYTE ExtHeaderSize[4];
+    BYTE Flags[2];
+    BYTE PaddingSize[4];
 };
 
 struct ID3v2_UnitHeader	//ID3v2帧头
