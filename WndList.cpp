@@ -107,6 +107,9 @@ void List_ResetLV()
 }
 PLAYERLISTUNIT* List_GetArrayItem(int iLVIndex)
 {
+    if (iLVIndex < 0)
+        return NULL;
+
 	int i = iLVIndex;
 	if (g_iSearchResult != -1)// 应执行搜索时索引映射
 		i = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSearch;
@@ -763,11 +766,24 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 					STGMEDIUM sm;
 					sm.tymed = TYMED_HGLOBAL;
 					sm.pUnkForRelease = NULL;
-					sm.hGlobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, (Items->iCount + 1) * sizeof(int));
+                    sm.hGlobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, (Items->iCount + 2) * sizeof(int) + sizeof(DWORD));
+
+                    // (int)        版本信息
+                    // (DWORD)      进程ID
+                    // (int)        项目数
+                    // (void*)      项目数据
+                    // ...
 
 					int* p = (int*)GlobalLock(sm.hGlobal);
-					*p = Items->iCount;
+                    *p = QKOLEDRAGVER_1;// 拖放信息版本号
+                    ++p;
+
+                    *(DWORD*)p = GetCurrentProcessId();// 进程ID
+                    p = (int*)((DWORD*)p + 1);
+
+					*p = Items->iCount;// 项目数
 					++p;
+
 					for (int i = 0; i < Items->iCount; ++i)
 					{
 						memcpy(p, QKArray_GetValue(Items, i), sizeof(int));
@@ -1210,11 +1226,11 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             return 0;
             case IDC_BT_EMPTY:
             {
-				if (QKMessageBox(L"确定要清空播放列表吗？", NULL, (HICON)TD_ERROR_ICON, L"询问", g_hBKList))
+				if (QKMessageBox(L"确定要清空播放列表吗？", NULL, (HICON)TD_WARNING_ICON, L"询问", g_hBKList, NULL, 2) == QKMSGBOX_BTID_1)
                 {
+                    Playing_Stop();
                     List_Delete(-1, TRUE);
                     SetWindowTextW(GetDlgItem(g_hBKRight, IDC_ST_LISTNAME), L"/*当前无播放列表*/");
-                    Playing_Stop();
                     UI_RedrawBookMarkPos();
                     g_iLaterPlay = -1;
                 }
@@ -2205,71 +2221,90 @@ HRESULT CALLBACK OLEDrop_OnDrop(IDataObject* pDataObj, DWORD grfKeyState, POINTL
 
     if (SUCCEEDED(pDataObj->GetData(&fe, &sm)))// 判断有没有自定义拖放信息
     {
-        List_SetRedraw(FALSE);
         int* p = (int*)GlobalLock(sm.hGlobal);
-        int iCount = *p;
-        ++p;
-        int m = 0, n = 0;
-        int iIndex;
-        for (int i = 0; i < iCount; ++i)
+        if (!p)
+            return 0;
+
+        int iVer = *p;// 读版本号
+        if (iVer == QKOLEDRAGVER_1)
         {
-            iIndex = *p;
-            if (iIndex >= iTargetIndex)
-            {
-                QKArray_Insert(&g_ItemData, QKArray_Get(g_ItemData, iIndex), iTargetIndex + m);
-                QKArray_DeleteMember(&g_ItemData, iIndex + 1);
-                ++m;
-            }
-            else
-            {
-                iIndex -= n;
-                QKArray_Insert(&g_ItemData, QKArray_Get(g_ItemData, iIndex), iTargetIndex);
-                QKArray_DeleteMember(&g_ItemData, iIndex);
-                ++n;
-            }
             ++p;
-        }
-        LVITEMW li;
-        li.stateMask = LVIS_SELECTED;
-        li.state = 0;
-        SendMessageW(g_hLV, LVM_SETITEMSTATE, -1, (LPARAM)&li);// 清除选中；wParam = -1：应用于所有项目
-        li.state = LVIS_SELECTED;
-
-        iTargetIndex -= n;
-        for (int i = 0; i < iCount; ++i)
-        {
-            SendMessageW(g_hLV, LVM_SETITEMSTATE, iTargetIndex + i, (LPARAM)&li);// 选中新移动的项
-        }
-
-        PLAYERLISTUNIT* pi;
-        BOOL b[2] = { 0 };
-        for (int i = 0; i < g_ItemData->iCount; ++i)// 捏麻麻地算这算那的劳资脑子不够用了，直接用个简单粗暴的方法还原索引
-        {
-            pi = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
-            if (pi->dwFlags & QKLIF_DRAGMARK_CURRFILE)
+            DWORD dwProcID = *(DWORD*)p;// 读进程ID
+            if (dwProcID != GetCurrentProcessId())// 判断是不是自己向自己拖放
             {
-                g_iCurrFileIndex = i;
-                pi->dwFlags &= ~QKLIF_DRAGMARK_CURRFILE;
-                b[0] = TRUE;
+                GlobalUnlock(sm.hGlobal);
+                goto CommonDragFile;
+            }
+            p = (int*)((DWORD*)p + 1);
+
+            int iCount = *p;
+            ++p;
+            int m = 0, n = 0;
+            int iIndex;
+            for (int i = 0; i < iCount; ++i)
+            {
+                iIndex = *p;
+                if (iIndex >= iTargetIndex)
+                {
+                    QKArray_Insert(&g_ItemData, QKArray_Get(g_ItemData, iIndex), iTargetIndex + m);
+                    QKArray_DeleteMember(&g_ItemData, iIndex + 1);
+                    ++m;
+                }
+                else
+                {
+                    iIndex -= n;
+                    QKArray_Insert(&g_ItemData, QKArray_Get(g_ItemData, iIndex), iTargetIndex);
+                    QKArray_DeleteMember(&g_ItemData, iIndex);
+                    ++n;
+                }
+                ++p;
+            }
+            LVITEMW li;
+            li.stateMask = LVIS_SELECTED;
+            li.state = 0;
+            SendMessageW(g_hLV, LVM_SETITEMSTATE, -1, (LPARAM)&li);// 清除选中；wParam = -1：应用于所有项目
+            li.state = LVIS_SELECTED;
+
+            iTargetIndex -= n;
+            for (int i = 0; i < iCount; ++i)
+            {
+                SendMessageW(g_hLV, LVM_SETITEMSTATE, iTargetIndex + i, (LPARAM)&li);// 选中新移动的项
             }
 
-            if (pi->dwFlags & QKLIF_DRAGMARK_PLLATER)
+            PLAYERLISTUNIT* pi;
+            BOOL b[2] = { 0 };
+            for (int i = 0; i < g_ItemData->iCount; ++i)// 捏麻麻地算这算那的劳资脑子不够用了，直接用个简单粗暴的方法还原索引
             {
-                g_iLaterPlay = i;
-                pi->dwFlags &= ~QKLIF_DRAGMARK_PLLATER;
-                b[1] = TRUE;
-            }
+                pi = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
+                if (pi->dwFlags & QKLIF_DRAGMARK_CURRFILE)
+                {
+                    g_iCurrFileIndex = i;
+                    pi->dwFlags &= ~QKLIF_DRAGMARK_CURRFILE;
+                    b[0] = TRUE;
+                }
 
-            if (b[0] && b[1])
-                break;
+                if (pi->dwFlags & QKLIF_DRAGMARK_PLLATER)
+                {
+                    g_iLaterPlay = i;
+                    pi->dwFlags &= ~QKLIF_DRAGMARK_PLLATER;
+                    b[1] = TRUE;
+                }
+
+                if (b[0] && b[1])
+                    break;
+            }
+            GlobalUnlock(sm.hGlobal);
+            List_Redraw();
+            ReleaseStgMedium(&sm);
         }
-        GlobalUnlock(sm.hGlobal);
-        List_SetRedraw(TRUE);
-        List_Redraw();
-        ReleaseStgMedium(&sm);
+        else
+        {
+            GlobalUnlock(sm.hGlobal);
+        }
     }
     else// 仅拖放文件
     {
+    CommonDragFile:// 进程ID与自身不相等时跳过来
         fe.cfFormat = CF_HDROP;
         if (FAILED(pDataObj->GetData(&fe, &sm)))// 取回HDROP
             return S_OK;

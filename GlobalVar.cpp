@@ -23,6 +23,7 @@ HWND			g_hBKLeft;
 HWND			g_hBKRight;
 HWND			g_hSEB;
 HWND			g_hBKList;
+HWND            g_hTBGhost				= NULL;
 
 HINSTANCE		g_hInst;
 GLOBALRES		GR						= { 0 };
@@ -82,3 +83,4 @@ int             g_iSearchResult			= -1;
 int             g_bSort					= FALSE;
 
 BOOL			g_bPlayIcon				= FALSE;
+BOOL			g_bShowAlbum			= 1;

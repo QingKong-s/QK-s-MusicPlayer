@@ -53,6 +53,8 @@ struct LISTFILEITEM		// 播放列表文件项目头
 
 #define CLIPBOARDFMT_MYDRAGDROP L"QKClipboardFormat.MyDragDrop"
 
+#define QKOLEDRAGVER_1			0
+
 #define UI_RedrawBookMarkPos() SendMessageW(g_hBKList, LISTWND_REDRAWBOOKMARK, 0, 0)
 void UI_SetRitCtrlPos();
 /*

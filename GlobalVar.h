@@ -28,6 +28,7 @@ extern HWND				g_hBKLeft;              // 左侧背景
 extern HWND				g_hBKRight;             // 列表工具背景
 extern HWND				g_hSEB;                 // 分隔条
 extern HWND				g_hBKList;              // 列表背景
+extern HWND				g_hTBGhost;
 // 全局类
 extern HINSTANCE		g_hInst;                // 全局实例句柄
 extern GLOBALRES		GR;                     // 全局资源
@@ -87,3 +88,4 @@ extern int              g_iSearchResult;        // 搜索结果数
 extern int              g_bSort;                // 是否处于排序模式
 
 extern BOOL				g_bPlayIcon;            // 是否为播放图标（桌面歌词和主窗口用）
+extern BOOL				g_bShowAlbum;			// 是否显示旋转封面

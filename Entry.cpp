@@ -121,6 +121,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     g_pD2DFactory->CreateDevice(g_pDXGIDevice, &g_pD2DDevice);
     CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&g_pWICFactory));
+
+    CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&g_pITaskbarList));// 创建ITaskbarList4对象
+    g_pITaskbarList->HrInit();// 初始化
+
     //////////////载入资源，填充全局上下文
     if (pGetDpiForSystem)
         Res_Load(pGetDpiForSystem() * 16 / 96);
@@ -209,12 +213,36 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	//////////////创建窗口
 	if (!BASS_Init(-1, 44100, 0, g_hMainWnd, NULL))// 初始化Bass
 		Global_ShowError(L"Bass初始化失败", L"稍后请尝试更换输出设备", ECODESRC_BASS);
+
+	g_hTBGhost = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, TBGHOSTWNDCLASS, NULL, 
+        WS_POPUP | WS_BORDER | WS_SYSMENU | WS_CAPTION, -32000, -32000, 10, 10, NULL, NULL, g_hInst, NULL);// WS_CAPTION是必须的，否则选项卡不会注册成功
+
 	if (pGetDpiForSystem)
 		g_hMainWnd = CreateWindowExW(0, MAINWNDCLASS, L"未播放 - 晴空的音乐播放器", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 			CW_USEDEFAULT, 0, pGetDpiForSystem() * 1000 / 96, pGetDpiForSystem() * 640 / 96, NULL, NULL, hInstance, NULL);
 	else
 		g_hMainWnd = CreateWindowExW(0, MAINWNDCLASS, L"未播放 - 晴空的音乐播放器", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 			CW_USEDEFAULT, 0, 1000, 640, NULL, NULL, hInstance, NULL);
+
+    g_pITaskbarList->RegisterTab(g_hTBGhost, g_hMainWnd);
+    g_pITaskbarList->SetTabOrder(g_hTBGhost, NULL);
+    THUMBBUTTON tb[3];
+    THUMBBUTTONMASK dwMask = THB_ICON | THB_TOOLTIP;
+    tb[0].dwMask = dwMask;
+    tb[0].hIcon = GR.hiLast2;
+    tb[0].iId = IDTBB_LAST;
+    lstrcpyW(tb[0].szTip, L"上一曲");
+
+    tb[1].dwMask = dwMask;
+    tb[1].hIcon = GR.hiPlay2;
+    tb[1].iId = IDTBB_PLAY;
+    lstrcpyW(tb[1].szTip, L"播放");
+
+    tb[2].dwMask = dwMask;
+    tb[2].hIcon = GR.hiNext2;
+    tb[2].iId = IDTBB_NEXT;
+    lstrcpyW(tb[2].szTip, L"下一曲");
+    hr = g_pITaskbarList->ThumbBarAddButtons(g_hTBGhost, 3, tb);
 
     if (!g_hMainWnd)
     {
@@ -282,15 +310,16 @@ void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc, HWND 
 ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS, DWORD dwFlagsHM, DWORD dwFlagsHMIDI)
 {
 	ULONG_PTR h;
-	h = BASS_StreamCreateFile(FALSE, pszFile, 0, 0, BASS_UNICODE | dwFlagsHS);
+    const DWORD dwCommFlags = BASS_SAMPLE_FLOAT | BASS_UNICODE;
+	h = BASS_StreamCreateFile(FALSE, pszFile, 0, 0, dwCommFlags | dwFlagsHS);
 	g_iMusicType = MUSICTYPE_NORMAL;
 	if (!h && BASS_ErrorGetCode() == BASS_ERROR_FILEFORM)
 	{
-		h = BASS_MusicLoad(FALSE, pszFile, 0, 0, BASS_UNICODE | dwFlagsHM, 0);
+		h = BASS_MusicLoad(FALSE, pszFile, 0, 0, dwCommFlags | dwFlagsHM, 0);
 		g_iMusicType = MUSICTYPE_MOD;
 		if (!h && BASS_ErrorGetCode() == BASS_ERROR_FILEFORM)
 		{
-			h = BASS_MIDI_StreamCreateFile(FALSE, pszFile, 0, 0, dwFlagsHMIDI, 1);
+			h = BASS_MIDI_StreamCreateFile(FALSE, pszFile, 0, 0, dwCommFlags | dwFlagsHMIDI, 1);
 			g_iMusicType = MUSICTYPE_MIDI;
 		}
 		else
@@ -356,6 +385,7 @@ void UI_UpdateDPISize()
 	GC.DS_CXDRAGDROPICON = DPI(SIZE_CXDRAGDROPICON);
 	GC.DS_CYDRAGDROPICON = DPI(SIZE_CYDRAGDROPICON);
 	GC.DS_LVDRAGEDGE = DPI(SIZE_LVDRAGEDGE);
+    GC.DS_ALBUMLEVEL = DPI(SIZE_ALBUMLEVEL);
 
 	GC.iIconSize = DPI(16);
 	GC.cyBT = GC.iIconSize * 10 / 5;
@@ -374,9 +404,9 @@ void UI_UpdateDPISize()
 }
 void Res_Free()
 {
-    for (int i = 0; i <= sizeof(GR); i += sizeof(HANDLE))
+    for (int i = 0; i <= sizeof(GR); i += sizeof(HICON))
     {
-        DeleteObject(*(HGDIOBJ*)((BYTE*)&GR + i));
+        DestroyIcon(*(HICON*)((BYTE*)&GR + i));
     }
 }
 void Res_Load(int iSize)

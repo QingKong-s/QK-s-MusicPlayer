@@ -5,6 +5,7 @@
 #include <shlwapi.h>
 #include <wincodec.h>
 #include <d2d1.h>
+#include <d2d1_1.h>
 
 #include "bass.h"
 #define CURRVER L"0.3"
@@ -227,6 +228,8 @@ struct MUSICINFO
 struct CURRMUSICINFO
 {
 	PWSTR pszName;
+	ID2D1Bitmap1* pD2DBmpOrgAlbum;
+	ID2D1BitmapBrush* pD2DBrushOrgAlbum;
 	MUSICINFO mi;
 };
 
@@ -417,6 +420,7 @@ struct GLOBALCONTEXT
 	int DS_CXDRAGDROPICON;
 	int DS_CYDRAGDROPICON;
 	int DS_LVDRAGEDGE;
+	int DS_ALBUMLEVEL;
 
 	int cyBT;			// 底部背景高度
 	int cxBKBtm;			// 底部背景宽度
@@ -460,6 +464,7 @@ struct GLOBALCONTEXT
 #define SIZE_CXDRAGDROPICON		200
 #define SIZE_CYDRAGDROPICON		150
 #define SIZE_LVDRAGEDGE			80
+#define SIZE_ALBUMLEVEL			15
 
 #define DPIS_CYPROGBAR GC.DS_CYPROGBAR
 #define DPIS_CYBTBK GC.DS_CYBTBK
