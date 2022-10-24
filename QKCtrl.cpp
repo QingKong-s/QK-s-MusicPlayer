@@ -3,13 +3,15 @@
 *   (C) 2021-2022 晴空 保留所有权利
 */
 #include "QKCtrl.h"
-#include "Windows.h"
-#include "windowsx.h"
-#include "commctrl.h"
-#include "Function.h"
-#include "UxTheme.h"
-#include "vsstyle.h"
+
+#include <Windows.h>
+#include <windowsx.h>
+#include <Commctrl.h>
+#include <UxTheme.h>
+#include <vsstyle.h>
+
 #include "MyProject.h"
+#include "Function.h"
 
 LRESULT CALLBACK WndProc_QKCTrackBar(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WndProc_QKCSeparateBar(HWND, UINT, WPARAM, LPARAM);

@@ -173,6 +173,8 @@ const PCWSTR c_szBtmTip[] =
 #define LEFTBKM_SETPROGBARMAX	WM_USER + 11// (uMax, bRedraw)
 #define LEFTBKM_GETPROGBARMAX	WM_USER + 12// (0, 0)
 
+#define MAINWNDM_AUTONEXT		WM_USER + 1// (0, 0)
+
 #define REPEATMODE_TOTALLOOP	0// 整体循环
 #define REPEATMODE_RADOM		1// 随机播放
 #define REPEATMODE_SINGLE		2// 单曲播放

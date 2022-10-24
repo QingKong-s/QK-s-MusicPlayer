@@ -500,15 +500,14 @@ void UI_PreProcessAlbumImage(IWICBitmap** ppWICBitmap)
 void MainWnd_ReleaseCurrInfo()
 {
 	delete[] m_CurrSongInfo.pszName;
-    if (m_CurrSongInfo.pD2DBmpOrgAlbum)
-        m_CurrSongInfo.pD2DBmpOrgAlbum->Release();
+    SAFE_RELEASE(m_CurrSongInfo.pD2DBmpOrgAlbum);
+    SAFE_RELEASE(m_CurrSongInfo.pD2DBrushOrgAlbum);
 	MusicInfo_Release(&m_CurrSongInfo.mi);
     ZeroMemory(&m_CurrSongInfo, sizeof(CURRMUSICINFO));
 }
 void CALLBACK SyncProc_End(HSYNC handle, DWORD channel, DWORD data, void* user)
 {
-    WndProc_LeftBK(g_hBKLeft, LEFTBKM_SETPROGBARPOS, WndProc_LeftBK(g_hBKLeft, LEFTBKM_GETPROGBARMAX, 0, 0), TRUE);
-    Playing_AutoNext();
+    PostMessageW(g_hMainWnd, MAINWNDM_AUTONEXT, 0, 0);
 }
 /*
  * 目标：画一行歌词
@@ -969,6 +968,7 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
 
     DwmInvalidateIconicBitmaps(g_hTBGhost);
     UI_RefreshBmpBrush();
+    m_fRotationAngle = 0.f;
     //////解析Lrc歌词
     Lrc_ParseLrcData(g_pszFile, 0, TRUE, NULL, &g_Lrc, GS.uDefTextCode);
     if (!g_Lrc->iCount && m_CurrSongInfo.mi.pszLrc)
@@ -1994,19 +1994,19 @@ BOOL UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing, BOOL bOnlyDraw
 }
 void UI_RefreshBmpBrush()
 {
-    if (g_bShowAlbum && m_CurrSongInfo.pD2DBmpOrgAlbum)
-    {
-        if (m_CurrSongInfo.pD2DBrushOrgAlbum)
-            m_CurrSongInfo.pD2DBrushOrgAlbum->Release();
+	if (g_bShowAlbum && m_CurrSongInfo.pD2DBmpOrgAlbum)
+	{
+		if (m_CurrSongInfo.pD2DBrushOrgAlbum)
+			m_CurrSongInfo.pD2DBrushOrgAlbum->Release();
 
-        float fRadius, cx, cy;
-        cx = m_D2DRcAlbum.right - m_D2DRcAlbum.left;
-        cy = m_D2DRcAlbum.bottom - m_D2DRcAlbum.top;
+		float fRadius, cx, cy;
+		cx = m_D2DRcAlbum.right - m_D2DRcAlbum.left - GC.DS_ALBUMLEVEL * 2;
+		cy = m_D2DRcAlbum.bottom - m_D2DRcAlbum.top - GC.DS_ALBUMLEVEL * 2;
 		fRadius = min(cx / 2.f, cy / 2.f);
-        float xStart = m_D2DRcAlbum.left + cx / 2.f - fRadius, yStart = m_D2DRcAlbum.top + cy / 2.f - fRadius;
+		float xStart = m_D2DRcAlbum.left + GC.DS_ALBUMLEVEL + cx / 2.f - fRadius, yStart = m_D2DRcAlbum.top + GC.DS_ALBUMLEVEL + cy / 2.f - fRadius;
 
-        ID2D1BitmapBrush* pD2DBmpBrush;
-        D2D1_MATRIX_3X2_F Matrix, Matrix2;
+		ID2D1BitmapBrush* pD2DBmpBrush;
+		D2D1_MATRIX_3X2_F Matrix, Matrix2;
 
 		Matrix = D2D1::Matrix3x2F::Translation(xStart, yStart);// 制平移矩阵
 		D2D1::Matrix3x2F* MatrixObj1 = D2D1::Matrix3x2F::ReinterpretBaseType(&Matrix);// 转类
@@ -2170,7 +2170,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
     }
-    break;
+    return 0;
+
     case WM_CREATE:
     {
 
@@ -2258,6 +2259,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         UI_UpdateLeftBK();
 	}
 	return 0;
+
 	case WM_DESTROY:
 	{
         Playing_Stop();
@@ -2276,6 +2278,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 	}
 	return 0;
+
     case WM_SIZE:
     {
         if (wParam == SIZE_MINIMIZED)
@@ -2318,6 +2321,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             SWP_NOZORDER | SWP_NOMOVE);
     }
     return 0;
+
     case WM_GETMINMAXINFO:// 限制窗口大小
 	{
 		LPMINMAXINFO pInfo = (LPMINMAXINFO)lParam;
@@ -2325,6 +2329,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		pInfo->ptMinTrackSize.y = DPI(640);
 	}
 	return 0;
+
 	case WM_DPICHANGED:
 	{
 		g_iDPI = HIWORD(wParam);
@@ -2335,9 +2340,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		SetWindowPos(hWnd, NULL, p->left, p->top, p->right - p->left, p->bottom - p->top, SWP_NOZORDER);
 	}
 	return 0;
+
     case WM_SETTEXT:// 设置标题，转发，否则预览时不会显示标题（鸣谢：nlmhc）
         SetWindowTextW(g_hTBGhost, (PCWSTR)lParam);
         break;
+
+    case MAINWNDM_AUTONEXT:
+    {
+        WndProc_LeftBK(g_hBKLeft, LEFTBKM_SETPROGBARPOS, WndProc_LeftBK(g_hBKLeft, LEFTBKM_GETPROGBARMAX, 0, 0), TRUE);
+        Playing_AutoNext();
+    }
+    return 0;
+
 	}
     return DefWindowProcW(hWnd, message, wParam, lParam);
 }

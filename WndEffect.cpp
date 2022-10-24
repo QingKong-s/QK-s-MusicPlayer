@@ -161,6 +161,8 @@ INT_PTR CALLBACK DlgProc_EQ(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
     {
         SendDlgItemMessageW(hDlg, IDC_CB_ENABLE, BM_SETCHECK, bApply ? BST_CHECKED : BST_UNCHECKED, 0);
 
+		while (SendDlgItemMessageW(hDlg, IDC_CB_EQ, CB_DELETESTRING, 0, 0) != CB_ERR);// Çå¿Õ
+
         for (int i = 0; i < 23; i++)
         {
             SendDlgItemMessageW(hDlg, IDC_CB_EQ, CB_INSERTSTRING, -1, (LPARAM)c_EQSetting[i].pszText);

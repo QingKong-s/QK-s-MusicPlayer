@@ -78,13 +78,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	pGetDpiForWindow = (pFuncGetDpiForWindow)GetProcAddress(hLib, "GetDpiForWindow");
 	//////////////初始化COM和OLE
 	HRESULT hr;
-	hr = CoInitialize(NULL);
+    hr = CoInitialize(NULL);
 	if (FAILED(hr))
 	{
 		Global_ShowError(L"COM库初始化失败", NULL, ECODESRC_OTHERS, NULL, hr);
 		return 1;
 	}
-	hr = OleInitialize(NULL);
+    hr = OleInitialize(NULL);
 	if (FAILED(hr))
 	{
 		Global_ShowError(L"OLE库初始化失败", NULL, ECODESRC_OTHERS, NULL, hr);
@@ -102,13 +102,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         return 1;
     }
 
-	D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), (void**)&g_pD2DFactory);
+#ifndef NDEBUG
+    D2D1_FACTORY_OPTIONS D2DFactoryOptions;
+    D2DFactoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory1), &D2DFactoryOptions, (void**)&g_pD2DFactory);
+#else
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory1), (void**)&g_pD2DFactory);
+#endif // !NDBUG
 	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&g_pDWFactory));
     ID3D11Device* pD3DDevice;
     D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT
 #ifndef NDEBUG
         | D3D11_CREATE_DEVICE_DEBUG
-#endif // NDEBUG
+#endif // !NDEBUG
         , NULL, 0, D3D11_SDK_VERSION, &pD3DDevice, NULL, NULL);
     pD3DDevice->QueryInterface(__uuidof(IDXGIDevice1), (void**)&g_pDXGIDevice);
     pD3DDevice->Release();
@@ -224,10 +230,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		g_hMainWnd = CreateWindowExW(0, MAINWNDCLASS, L"未播放 - 晴空的音乐播放器", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 			CW_USEDEFAULT, 0, 1000, 640, NULL, NULL, hInstance, NULL);
 
-    g_pITaskbarList->RegisterTab(g_hTBGhost, g_hMainWnd);
-    g_pITaskbarList->SetTabOrder(g_hTBGhost, NULL);
-    THUMBBUTTON tb[3];
-    THUMBBUTTONMASK dwMask = THB_ICON | THB_TOOLTIP;
+	ShowWindow(g_hMainWnd, nCmdShow);
+	UpdateWindow(g_hMainWnd);
+
+	g_pITaskbarList->RegisterTab(g_hTBGhost, g_hMainWnd);
+	g_pITaskbarList->SetTabOrder(g_hTBGhost, NULL);
+	THUMBBUTTON tb[3];
+	THUMBBUTTONMASK dwMask = THB_ICON | THB_TOOLTIP;
     tb[0].dwMask = dwMask;
     tb[0].hIcon = GR.hiLast2;
     tb[0].iId = IDTBB_LAST;
@@ -249,9 +258,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         Global_ShowError(L"创建主窗口失败", NULL, ECODESRC_WINSDK);
         return 1;
     }
-
-    ShowWindow(g_hMainWnd, nCmdShow);
-    UpdateWindow(g_hMainWnd);
     //////////////消息循环
     MSG msg;
     while (GetMessageW(&msg, NULL, 0, 0))

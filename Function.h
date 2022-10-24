@@ -77,7 +77,21 @@ struct FLAC_Header
 
 //typedef LPVOID QKARRAY;
 ////////////////////////////////////
-HFONT QKCreateFont(LPCWSTR szFontName, int nPoint = 9, int nWeight = 400, bool IsItalic = false, bool IsUnderline = false, bool IsStrikeOut = false);
+/*
+* 目标：创建GDI字体
+*
+* 参数：
+* pszFontName 字体名
+* nPoint 点数
+* nWeight 粗细
+* IsItalic 是否倾斜
+* IsUnderline 是否下划线
+* IsStrikeOut 是否删除线
+*
+* 返回值：字体句柄
+* 备注：封装了CreateFont便于使用
+*/
+HFONT QKCreateFont(PCWSTR pszFontName, int nPoint = 9, int nWeight = 400, BOOL IsItalic = FALSE, BOOL IsUnderline = FALSE, BOOL IsStrikeOut = FALSE);
 /*
  * 目标：在一个字符串中查找另一字符串出现的位置
  *
@@ -134,7 +148,7 @@ UINT QKMessageBox(
     HICON hIcon = NULL,
     PCWSTR pszWndTitle = NULL,
     HWND hParent = NULL,
-    PCWSTR pszChackBoxTitle = NULL,//设为Null则不显示复选框
+    PCWSTR pszChackBoxTitle = NULL,// 设为Null则不显示复选框
     UINT iButtonCount = 1,
     PCWSTR pszButton1Title = NULL,
     PCWSTR pszButton2Title = NULL,
@@ -150,12 +164,102 @@ UINT QKGDIClrToCommonClr(COLORREF cr);
 COLORREF QKCommonClrToGDIClr(UINT u);
 UINT QKGetDPIForWindow(HWND hWnd);
 BOOL QKStrToBool(PCWSTR psz);
-UINT32 QKByteStreamToBEUINT32(BYTE* p);
+/*
+* 目标：大端序32位整数转小端序
+*
+* 参数：
+* p 字节流指针
+*
+* 返回值：小端序整数
+* 备注：
+*/
+UINT32 QKBEUINT32ToUINT32(BYTE* p);
+/*
+* 目标：同步安全整数转32位整数
+*
+* 参数：
+* p 字节流指针
+*
+* 返回值：转换结果
+* 备注：
+*/
+UINT32 QKSynchsafeUINT32ToUINT32(BYTE* p);
 int QKStrInStrRev(PCWSTR pszOrg, PCWSTR pszSubStr, int iStartPos=1);
+/*
+* 目标：从文件解析音乐信息
+*
+* 参数：
+* pszFile 文件名
+* pmi 结果，稍后应调用MusicInfo_Release释放
+*
+* 返回值：
+* 备注：
+*/
 void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi);
+/*
+* 目标：安全释放音乐信息数据
+*
+* 参数：
+* mi 音乐信息结构
+*
+* 返回值：
+* 备注：
+*/
 void MusicInfo_Release(MUSICINFO* mi);
+/*
+ * 目标：安全释放歌词数据
+ *
+ * 参数：
+ * x 歌词数据数组
+ *
+ * 返回值：
+ * 备注：
+ */
 void Lrc_ClearArray(QKARRAY x);
+/*
+ * 目标：从文件或字节流解析歌词数据
+ *
+ * 参数：
+ * pStream 文件名字符串指针或LRC文件数据字节流。当作为文件字节流输入时，函数复制内存并使用副本
+ * iSize 若输入LRC字节流，则该参数指示字节流长度
+ * bFileName 指示pStream是否为文件名
+ * Result 结果数组，调用函数前数组应初始化完毕
+ * iDefTextCode 默认文本编码，0 自动；1 GB2312；2 UTF-8；3 UTF-16LE；4 UTF-16BE
+ *
+ * 返回值：
+ * 备注：我写的这算法有点哈人
+ */
 void Lrc_ParseLrcData(void* pStream, int iSize, BOOL bFileName, QKARRAY* IDResult, QKARRAY* Result, int iDefTextCode);
-int QKIsTextUTF8(char* str, ULONGLONG length);
+/*
+* 目标：粗略判断字节流是否为UTF8文本
+*
+* 参数：
+* str 字节流指针
+* length 字节流长度
+*
+* 返回值：是否为UTF8文本
+* 备注：网上抄的
+*/
+BOOL QKIsTextUTF8(char* str, ULONGLONG length);
+/*
+* 目标：从文件创建WIC位图
+*
+* 参数：
+* pszFile 文件名
+* ppWICBitmap 返回WIC位图对象
+*
+* 返回值：
+* 备注：
+*/
 HRESULT WICCreateBitmap(PWSTR pszFile, IWICBitmap** ppWICBitmap);
+/*
+* 目标：从字节流创建WIC位图
+*
+* 参数：
+* pStream 字节流指针
+* ppWICBitmap 返回WIC位图对象
+*
+* 返回值：
+* 备注：
+*/
 HRESULT WICCreateBitmap(IStream* pStream, IWICBitmap** ppWICBitmap);

@@ -15,17 +15,16 @@
 #include "resource.h"
 #include "WndMain.h"
 
-HFONT QKCreateFont(LPCWSTR szFontName, int nPoint, int nWeight, bool IsItalic, bool IsUnderline, bool IsStrikeOut)
+HFONT QKCreateFont(PCWSTR pszFontName, int nPoint, int nWeight, BOOL IsItalic, BOOL IsUnderline, BOOL IsStrikeOut)
 {
-    //for the MM_TEXT mapping mode, you can use the following formula to specify a height for a font with a specified point size:
-    //MM_TEXT映射模式下可用以下公式来计算指定磅值字体的高度：
-    //Height = -MulDiv(PointSize, GetDeviceCaps(hDC, LOGPIXELSY), 72);     （摘自MSDN）
+    // for the MM_TEXT mapping mode, you can use the following formula to specify a height for a font with a specified point size:
+    // MM_TEXT映射模式下可用以下公式来计算指定磅值字体的高度：
+    // Height = -MulDiv(PointSize, GetDeviceCaps(hDC, LOGPIXELSY), 72);
     HDC hDC = GetDC(NULL);
-    int nSize;
-    nSize = -MulDiv(nPoint, GetDeviceCaps(hDC, LOGPIXELSY), 72);
-    //MulDiv(a, b, c) 就是计算 a * b / c ，不过在 a * b > 2^32 时仍保证结果正确
+    int iSize;
+    iSize = -MulDiv(nPoint, GetDeviceCaps(hDC, LOGPIXELSY), 72);
     ReleaseDC(NULL, hDC);
-    return CreateFontW(nSize, 0, 0, 0, nWeight, IsItalic, IsUnderline, IsStrikeOut, 0, 0, 0, 0, 0, szFontName);
+    return CreateFontW(iSize, 0, 0, 0, nWeight, IsItalic, IsUnderline, IsStrikeOut, 0, 0, 0, 0, 0, pszFontName);
 }
 QKARRAY QKArray_Create(int iCount)
 {
@@ -247,7 +246,6 @@ LPVOID QKArray_GetDataPtr(QKARRAY pArray)
 INT_PTR CALLBACK DlgProc_InputBox(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     QKINPUTBOXCOMTEXT* pContext;
-    pContext = (QKINPUTBOXCOMTEXT*)GetPropW(hDlg, PROP_INPUTBOXCONTEXT);
     switch (message)
     {
     case WM_INITDIALOG:
@@ -260,6 +258,7 @@ INT_PTR CALLBACK DlgProc_InputBox(HWND hDlg, UINT message, WPARAM wParam, LPARAM
         SetFocus(GetDlgItem(hDlg, IDC_ED_INPUT));
     }
     return FALSE;
+
     case WM_COMMAND:
     {
         if (LOWORD(wParam) == IDOK)
@@ -277,12 +276,14 @@ INT_PTR CALLBACK DlgProc_InputBox(HWND hDlg, UINT message, WPARAM wParam, LPARAM
         }
 	}
 	return TRUE;
+
 	case WM_CLOSE:
 	{
 		pContext->iButton = IDCANCEL;
 		EndDialog(hDlg, 0);
 	}
 	return TRUE;
+
 	}
 	return FALSE;
 }
@@ -360,7 +361,7 @@ UINT QKMessageBox(
     HICON hIcon,
     PCWSTR pszWndTitle,
     HWND hParent,
-    PCWSTR pszChackBoxTitle,//设为Null则不显示复选框
+    PCWSTR pszChackBoxTitle,// 设为Null则不显示复选框
     UINT iButtonCount,
     PCWSTR pszButton1Title,
     PCWSTR pszButton2Title,
@@ -488,7 +489,7 @@ BOOL QKStrToBool(PCWSTR psz)
     else
         return FALSE;
 }
-UINT32 QKByteStreamToBEUINT32(BYTE* p)
+UINT32 QKBEUINT32ToUINT32(BYTE* p)
 {
 	return (UINT32)((UINT32)p[0] << 24 | (UINT32)p[1] << 16 | (UINT32)p[2] << 8 | (UINT32)p[3]);
 }
@@ -592,7 +593,7 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
             if (Header.Ver == 3)// 2.3
             {
                 if (Header.Flags & 0x20)// 有扩展头
-                    dwOffest = sizeof(ID3v2_Header) + 4 + QKByteStreamToBEUINT32(ExtHeader.ExtHeaderSize);
+                    dwOffest = sizeof(ID3v2_Header) + 4 + QKBEUINT32ToUINT32(ExtHeader.ExtHeaderSize);
                 else
                     dwOffest = sizeof(ID3v2_Header);
             }
@@ -611,7 +612,7 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
 				pFrame = pFile + dwOffest;
 
 				if (Header.Ver == 3)
-					dwUnitSize = QKByteStreamToBEUINT32(pFrame + 4);// 2.3：32位数据，不包括帧头（偏4B）
+					dwUnitSize = QKBEUINT32ToUINT32(pFrame + 4);// 2.3：32位数据，不包括帧头（偏4B）
 				else if (Header.Ver = 4)
 					dwUnitSize = QKSynchsafeUINT32ToUINT32(pFrame + 4);//2.4：28位数据（同步安全整数）
 
@@ -781,17 +782,17 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
                 SetFilePointer(hFile, 4, NULL, FILE_CURRENT);// 跳过图片类型
 
                 ReadFile(hFile, &t, 4, &dwLengthRead, NULL);
-                t = QKByteStreamToBEUINT32((BYTE*)&t);// 大端序字节到整数，下同
+                t = QKBEUINT32ToUINT32((BYTE*)&t);// 大端序字节到整数，下同
                 SetFilePointer(hFile, t, NULL, FILE_CURRENT);// 跳过MIME类型字符串
 
                 ReadFile(hFile, &t, 4, &dwLengthRead, NULL);
-                t = QKByteStreamToBEUINT32((BYTE*)&t);
+                t = QKBEUINT32ToUINT32((BYTE*)&t);
                 SetFilePointer(hFile, t, NULL, FILE_CURRENT);// 跳过描述字符串
 
                 SetFilePointer(hFile, 16, NULL, FILE_CURRENT);// 跳过宽度、高度、色深、索引图颜色数
 
                 ReadFile(hFile, &t, 4, &dwLengthRead, NULL);
-                t = QKByteStreamToBEUINT32((BYTE*)&t);// 图片数据长度
+                t = QKBEUINT32ToUINT32((BYTE*)&t);// 图片数据长度
 
                 pBuffer = HeapAlloc(GetProcessHeap(), 0, t);
                 ReadFile(hFile, pBuffer, t, &dwLengthRead, NULL);// 读图片
@@ -915,16 +916,6 @@ void GetLrcData_ProcLabel(QKARRAY* Result, QKARRAY TimeLabel, LPWSTR pszLrc)
         QKArray_Add(Result, p);
     }
 }
-/*
- * 目标：清除歌词数据
- *
- * 参数：
- * x 歌词数据数组
- *
- * 返回值：
- * 操作简述：
- * 备注：
- */
 void Lrc_ClearArray(QKARRAY x)
 {
     for (int i = 0; i < x->iCount; ++i)
@@ -933,7 +924,7 @@ void Lrc_ClearArray(QKARRAY x)
     }
     QKArray_Delete(x, QKADF_DELETE);
 }
-int QKIsTextUTF8(char* str, ULONGLONG length)
+BOOL QKIsTextUTF8(char* str, ULONGLONG length)
 {
     int i;
     DWORD nBytes = 0;//UFT8可用1-6个字节编码,ASCII用一个字节
@@ -984,20 +975,6 @@ int QKIsTextUTF8(char* str, ULONGLONG length)
     }
     return TRUE;
 }
-/*
- * 目标：读取歌词数据
- *
- * 参数：
- * pStream 输入流，文件名或LRC文件数据字节流。当作为文件字节流输入时，函数复制内存并使用副本
- * iSize 若输入LRC字节流，则该参数指示字节流长度
- * bFileName 指示pStream是否为文件名
- * Result 结果数组，调用函数前数组应初始化完毕
- * iDefTextCode 默认文本编码，0 自动；1 GB2312；2 UTF-8；3 UTF-16LE；4 UTF-16BE
- *
- * 返回值：
- * 操作简述：
- * 备注：我写的这算法有点哈人
- */
 void Lrc_ParseLrcData(void* pStream, int iSize, BOOL bFileName, QKARRAY* IDResult, QKARRAY* Result, int iDefTextCode)
 {
     //                                                                          ↓这里是要释放的对象↓

@@ -1,25 +1,14 @@
-#include "Windows.h"
-#include "ole2.h"
-#include <ShObjIdl.h>
-#include "shlobj_core.h"
-#include "oleidl.h"
-#include "shlobj.h"
-#include "shlwapi.h"
 #include "OLEDragDrop.h"
+
+#include <Windows.h>
+#include <ole2.h>
+#include <ShObjIdl.h>
+#include <shlobj_core.h>
+#include <oleidl.h>
+#include <shlobj.h>
+#include <shlwapi.h>
+
 #include "Function.h"
-
-
-HGLOBAL DupGlobalMem(HGLOBAL hMem)
-{
-    DWORD   len = GlobalSize(hMem);
-    PVOID   source = GlobalLock(hMem);
-    PVOID   dest = GlobalAlloc(GMEM_ZEROINIT | GMEM_MOVEABLE | GMEM_DDESHARE, len);
-
-    memcpy(GlobalLock(dest), source, len);
-    GlobalUnlock(dest);
-    GlobalUnlock(hMem);
-    return dest;
-}
 
 void QKMakeDropSource(QKARRAY Files, QKDRAGGIVEFEEDBACK pGiveFeedBack, CDataObject** ppDataObject, CDropSource** ppDropSource, BOOL fRelease)
 {
@@ -85,14 +74,24 @@ CDataObject::CDataObject(FORMATETC* fmtetc, STGMEDIUM* stgmed, BOOL fRelease, in
         m_pbRelease[i] = fRelease;
     }
 }
-
 CDataObject::~CDataObject()
 {
     delete[] m_pFormatEtc;
     delete[] m_pStgMedium;
 }
+int CDataObject::LookupFormatEtc(FORMATETC* pFormatEtc)
+{
+    for (int i = 0; i < m_nNumFormats; i++)
+    {
+        if ((m_pFormatEtc[i].tymed & pFormatEtc->tymed) &&
+            m_pFormatEtc[i].cfFormat == pFormatEtc->cfFormat &&
+            m_pFormatEtc[i].dwAspect == pFormatEtc->dwAspect)
+            return i;
+    }
 
-HRESULT __stdcall CDataObject::QueryInterface(REFIID iid, void** ppvObject)
+    return -1;
+}
+HRESULT STDMETHODCALLTYPE CDataObject::QueryInterface(REFIID iid, void** ppvObject)
 {
     static const QITAB qit[] =
     {
@@ -102,14 +101,12 @@ HRESULT __stdcall CDataObject::QueryInterface(REFIID iid, void** ppvObject)
 
     return QISearch(this, qit, iid, ppvObject);
 }
-
-ULONG __stdcall CDataObject::AddRef(void)
+ULONG STDMETHODCALLTYPE CDataObject::AddRef(void)
 {
     ++m_lRefCount;
     return m_lRefCount;
 }
-
-ULONG __stdcall CDataObject::Release(void)
+ULONG STDMETHODCALLTYPE CDataObject::Release(void)
 {
     --m_lRefCount;
     int i = m_lRefCount;
@@ -124,85 +121,67 @@ ULONG __stdcall CDataObject::Release(void)
     }
     return i;
 }
-
-HRESULT __stdcall CDataObject::QueryGetData(FORMATETC* pFormatEtc)
+HRESULT STDMETHODCALLTYPE CDataObject::QueryGetData(FORMATETC* pFormatEtc)
 {
     return (LookupFormatEtc(pFormatEtc) == -1) ? DV_E_FORMATETC : S_OK;
 }
-
-int CDataObject::LookupFormatEtc(FORMATETC* pFormatEtc)
+HRESULT STDMETHODCALLTYPE CDataObject::GetData(FORMATETC* pFormatEtc, STGMEDIUM* pStgMedium)
 {
-    for (int i = 0; i < m_nNumFormats; i++)
-    {
-        if ((m_pFormatEtc[i].tymed & pFormatEtc->tymed) &&
-            m_pFormatEtc[i].cfFormat == pFormatEtc->cfFormat &&
-            m_pFormatEtc[i].dwAspect == pFormatEtc->dwAspect)
-            return i;
-    }
+    int iIndex = LookupFormatEtc(pFormatEtc);
 
-    return -1;
-}
-
-HRESULT __stdcall CDataObject::GetData(FORMATETC* pFormatEtc, STGMEDIUM* pStgMedium)
-{
-    int iIndex;
-
-    if ((iIndex = LookupFormatEtc(pFormatEtc)) == -1)
+    if (iIndex == -1)
         return DV_E_FORMATETC;
 
     pStgMedium->tymed = m_pFormatEtc[iIndex].tymed;
     pStgMedium->pUnkForRelease = 0;
 
-    DROPFILES* p;
-    switch (m_pFormatEtc[iIndex].tymed)
-    {
-    case TYMED_HGLOBAL:
-        pStgMedium->hGlobal = DupGlobalMem(m_pStgMedium[iIndex].hGlobal);
-        p = (DROPFILES*)GlobalLock(pStgMedium->hGlobal);
+	switch (m_pFormatEtc[iIndex].tymed)
+	{
+	case TYMED_HGLOBAL:
+	{
+        HGLOBAL hG = m_pStgMedium[iIndex].hGlobal;
+        int iSize = GlobalSize(hG);
+		pStgMedium->hGlobal = GlobalAlloc(GMEM_ZEROINIT | GMEM_MOVEABLE | GMEM_DDESHARE, iSize);
+        memcpy(GlobalLock(pStgMedium->hGlobal), GlobalLock(hG), iSize);
+        GlobalUnlock(hG);
+		GlobalUnlock(pStgMedium->hGlobal);
+	}
+	break;
 
-        GlobalUnlock(pStgMedium->hGlobal);
-        break;
-    default:
-        return DV_E_FORMATETC;
-    }
-    return S_OK;
+	default:
+		return DV_E_FORMATETC;
+	}
+	return S_OK;
 }
-
-HRESULT __stdcall CDataObject::EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC** ppEnumFormatEtc)
+HRESULT STDMETHODCALLTYPE CDataObject::EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC** ppEnumFormatEtc)
 {
     IEnumFORMATETC* p;
     SHCreateStdEnumFmtEtc(m_nNumFormats, m_pFormatEtc, &p);
     *ppEnumFormatEtc = p;
     return S_OK;
 }
-
-HRESULT CDataObject::DAdvise(FORMATETC* pFormatEtc, DWORD advf, IAdviseSink* pAdvSink, DWORD* pdwConnection)
+HRESULT STDMETHODCALLTYPE CDataObject::DAdvise(FORMATETC* pFormatEtc, DWORD advf, IAdviseSink* pAdvSink, DWORD* pdwConnection)
 {
     return OLE_E_ADVISENOTSUPPORTED;
 }
-
-HRESULT CDataObject::DUnadvise(DWORD dwConnection)
+HRESULT STDMETHODCALLTYPE CDataObject::DUnadvise(DWORD dwConnection)
 {
     return OLE_E_ADVISENOTSUPPORTED;
 }
-
-HRESULT CDataObject::EnumDAdvise(IEnumSTATDATA** ppEnumAdvise)
+HRESULT STDMETHODCALLTYPE CDataObject::EnumDAdvise(IEnumSTATDATA** ppEnumAdvise)
 {
     return OLE_E_ADVISENOTSUPPORTED;
 }
-
-HRESULT CDataObject::GetDataHere(FORMATETC* pFormatEtc, STGMEDIUM* pMedium)
+HRESULT STDMETHODCALLTYPE CDataObject::GetDataHere(FORMATETC* pFormatEtc, STGMEDIUM* pMedium)
 {
     return DATA_E_FORMATETC;
 }
-
-HRESULT CDataObject::GetCanonicalFormatEtc(FORMATETC* pFormatEct, FORMATETC* pFormatEtcOut)
+HRESULT STDMETHODCALLTYPE CDataObject::GetCanonicalFormatEtc(FORMATETC* pFormatEct, FORMATETC* pFormatEtcOut)
 {
     pFormatEtcOut->ptd = NULL;
     return E_NOTIMPL;
 }
-
-HRESULT CDataObject::SetData(FORMATETC* pFormatEtc, STGMEDIUM* pMedium, BOOL fRelease)
+HRESULT STDMETHODCALLTYPE CDataObject::SetData(FORMATETC* pFormatEtc, STGMEDIUM* pMedium, BOOL fRelease)
 {
     int iIndex = LookupFormatEtc(pFormatEtc);
     if (iIndex == -1)
@@ -237,12 +216,12 @@ HRESULT CDataObject::SetData(FORMATETC* pFormatEtc, STGMEDIUM* pMedium, BOOL fRe
     return S_OK;
 }
 
-
-
-
-
-
-HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
+CDropSource::CDropSource(QKDRAGGIVEFEEDBACK pGiveFeedBack)
+{
+    m_lRefCount = 1;
+    m_pGiveFeedBack = pGiveFeedBack;
+}
+HRESULT STDMETHODCALLTYPE CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
 {
     if (fEscapePressed)
         return DRAGDROP_S_CANCEL;
@@ -252,13 +231,11 @@ HRESULT __stdcall CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfK
 
     return S_OK;
 }
-
-HRESULT __stdcall CDropSource::GiveFeedback(DWORD dwEffect)
+HRESULT STDMETHODCALLTYPE CDropSource::GiveFeedback(DWORD dwEffect)
 {
     return m_pGiveFeedBack(dwEffect);
 }
-
-HRESULT __stdcall CDropSource::QueryInterface(REFIID iid, void** ppvObject)
+HRESULT STDMETHODCALLTYPE CDropSource::QueryInterface(REFIID iid, void** ppvObject)
 {
     static const QITAB qit[] =
     {
@@ -268,14 +245,12 @@ HRESULT __stdcall CDropSource::QueryInterface(REFIID iid, void** ppvObject)
 
     return QISearch(this, qit, iid, ppvObject);
 }
-
-ULONG __stdcall CDropSource::AddRef(void)
+ULONG STDMETHODCALLTYPE CDropSource::AddRef(void)
 {
     m_lRefCount++;
     return m_lRefCount;
 }
-
-ULONG __stdcall CDropSource::Release(void)
+ULONG STDMETHODCALLTYPE CDropSource::Release(void)
 {
     m_lRefCount--;
     int i = m_lRefCount;
@@ -283,14 +258,6 @@ ULONG __stdcall CDropSource::Release(void)
         delete this;
     return i;
 }
-
-CDropSource::CDropSource(QKDRAGGIVEFEEDBACK pGiveFeedBack)
-{
-    m_lRefCount = 1;
-    m_pGiveFeedBack = pGiveFeedBack;
-}
-
-
 
 
 CDropTarget::CDropTarget(QKONDRAGENTER pOnEnter, QKONDRAGOVER pOnOver, QKONDRAGLEAVE pOnLeave, QKONDRAGDROP pOnDrop)
@@ -301,8 +268,7 @@ CDropTarget::CDropTarget(QKONDRAGENTER pOnEnter, QKONDRAGOVER pOnOver, QKONDRAGL
     m_pOnDrop = pOnDrop;
     //CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pDropTargetHelper));
 }
-
-HRESULT __stdcall CDropTarget::QueryInterface(REFIID iid, void** ppvObject)
+HRESULT STDMETHODCALLTYPE CDropTarget::QueryInterface(REFIID iid, void** ppvObject)
 {
     static const QITAB qit[] =
     {
@@ -312,14 +278,12 @@ HRESULT __stdcall CDropTarget::QueryInterface(REFIID iid, void** ppvObject)
 
     return QISearch(this, qit, iid, ppvObject);
 }
-
-ULONG __stdcall CDropTarget::AddRef(void)
+ULONG STDMETHODCALLTYPE CDropTarget::AddRef(void)
 {
     m_lRefCount++;
     return m_lRefCount;
 }
-
-ULONG __stdcall CDropTarget::Release(void)
+ULONG STDMETHODCALLTYPE CDropTarget::Release(void)
 {
     m_lRefCount--;
     int i = m_lRefCount;
@@ -327,29 +291,25 @@ ULONG __stdcall CDropTarget::Release(void)
         delete this;
     return i;
 }
-
-STDMETHODIMP CDropTarget::DragEnter(IDataObject* pDataObj, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
+HRESULT STDMETHODCALLTYPE CDropTarget::DragEnter(IDataObject* pDataObj, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
     if (!pdwEffect)
         return E_INVALIDARG;
 
     return m_pOnEnter(pDataObj, grfKeyState, pt, pdwEffect);
 }
-
-STDMETHODIMP CDropTarget::DragOver(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
+HRESULT STDMETHODCALLTYPE CDropTarget::DragOver(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
     if (!pdwEffect)
         return E_INVALIDARG;
 
     return m_pOnOver(grfKeyState, pt, pdwEffect);
 }
-
-STDMETHODIMP CDropTarget::DragLeave(void)
+HRESULT STDMETHODCALLTYPE CDropTarget::DragLeave(void)
 {
     return m_pOnLeave();
 }
-
-STDMETHODIMP CDropTarget::Drop(IDataObject* pDataObj, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
+HRESULT STDMETHODCALLTYPE CDropTarget::Drop(IDataObject* pDataObj, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
     if (!pdwEffect)
         return E_INVALIDARG;
