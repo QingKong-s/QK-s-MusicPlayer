@@ -165,7 +165,7 @@ const PCWSTR c_szBtmTip[] =
 #define LEFTBKM_REDRAWBTMBT		WM_USER + 3// (bImmdShow, bIndependlyDrawing)
 #define LEFTBKM_INIT			WM_USER + 4// (0, 0)
 #define LEFTBKM_GETREPEATMODE	WM_USER + 5// (0, 0)
-#define LEFTBKM_SETPLAYBTICON	WM_USER + 6// (0, 0)
+#define LEFTBKM_SETPLAYBTICON	WM_USER + 6// (bPlayIcon, bRedraw)
 #define LEFTBKM_DOBTOPE			WM_USER + 7// (0, 0)
 #define LEFTBKM_REDRAWTRACKBAR	WM_USER + 8// (bImmdShow, bIndependlyDrawing)
 #define LEFTBKM_SETPROGBARPOS	WM_USER + 9// (uPos, bRedraw)

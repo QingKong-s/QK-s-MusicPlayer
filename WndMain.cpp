@@ -33,9 +33,6 @@
 
 CURRMUSICINFO                   m_CurrSongInfo = { 0 };        //当前信息（在顶部显示）
 
-ID2D1DCRenderTarget*            m_pD2DRTLeftBK              = NULL;
-ID2D1DCRenderTarget*            m_pD2DRTLeftBK2             = NULL;
-
 ID2D1DeviceContext*             m_pD2DDCLeftBK              = NULL;
 ID2D1GdiInteropRenderTarget*    m_pD2DGdiInteropRTLeftBK    = NULL;
 ID2D1Bitmap1*                   m_pD2DBmpLeftBK             = NULL;
@@ -1505,82 +1502,100 @@ void UI_VEDrawAlbum(BOOL bImmdShow, BOOL bIndependlyDrawing)
     m_pD2DDCLeftBK->PushAxisAlignedClip(&m_D2DRcAlbum, D2D1_ANTIALIAS_MODE_ALIASED);// 设个剪辑区，防止边缘残留
     m_pD2DDCLeftBK->DrawBitmap(m_pD2DBmpLeftBK2, &m_D2DRcAlbum, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &m_D2DRcAlbum);// 刷背景
 
-    if (m_CurrSongInfo.pD2DBrushOrgAlbum && g_hStream)
+    if (m_CurrSongInfo.pD2DBrushOrgAlbum)
     {
-		ID2D1SolidColorBrush* pD2DBrush;
-		m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.6f), &pD2DBrush);
-
-		float cx = m_D2DRcAlbum.right - m_D2DRcAlbum.left, cy = m_D2DRcAlbum.bottom - m_D2DRcAlbum.top;
-        /////////////////////////////准备数据
-        const int iSampleCount = 100;
-        int iBufSize = 2 * iSampleCount * sizeof(float);
-
-        static float fData[200];
-        static DWORD dwLevel;
-
-        if (!g_bPlayIcon)
+        static DWORD dwLevel = -1;
+        D2D1_POINT_2F D2DPt1, D2DPt2;
+        ID2D1SolidColorBrush* pD2DBrush;
+        float cx = m_D2DRcAlbum.right - m_D2DRcAlbum.left, cy = m_D2DRcAlbum.bottom - m_D2DRcAlbum.top;
+        m_pD2DDCLeftBK->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.6f), &pD2DBrush);
+        if (g_hStream)
         {
-            DWORD dw = BASS_ChannelGetData(g_hStream, fData, iBufSize);// 取频谱数据
-            dwLevel = BASS_ChannelGetLevel(g_hStream);// 取电平
+            /////////////////////////////准备数据
+            const int iSampleCount = 100;
+            int iBufSize = 2 * iSampleCount * sizeof(float);
 
-            m_fRotationAngle += 0.5f;
-            if (m_fRotationAngle >= 360.f)
-                m_fRotationAngle = 0;
-        }
-        /////////////////////////////画频谱
-        float fStep = cx / iSampleCount;
-		D2D1_POINT_2F D2DPt1, D2DPt2;
-		int k, l;
-		for (int j = 0; j < 2; ++j)
-		{
-			for (int i = 0; i < iSampleCount - 1; ++i)
-			{
-				k = (1 - fData[i * 2 + j]) * cy / 2;
-				if (k < 0)
-					k = 0;
-				if (k > cy)
-					k = cy;
-				D2DPt1 = { m_D2DRcAlbum.left + i * fStep,(float)(m_D2DRcAlbum.top + k) };
+            static float fData[200];
 
-				l = (1 - fData[(i + 1) * 2 + j]) * cy / 2;
-				if (l < 0)
-					l = 0;
-				if (l > cy)
-					l = cy;
-				D2DPt2 = { m_D2DRcAlbum.left + (i + 1) * fStep,(float)(m_D2DRcAlbum.top + l) };
-				m_pD2DDCLeftBK->DrawLine(D2DPt1, D2DPt2, m_pD2DBrMyBlue, DPIF(1.F));
-			}
-		}
-        /////////////////////////////画封面边缘
-        D2D1_ELLIPSE D2DEllipse;
-        D2DEllipse.point = { m_D2DRcAlbum.left + cx / 2.f,m_D2DRcAlbum.top + cy / 2.f };
-		float fRadius, f;
-        fRadius = min(cx / 2.f - GC.DS_ALBUMLEVEL, cy / 2.f - GC.DS_ALBUMLEVEL) + GC.DS_ALBUMLEVEL;
-        D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
+            if (!g_bPlayIcon)
+            {
+                BASS_ChannelGetData(g_hStream, fData, iBufSize);// 取频谱数据
+                dwLevel = BASS_ChannelGetLevel(g_hStream);// 取电平
 
-        m_pD2DDCLeftBK->FillEllipse(&D2DEllipse, pD2DBrush);// 画外圈
-        float fOffset = 0.f;
-        fRadius -= GC.DS_ALBUMLEVEL;
-        
-        if (dwLevel != -1)
-        {
-            fOffset = ((float)(LOWORD(dwLevel) + HIWORD(dwLevel)) / 2.f) / 32768.f * GC.DS_ALBUMLEVEL;
-            fRadius += fOffset;
+                m_fRotationAngle += 0.5f;
+                if (m_fRotationAngle >= 360.f)
+                    m_fRotationAngle = 0;
+            }
+            /////////////////////////////画频谱
+            float fStep = cx / iSampleCount;
+            
+            int k, l;
+            for (int j = 0; j < 2; ++j)
+            {
+                for (int i = 0; i < iSampleCount - 1; ++i)
+                {
+                    k = (1 - fData[i * 2 + j]) * cy / 2;
+                    if (k < 0)
+                        k = 0;
+                    if (k > cy)
+                        k = cy;
+                    D2DPt1 = { m_D2DRcAlbum.left + i * fStep,(float)(m_D2DRcAlbum.top + k) };
+
+                    l = (1 - fData[(i + 1) * 2 + j]) * cy / 2;
+                    if (l < 0)
+                        l = 0;
+                    if (l > cy)
+                        l = cy;
+                    D2DPt2 = { m_D2DRcAlbum.left + (i + 1) * fStep,(float)(m_D2DRcAlbum.top + l) };
+                    m_pD2DDCLeftBK->DrawLine(D2DPt1, D2DPt2, m_pD2DBrMyBlue, DPIF(1.F));
+                }
+            }
+            /////////////////////////////画封面边缘
+            D2D1_ELLIPSE D2DEllipse;
+            D2DEllipse.point = { m_D2DRcAlbum.left + cx / 2.f,m_D2DRcAlbum.top + cy / 2.f };
+            float fRadius, f;
+            fRadius = min(cx / 2.f, cy / 2.f);
             D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
-            pD2DBrush->SetColor(D2D1::ColorF(D2D1::ColorF::White, 0.8f));
-            m_pD2DDCLeftBK->FillEllipse(&D2DEllipse, pD2DBrush);// 画电平指示
+
+            m_pD2DDCLeftBK->FillEllipse(&D2DEllipse, pD2DBrush);// 画外圈
+            float fOffset = 0.f;
+            fRadius -= GC.DS_ALBUMLEVEL;
+
+            if (dwLevel != -1)
+            {
+                fOffset = ((float)(LOWORD(dwLevel) + HIWORD(dwLevel)) / 2.f) / 32768.f * GC.DS_ALBUMLEVEL;
+                fRadius += fOffset;
+                D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
+                pD2DBrush->SetColor(D2D1::ColorF(D2D1::ColorF::White, 0.8f));
+                m_pD2DDCLeftBK->FillEllipse(&D2DEllipse, pD2DBrush);// 画电平指示
+            }
+            
+            /////////////////////////////画封面
+            D2D1_MATRIX_3X2_F Matrix = D2D1::Matrix3x2F::Rotation(m_fRotationAngle, D2DEllipse.point);// 制旋转矩阵
+            m_pD2DDCLeftBK->SetTransform(Matrix);// 置旋转变换
+
+            fRadius = fRadius - fOffset;
+            D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
+            m_pD2DDCLeftBK->FillEllipse(&D2DEllipse, m_CurrSongInfo.pD2DBrushOrgAlbum);
+
+            Matrix = D2D1::Matrix3x2F::Identity();
+            m_pD2DDCLeftBK->SetTransform(Matrix);// 还原空变换
+        }
+        else
+        {
+            D2D1_ELLIPSE D2DEllipse;
+            D2DEllipse.point = { m_D2DRcAlbum.left + cx / 2.f,m_D2DRcAlbum.top + cy / 2.f };
+            float fRadius, f;
+            fRadius = min(cx / 2.f, cy / 2.f);
+            D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
+
+            m_pD2DDCLeftBK->FillEllipse(&D2DEllipse, pD2DBrush);// 画外圈
+
+            fRadius -= GC.DS_ALBUMLEVEL;
+            D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
+            m_pD2DDCLeftBK->FillEllipse(&D2DEllipse, m_CurrSongInfo.pD2DBrushOrgAlbum);
         }
         pD2DBrush->Release();
-        /////////////////////////////画封面
-        D2D1_MATRIX_3X2_F Matrix = D2D1::Matrix3x2F::Rotation(m_fRotationAngle, D2DEllipse.point);// 制旋转矩阵
-        m_pD2DDCLeftBK->SetTransform(Matrix);// 置旋转变换
-
-        fRadius = fRadius - fOffset;
-        D2DEllipse.radiusX = D2DEllipse.radiusY = fRadius;
-        m_pD2DDCLeftBK->FillEllipse(&D2DEllipse, m_CurrSongInfo.pD2DBrushOrgAlbum);
-
-        Matrix = D2D1::Matrix3x2F::Identity();
-        m_pD2DDCLeftBK->SetTransform(Matrix);// 还原空变换
     }
 
     m_pD2DDCLeftBK->PopAxisAlignedClip();
@@ -2171,11 +2186,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
     }
     return 0;
-
     case WM_CREATE:
     {
-
-
         Settings_Read();
         GlobalEffect_ResetToDefault(EFFECT_ALL);
         
@@ -2259,7 +2271,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         UI_UpdateLeftBK();
 	}
 	return 0;
-
 	case WM_DESTROY:
 	{
         Playing_Stop();
@@ -2270,6 +2281,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             g_pITaskbarList->Release();
 
         m_pD2DBrMyBlue->Release();
+        m_pD2DBrMyBlue2->Release();
+        m_pD2DBmpLeftBK->Release();
+        m_pD2DBmpLeftBK2->Release();
+        m_pD2DGdiInteropRTLeftBK->Release();
+        m_pD2DDCLeftBK->Release();
+        m_pDXGISfceLeftBK->Release();
+        m_pDXGIScLeftBK->Release();
 
         MainWnd_ReleaseCurrInfo();
         Lrc_ClearArray(g_Lrc);
@@ -2278,7 +2296,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 	}
 	return 0;
-
     case WM_SIZE:
     {
         if (wParam == SIZE_MINIMIZED)
@@ -2321,7 +2338,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             SWP_NOZORDER | SWP_NOMOVE);
     }
     return 0;
-
     case WM_GETMINMAXINFO:// 限制窗口大小
 	{
 		LPMINMAXINFO pInfo = (LPMINMAXINFO)lParam;
@@ -2329,7 +2345,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		pInfo->ptMinTrackSize.y = DPI(640);
 	}
 	return 0;
-
 	case WM_DPICHANGED:
 	{
 		g_iDPI = HIWORD(wParam);
@@ -2340,18 +2355,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		SetWindowPos(hWnd, NULL, p->left, p->top, p->right - p->left, p->bottom - p->top, SWP_NOZORDER);
 	}
 	return 0;
-
     case WM_SETTEXT:// 设置标题，转发，否则预览时不会显示标题（鸣谢：nlmhc）
         SetWindowTextW(g_hTBGhost, (PCWSTR)lParam);
         break;
-
     case MAINWNDM_AUTONEXT:
     {
         WndProc_LeftBK(g_hBKLeft, LEFTBKM_SETPROGBARPOS, WndProc_LeftBK(g_hBKLeft, LEFTBKM_GETPROGBARMAX, 0, 0), TRUE);
         Playing_AutoNext();
     }
     return 0;
-
 	}
     return DefWindowProcW(hWnd, message, wParam, lParam);
 }
@@ -2372,7 +2384,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     static BOOL bBTPLPushed = FALSE, bBTIGPushed = FALSE;
     static HWND hToolTip;
     static BOOL bLBTDown = FALSE;
-    static TTTOOLINFOW ti = { sizeof(TTTOOLINFOW),0,hWnd,1,{0},g_hInst,NULL,0 };
+	static TTTOOLINFOW ti = { sizeof(TTTOOLINFOW),TTF_TRACK | TTF_IDISHWND | TTF_ABSOLUTE,hWnd,(UINT_PTR)hWnd,{0},g_hInst,NULL,0 };
     static HWND hDlg = NULL;
     static int i;
     static D2D_RECT_F D2DRcTimeLabel = { (float)m_rcBtmBK.left,(float)m_rcBtmBK.top,(float)(m_rcBtmBK.left + DPIS_CXTIME),(float)m_rcBtmBK.bottom };
@@ -2557,7 +2569,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             SetFocus(hWnd);
         else if (PtInRect(&rcLrcSB, pt))// 在歌词滚动条区
         {
-            if (PtInRect(&rcLrcSBThumb, pt))
+            if (PtInRect(&rcLrcSBThumb, pt))// 在滑块区
             {
                 bSBLBtnDown = TRUE;
                 iCursorOffest = pt.y - m_rcLrcShow.top - m_iLrcSBPos * (rcLrcSB.bottom - rcLrcSB.top - iThumbSize) / iSBMax;
@@ -2606,21 +2618,24 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				);// 设置位置
 			}
 		}
-        else if (PtInRect(&m_rcBtmBK, pt))
+		else if (PtInRect(&m_rcBtmBK, pt) || iPushed != -1)
         {
             if (iPushed == -1)
                 return 0;
             i = iPushed;
             iPushed = -1;
+            iLastHot = -1;
+            bLBTDown = FALSE;
 
             ReleaseCapture();
 
+            WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
             if (i != HitTest_BtmBK(pt))
                 return 0;
+
             ti.lpszText = NULL;
             SendMessageW(hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&ti);
             SendMessageW(hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&ti);
-            WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
             switch (i)
             {
             case 0:// 上一曲
@@ -2954,6 +2969,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
                 bInBTBK = FALSE;
                 iHot = -1;
                 WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
+                SendMessageW(hToolTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&ti);
             }
         }
     }
@@ -2967,6 +2983,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             SendMessageW(hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&ti);
             iLastHot = iHot = -1;
             WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
+            SendMessageW(hToolTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&ti);
         }
 
         if (m_iLrcFixedIndex != -1)
@@ -2981,15 +2998,19 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         if (iHot != -1 && iPushed == -1 && iLastOver != iHot)
         {
         ShowToolTip:
+            POINT pt = { GET_X_LPARAM(lParam),GET_Y_LPARAM(lParam) };
+            ClientToScreen(hWnd, &pt);
             iLastOver = iHot;
             ti.lpszText = NULL;
-            //SendMessageW(hToolTip, TTM_GETTOOLINFOW, 0, (LPARAM)&ti);
+
             if (iHot == 5)
                 ti.lpszText = (LPWSTR)c_szBtmTip[BTMBKBTNCOUNT + iRepeatMode];
             else
                 ti.lpszText = (LPWSTR)c_szBtmTip[iHot];
-            //SendMessageW(hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&ti);
-            //SendMessageW(hToolTip, TTM_POPUP, 0, 0);
+
+            SendMessageW(hToolTip, TTM_SETTOOLINFOW, 0, (LPARAM)&ti);
+            SendMessageW(hToolTip, TTM_TRACKACTIVATE, TRUE, (LPARAM)&ti);
+            SendMessageW(hToolTip, TTM_TRACKPOSITION, 0, MAKELPARAM(pt.x, pt.y));
         }
     }
     return 0;
@@ -3109,7 +3130,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         }
     }
     break;
-    case LEFTBKM_REDRAWBTMBT:
+    case LEFTBKM_REDRAWBTMBT:// 重画控制栏
     {
 		HDC hDC;
 		if (lParam)
@@ -3155,6 +3176,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             D2DRectF2.bottom = D2DRectF.bottom;
             m_pD2DDCLeftBK->FillRectangle(&D2DRectF2, pD2DBrush);
         }
+        pD2DBrush->Release();
 
         m_pD2DGdiInteropRTLeftBK->GetDC(D2D1_DC_INITIALIZE_MODE_COPY, &hDC);
         DrawIconEx(hDC, x + iIconOffest, y, GR.hiLast, 0, 0, 0, NULL, DI_NORMAL);// 1 上一曲
@@ -3238,7 +3260,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			m_pD2DDCLeftBK->EndDraw();
     }
     return 0;
-    case LEFTBKM_REDRAWTRACKBAR:
+    case LEFTBKM_REDRAWTRACKBAR:// 重画进度条
     {
         if (lParam)
             m_pD2DDCLeftBK->BeginDraw();
@@ -3263,7 +3285,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 		}
 		else
         {
-        NoPgs:
+        NoPgs:// 进度条尺寸不正确时跳过来
             D2D_RECT_F D2DRcF;
             D2DRcF.left = D2DRcTrackBar.left;
             D2DRcF.top = D2DRcTrackBar.top + (DPIS_CYPROGBAR - GC.DS_CYPROGBARCORE) / 2;
@@ -3302,16 +3324,8 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         return uTBMax;
     case LEFTBKM_INIT:
     {
-        hToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0, 0, 0, 0, 0, hWnd, NULL, NULL, NULL);
-        //ShowWindow(hToolTip, SW_SHOWNOACTIVATE);
-        RECT rc;
-        GetClientRect(hWnd, &rc);
-        ti.rect = rc;
-        ti.uFlags = TTF_SUBCLASS;
-        ti.hwnd = hWnd;
-        ti.lpszText = (PWSTR)L"11111";
+        hToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, TTS_NOPREFIX | TTS_ALWAYSTIP, 0, 0, 0, 0, hWnd, NULL, NULL, NULL);// 创建工具提示
         SendMessageW(hToolTip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
-        //SendMessageW(hToolTip, TTM_POP, 0, 0);
     }
     return 0;
     case LEFTBKM_GETREPEATMODE:
@@ -3343,11 +3357,12 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             BASS_ChannelPlay(g_hStream, FALSE);
             SetTimer(hWnd, IDT_PGS, TIMERELAPSE_PGS, NULL);
         }
+        
         WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
         LrcWnd_DrawLrc();
     }
     return 0;
-    case LEFTBKM_DOBTOPE:
+    case LEFTBKM_DOBTOPE:// 执行按钮动作
         switch (wParam)
         {
         case 0:goto BTOpe_Last;

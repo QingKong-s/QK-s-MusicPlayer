@@ -497,7 +497,6 @@ UINT32 QKSynchsafeUINT32ToUINT32(BYTE* p)
 {
     return (UINT32)(((UINT32)p[0] & 0x7F) << 21) | (((UINT32)p[1] & 0x7F) << 14) | (((UINT32)p[2] & 0x7F) << 7) | ((UINT32)p[3] & 0x7F);
 }
-
 /*
  * 目标：读ID3v2辅助函数：按指定编码处理文本
  *

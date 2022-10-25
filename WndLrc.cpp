@@ -13,14 +13,13 @@
 #include "WndMain.h"
 #include "WndList.h"
 
-HDC             m_hCDC_Lrc      = NULL;
+HDC             m_hCDCDTLrc      = NULL;
 HBITMAP         m_hBitmap       = NULL;
 
 BOOL            m_bShowBK       = FALSE;
 
 int             m_iLrcBT        = 0;
 int             m_iMouseHoverBT = 0;
-RECT            m_rcLrcText;//桌面歌词文本区域，鼠标位置检测用
 
 int             m_cxClient      = 0,
                 m_cyClient      = 0,
@@ -59,7 +58,7 @@ HRESULT QKDWTextRenderer_DrawOutline::DrawGlyphRun(void* clientDrawingContext, f
         glyphRun->glyphCount,glyphRun->isSideways,glyphRun->bidiLevel, pD2DGeometrySink);// 取字形轮廓
     pD2DGeometrySink->Close();
 
-    float fShandowOffest = 3;
+    float fShandowOffest = 3;// 阴影偏移
 
     g_pD2DFactory->CreateTransformedGeometry(pD2DPathGeometry, 
         D2D1::Matrix3x2F::Translation(baselineOriginX + fShandowOffest, baselineOriginY + fShandowOffest), &pD2DTransformedGeometry);// 平移
@@ -92,22 +91,19 @@ void LrcWnd_CreateRes()
 }
 void LrcWnd_DeleteRes()
 {
-    m_pD2DSolidBrush1->Release();
-    m_pD2DSolidBrush1 = NULL;
-    m_pD2DSolidBrush2->Release();
-    m_pD2DSolidBrush2 = NULL;
-    m_pDWTextFormat->Release();
-    m_pDWTextFormat = NULL;
-    m_pD2DRenderTarget->Release();
-    m_pD2DRenderTarget = NULL;
-    DeleteDC(m_hCDC_Lrc);
-    m_hCDC_Lrc = NULL;
+    SAFE_RELEASE(m_pD2DSolidBrush1);
+    SAFE_RELEASE(m_pD2DSolidBrush2);
+    SAFE_RELEASE(m_pDWTextFormat);
+    SAFE_RELEASE(m_pD2DRenderTarget);
+
+    DeleteDC(m_hCDCDTLrc);
+    m_hCDCDTLrc = NULL;
     DeleteObject(m_hBitmap);
     m_hBitmap = NULL;
 }
 void LrcWnd_Show()
 {
-    int cxDef = DPI(580), cyDef = DPI(155);
+    int cxDef = DPI(580), cyDef = DPI(160);
     int cxScr = GetSystemMetrics(SM_CXFULLSCREEN),
         cyScr = GetSystemMetrics(SM_CYFULLSCREEN);
     if (IsWindow(g_hLrcWnd))
@@ -229,16 +225,16 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		m_cxLrcRgn = m_cxClient - m_xLrcRgn * 2;
 		m_cyLrcRgn = m_cyClient - m_yLrcRgn - m_xLrcRgn;
 
-		if (m_hCDC_Lrc)
-			DeleteDC(m_hCDC_Lrc);
+		if (m_hCDCDTLrc)
+			DeleteDC(m_hCDCDTLrc);
 		if (m_hBitmap)
 			DeleteObject(m_hBitmap);
 
 		HDC hDC = GetDC(g_hLrcWnd);
-		m_hCDC_Lrc = CreateCompatibleDC(hDC);
+		m_hCDCDTLrc = CreateCompatibleDC(hDC);
 		m_hBitmap = CreateCompatibleBitmap(hDC, m_cxClient, m_cyClient);
 		ReleaseDC(g_hLrcWnd, hDC);
-		SelectObject(m_hCDC_Lrc, m_hBitmap);
+		SelectObject(m_hCDCDTLrc, m_hBitmap);
 
 		if (m_pD2DRenderTarget)
 			m_pD2DRenderTarget->Release();
@@ -258,7 +254,7 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		};
 		g_pD2DFactory->CreateDCRenderTarget(&DCRTProp, &m_pD2DRenderTarget);
 		RECT rc = { 0,0,m_cxClient,m_cyClient };
-		m_pD2DRenderTarget->BindDC(m_hCDC_Lrc, &rc);
+		m_pD2DRenderTarget->BindDC(m_hCDCDTLrc, &rc);
         m_pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pD2DSolidBrush1);
 		m_pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0, 0, 0, 0.4), &m_pD2DSolidBrush2);
 
@@ -377,7 +373,7 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     {
         LPMINMAXINFO pInfo = (LPMINMAXINFO)lParam;
         pInfo->ptMinTrackSize.x = DPI(580);
-        pInfo->ptMinTrackSize.y = DPI(150);
+        pInfo->ptMinTrackSize.y = DPI(160);
     }
     return 0;
     case WM_DESTROY:
@@ -390,7 +386,7 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	}
 	return DefWindowProcW(hWnd, message, wParam, lParam);
 }
-void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
+void LrcWnd_DrawLrc()
 {
 	if (!g_hLrcWnd)
 		return;
@@ -432,13 +428,13 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
         rcF.right = rcF.left + GC.cyBT;
         rcF.bottom = rcF.top + GC.cyBT;
         m_pD2DRenderTarget->EndDraw();
-		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, GR.hiLast2, 0, 0, 0, NULL, DI_NORMAL);
+		DrawIconEx(m_hCDCDTLrc, iLeft + iIconOffest, iIconTop, GR.hiLast2, 0, 0, 0, NULL, DI_NORMAL);
 		iLeft += iIconStep;
-		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, g_bPlayIcon ? GR.hiPlay2 : GR.hiPause2, 0, 0, 0, NULL, DI_NORMAL);
+		DrawIconEx(m_hCDCDTLrc, iLeft + iIconOffest, iIconTop, g_bPlayIcon ? GR.hiPlay2 : GR.hiPause2, 0, 0, 0, NULL, DI_NORMAL);
 		iLeft += iIconStep;
-		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, GR.hiNext2, 0, 0, 0, NULL, DI_NORMAL);
+		DrawIconEx(m_hCDCDTLrc, iLeft + iIconOffest, iIconTop, GR.hiNext2, 0, 0, 0, NULL, DI_NORMAL);
 		iLeft += iIconStep;
-		DrawIconEx(m_hCDC_Lrc, iLeft + iIconOffest, iIconTop, GR.hiCross2, 0, 0, 0, NULL, DI_NORMAL);
+		DrawIconEx(m_hCDCDTLrc, iLeft + iIconOffest, iIconTop, GR.hiCross2, 0, 0, 0, NULL, DI_NORMAL);
         m_pD2DRenderTarget->BeginDraw();
 	}
 	PWSTR pszLrc = NULL;
@@ -451,7 +447,7 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
         uStr1Length = lstrlenW(pszLrc);
 		break;
 	case LRCSTATE_NOLRC:
-	NoLrc:
+	NoLrc:// 没播到第一句时跳过来
         if (g_hStream)
         {
             pszLrc = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iCurrFileIndex))->pszName;
@@ -531,20 +527,9 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
                 pDWTextLayout->Release();
                 m_pDWTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
                 g_pDWFactory->CreateTextLayout(pszLrc, uStr1Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout);// 重新创建文本布局
-            NotShowingLrc:
-                m_rcLrcText.left = (m_cxClient - DWTextMetrics.width) / 2;
-                m_rcLrcText.top = m_yLrcRgn;
-                m_rcLrcText.right = m_rcLrcText.left + DWTextMetrics.width;
-                m_rcLrcText.bottom = m_rcLrcText.top + DWTextMetrics.height;
             }
-            else
-            {
-                m_rcLrcText.left = m_xLrcRgn;
-                m_rcLrcText.top = m_yLrcRgn;
-                m_rcLrcText.right = m_xLrcRgn + m_cxLrcRgn;
-                m_rcLrcText.bottom = m_yLrcRgn + DWTextMetrics.height;
-            }
-        
+
+        NotShowingLrc:
             GradientBrushProp = { D2D1::Point2F(0,m_yLrcRgn),D2D1::Point2F(0,m_yLrcRgn + DWTextMetrics.height) };
 
             GradientStop[0] = { 0.0f,D2D1::ColorF(0x00FF00,1) };
@@ -622,22 +607,6 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
 				g_pDWFactory->CreateTextLayout(pszLrc + p->iOrgLength + 1, uStr2Length, m_pDWTextFormat, m_cxClient, m_cyClient, &pDWTextLayout2);// 重新创建文本布局
 			}
 
-			if (m_LrcScrollInfo.cx1 != -1 || m_LrcScrollInfo.cx2 != -1)
-			{
-				m_rcLrcText.left = m_xLrcRgn;
-				m_rcLrcText.top = m_yLrcRgn;
-				m_rcLrcText.right = m_xLrcRgn + m_cxLrcRgn;
-				m_rcLrcText.bottom = m_yLrcRgn + DWTextMetrics.height + DWTextMetrics2.height;
-			}
-			else
-			{
-				x = max(DWTextMetrics.width, DWTextMetrics2.width);
-				m_rcLrcText.left = (m_cxClient - x) / 2;
-				m_rcLrcText.top = m_yLrcRgn;
-				m_rcLrcText.right = m_rcLrcText.left + x;
-				m_rcLrcText.bottom = m_rcLrcText.top + DWTextMetrics.height + DWTextMetrics2.height;
-			}
-
 			GradientBrushProp = { D2D1::Point2F(0,m_yLrcRgn),D2D1::Point2F(0,DWTextMetrics.height + DWTextMetrics2.height) };
             GradientStop[0] = { 0.0f,D2D1::ColorF(0x00FF00,1) };
             GradientStop[1] = { 1.0f,D2D1::ColorF(0x0000FF,1) };
@@ -687,7 +656,7 @@ void LrcWnd_DrawLrc()//  ＤＩＲＥＣＴ　Ｘ　２Ｄ！！！
     bf.BlendFlags = 0;
     bf.SourceConstantAlpha = 0xFF;
     bf.AlphaFormat = AC_SRC_ALPHA;
-    UpdateLayeredWindow(g_hLrcWnd, NULL, NULL, &size, m_hCDC_Lrc, &pt, 0, &bf, ULW_ALPHA);// 显示
+    UpdateLayeredWindow(g_hLrcWnd, NULL, NULL, &size, m_hCDCDTLrc, &pt, 0, &bf, ULW_ALPHA);// 显示
 }
 int LrcWnd_HitTest()// 歌词窗口命中测试
 {

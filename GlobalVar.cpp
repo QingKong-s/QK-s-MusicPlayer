@@ -82,5 +82,5 @@ int             g_cxBKList				= 0;
 int             g_iSearchResult			= -1;
 int             g_bSort					= FALSE;
 
-BOOL			g_bPlayIcon				= FALSE;
+BOOL			g_bPlayIcon				= TRUE;
 BOOL			g_bShowAlbum			= 1;

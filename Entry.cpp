@@ -268,10 +268,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     //////////////清理全局资源
     FreeLibrary(hLib);
     BASS_Free();
+
     DeleteObject(g_hFontCenterLrc);
     DeleteObject(g_hFont);
     DeleteObject(g_hFontDrawing);
+    DeleteObject(GC.hbrCyanDeeper);
+    DeleteObject(GC.hbrMyBule);
+
     GdiplusShutdown(uGPToken);
+
+    g_pD2DDevice->Release();
+    g_pDXGIFactory->Release();
+    g_pDXGIDevice->Release();
+    g_pDWFactory->Release();
+    g_pD2DFactory->Release();
+
+    g_pITaskbarList->Release();
+
     OleUninitialize();
     CoUninitialize();
     return (int)msg.wParam;
