@@ -1424,7 +1424,7 @@ INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         SendMessageW(hTab, TCM_GETITEMRECT, 0, (LPARAM)&rc);
         GetClientRect(hTab, &rc2);
 
-        PWSTR DialogID[] =
+        PCWSTR DialogID[] =
         {
             MAKEINTRESOURCEW(IDD_SBV),
             MAKEINTRESOURCEW(IDD_EQ),

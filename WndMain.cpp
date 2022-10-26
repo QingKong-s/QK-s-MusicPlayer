@@ -30,6 +30,7 @@
 #include "OLEDragDrop.h"
 #include "WndEffect.h"
 #include "WndList.h"
+#include "WndOptions.h"
 
 CURRMUSICINFO                   m_CurrSongInfo = { 0 };        //当前信息（在顶部显示）
 
@@ -95,367 +96,7 @@ HSTREAM m_hs;
 
 HRESULT hr = S_OK;
 
-void Settings_Read()
-{
-    WCHAR szBuffer[MAXPROFILEBUFFER];
-    UINT u;
-    GS.uDefTextCode = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, 0, g_pszProfie);
 
-    GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_LRCDIR, NULL, szBuffer, MAXPROFILEBUFFER, g_pszProfie);
-    delete[] GS.pszLrcDir;
-    GS.pszLrcDir = new WCHAR[lstrlenW(szBuffer) + 1];
-    lstrcpyW(GS.pszLrcDir, szBuffer);
-
-    GS.bLrcAnimation = !GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DISABLEVANIMATION, FALSE, g_pszProfie);
-    GS.bForceTwoLines = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DISABLEWORDBREAK, TRUE, g_pszProfie);
-    GS.bDTLrcShandow = !GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DISABLEDTLRCSHANDOW, FALSE, g_pszProfie);
-
-    GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_FONTNAME, L"微软雅黑", szBuffer, MAXPROFILEBUFFER, g_pszProfie);
-    delete[] GS.pszDTLrcFontName;
-    GS.pszDTLrcFontName = new WCHAR[lstrlenW(szBuffer) + 1];
-    lstrcpyW(GS.pszDTLrcFontName, szBuffer);
-
-    GS.uDTLrcFontSize = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_FONTSIZE, 40, g_pszProfie);
-    GS.uDTLrcFontWeight = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_FONTWEIGHT, 400, g_pszProfie);
-
-    GS.crDTLrc1 = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTLRCCLR1, 0x00FF00, g_pszProfie);
-    GS.crDTLrc2 = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTLRCCLR2, 0x0000FF, g_pszProfie);
-
-    GS.uDTLrcTransparent = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTLRCTRANSPARENT, 0xFF, g_pszProfie);
-
-    GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCSPACELINE, L"♬♪♬♪♬", szBuffer, MAXPROFILEBUFFER, g_pszProfie);
-    delete[] GS.pszDTLrcSpaceLine;
-    GS.pszDTLrcSpaceLine = new WCHAR[lstrlenW(szBuffer) + 1];
-    lstrcpyW(GS.pszDTLrcSpaceLine, szBuffer);
-}
-void Settings_Save()
-{
-    WCHAR sz[MAXPROFILEBUFFER];
-    wsprintfW(sz, L"%u", GS.uDefTextCode);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, sz, g_pszProfie);
-
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_LRCDIR, GS.pszLrcDir, g_pszProfie);
-
-    wsprintfW(sz, L"%u", !GS.bLrcAnimation);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DISABLEVANIMATION, sz, g_pszProfie);
-
-    wsprintfW(sz, L"%u", GS.bForceTwoLines);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DISABLEWORDBREAK, sz, g_pszProfie);
-
-    wsprintfW(sz, L"%u", !GS.bDTLrcShandow);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DISABLEDTLRCSHANDOW, sz, g_pszProfie);
-
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_FONTNAME, GS.pszDTLrcFontName, g_pszProfie);
-
-    wsprintfW(sz, L"%u", GS.uDTLrcFontSize);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_FONTSIZE, sz, g_pszProfie);
-
-    wsprintfW(sz, L"%u", GS.uDTLrcFontWeight);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_FONTWEIGHT, sz, g_pszProfie);
-
-    wsprintfW(sz, L"%u", GS.crDTLrc1);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCCLR1, sz, g_pszProfie);
-    wsprintfW(sz, L"%u", GS.crDTLrc2);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCCLR2, sz, g_pszProfie);
-
-    wsprintfW(sz, L"%u", GS.uDTLrcTransparent);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCTRANSPARENT, sz, g_pszProfie);
-
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCSPACELINE, GS.pszDTLrcSpaceLine, g_pszProfie);
-}
-INT_PTR CALLBACK DlgProc_Settings2(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    static HBRUSH hbr1, hbr2;
-    static HWND hST1, hST2;
-    switch (message)
-    {
-    case WM_INITDIALOG:
-    {
-        hST1 = GetDlgItem(hDlg, IDC_ST_DTLRCCLR1);
-        hST2 = GetDlgItem(hDlg, IDC_ST_DTLRCCLR2);
-
-        HWND hCtrl = GetDlgItem(hDlg, IDC_CB_DEFTEXTCODE);
-        SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"自动判断（不一定准确）");
-        SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"GBK");
-        SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"UTF-8");
-        SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"UTF-16LE");
-        SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"UTF-16BE");
-        SendMessageW(hCtrl, CB_SETCURSEL, GS.uDefTextCode, 0);
-
-        SetDlgItemTextW(hDlg, IDC_ED_LRCDIR, GS.pszLrcDir);
-
-        SendDlgItemMessageW(hDlg, IDC_CB_DISABLEVANIMATION, BM_SETCHECK, GS.bLrcAnimation ? BST_UNCHECKED : BST_CHECKED, 0);
-        SendDlgItemMessageW(hDlg, IDC_CB_DISABLEWORDBREAK, BM_SETCHECK, GS.bForceTwoLines ? BST_CHECKED : BST_UNCHECKED, 0);
-        SendDlgItemMessageW(hDlg, IDC_CB_DISABLEDTLRCSHANDOW, BM_SETCHECK, GS.bDTLrcShandow ? BST_UNCHECKED : BST_CHECKED, 0);
-
-        SetDlgItemTextW(hDlg, IDC_ED_DTLRCFONTINFO, GS.pszDTLrcFontName);
-
-        SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_SETSEL, -2, -1);
-        SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)L",");
-
-        WCHAR sz[10];
-        wsprintfW(sz, L"%u", GS.uDTLrcFontSize);
-        SetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTSIZE, (HANDLE)GS.uDTLrcFontSize);
-        SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_SETSEL, -2, -1);
-        SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)sz);
-
-        SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_SETSEL, -2, -1);
-        SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)L",");
-
-        wsprintfW(sz, L"%u", GS.uDTLrcFontWeight);
-        SetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTWEIGHT, (HANDLE)GS.uDTLrcFontWeight);
-        SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_SETSEL, -2, -1);
-        SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)sz);
-
-        hbr1 = CreateSolidBrush(QKCommonClrToGDIClr(GS.crDTLrc1));
-        hbr2 = CreateSolidBrush(QKCommonClrToGDIClr(GS.crDTLrc2));
-        SetPropW(GetDlgItem(hDlg, IDC_ST_DTLRCCLR1), PROP_DTLRCCLR1, (HANDLE)GS.crDTLrc1);
-        SetPropW(GetDlgItem(hDlg, IDC_ST_DTLRCCLR2), PROP_DTLRCCLR2, (HANDLE)GS.crDTLrc2);
-
-        SendDlgItemMessageW(hDlg, IDC_TB_DTLRCTRANSPARENT, TBM_SETRANGE, FALSE, MAKELPARAM(0, 0xFF));
-        SendDlgItemMessageW(hDlg, IDC_TB_DTLRCTRANSPARENT, TBM_SETPOS, TRUE, GS.uDTLrcTransparent);
-
-        SetDlgItemTextW(hDlg, IDC_ED_DTLRCSPACELINE, GS.pszDTLrcSpaceLine);
-
-        DlgProc_Settings2(hDlg, WM_COMMAND, MAKEWPARAM(IDC_BT_REFRESHDEV, BN_CLICKED), 0);
-    }
-    return FALSE;
-    case WM_NCPAINT:
-        return TRUE;
-    case WM_COMMAND:
-    {
-        switch (HIWORD(wParam))
-        {
-        case CBN_SELCHANGE:
-        {
-            BASS_Init(SendMessageW((HWND)lParam, CB_GETCURSEL, 0, 0) + 1, 44100, BASS_DEVICE_REINIT, g_hMainWnd, NULL);
-        }
-        case BN_CLICKED:
-        {
-            switch (LOWORD(wParam))
-            {
-            case IDC_BT_CHANGELRCDIR:
-            {
-                IFileOpenDialog* pfod;
-                HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog,
-                    NULL,
-                    CLSCTX_INPROC_SERVER,
-                    IID_PPV_ARGS(&pfod));
-                if (!SUCCEEDED(hr))
-                    return 0;
-                pfod->SetOptions(FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
-                pfod->Show(hDlg);
-                IShellItem* psi;
-                hr = pfod->GetResult(&psi);
-                if (!SUCCEEDED(hr))
-                {
-                    pfod->Release();
-                    return 0;
-                }
-                LPWSTR pszPath;
-                hr = psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &pszPath);
-                psi->Release();
-                pfod->Release();
-                if (!SUCCEEDED(hr))
-                    return 0;
-                SetDlgItemTextW(hDlg, IDC_ED_LRCDIR, pszPath);
-                CoTaskMemFree(pszPath);
-            }
-            return TRUE;
-            case IDC_BT_CHANGEFONT:
-            {
-                LOGFONTW lf = { 0 };
-                CHOOSEFONTW cf = { 0 };
-                cf.lStructSize = sizeof(CHOOSEFONTW);
-                cf.hwndOwner = hDlg;
-                cf.lpLogFont = &lf;
-                cf.Flags = CF_INITTOLOGFONTSTRUCT | CF_SCREENFONTS | CF_EFFECTS | CF_FORCEFONTEXIST | CF_NOVERTFONTS;
-
-            }
-            return TRUE;
-            case IDC_BT_REFRESHDEV:
-            {
-                BASS_DEVICEINFO DevInfo;
-                PWSTR psz;
-                DWORD dwCurrDev = BASS_GetDevice();
-                for (DWORD i = 1; BASS_GetDeviceInfo(i, &DevInfo); ++i)
-                {
-                    int iBufferSize = MultiByteToWideChar(CP_ACP, 0, DevInfo.name, -1, NULL, 0);
-                    if (iBufferSize)
-                    {
-                        psz = new WCHAR[iBufferSize];//包含结尾NULL
-                        MultiByteToWideChar(CP_ACP, 0, DevInfo.name, -1, psz, iBufferSize);
-                    }
-                    else
-                        psz = NULL;
-
-                    SendDlgItemMessageW(hDlg, IDC_CB_DEVICES, CB_INSERTSTRING, -1, (LPARAM)psz);
-                    delete[] psz;
-                }
-
-                SendDlgItemMessageW(hDlg, IDC_CB_DEVICES, CB_SETCURSEL, BASS_GetDevice() - 1, 0);
-            }
-            return TRUE;
-            }
-        }
-        }
-    }
-    return TRUE;
-    case WM_CTLCOLORSTATIC:
-    {
-        if (lParam == (LPARAM)hST1)
-            return (LRESULT)hbr1;
-        else if (lParam == (LPARAM)hST2)
-            return (LRESULT)hbr2;
-    }
-    return NULL;
-    }
-    return FALSE;
-}
-INT_PTR CALLBACK DlgProc_Settings(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    static HWND hWnd;
-    switch (message)
-    {
-    case WM_INITDIALOG:
-    {
-        int iGap = DPI(50);
-        int cxClient;
-        int cyClient;
-        RECT rc;
-        GetClientRect(hDlg, &rc);
-        cxClient = rc.right;
-        cyClient = rc.bottom;
-
-        hWnd = CreateDialogParamW(g_hInst, MAKEINTRESOURCEW(IDD_OPTIONS2), NULL, DlgProc_Settings2, 0);
-        GetClientRect(hWnd, &rc);
-        SetParent(hWnd, hDlg);
-        SetWindowPos(hWnd, NULL, 0, 0, rc.right, cyClient - iGap, SWP_NOZORDER);
-        SetWindowLongPtrW(hWnd, GWL_STYLE, WS_CHILD);
-        ShowWindow(hWnd, SW_SHOW);
-
-        HWND hCtrl = GetDlgItem(hDlg, IDC_SB_SETTINGS);
-        SetWindowPos(hCtrl, NULL, rc.right, 0, cxClient - rc.right, cyClient - iGap, SWP_NOZORDER);
-        SCROLLINFO si;
-        si.cbSize = sizeof(SCROLLINFO);
-        si.fMask = SIF_ALL;
-        si.nPos = 0;
-        si.nMax = rc.bottom;
-        si.nMin = 0;
-        si.nPage = cyClient - iGap;
-        SetScrollInfo(hCtrl, SB_CTL, &si, TRUE);
-    }
-    return FALSE;
-    case WM_COMMAND:
-    {
-        switch (LOWORD(wParam))
-        {
-        case IDOK:
-        {
-            GS.uDefTextCode = SendDlgItemMessageW(hWnd, IDC_CB_DEFTEXTCODE, CB_GETCURSEL, 0, 0);
-
-            delete[] GS.pszLrcDir;
-            int iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_LRCDIR));
-            GS.pszLrcDir = new WCHAR[iLength + 1];
-            GetDlgItemTextW(hWnd, IDC_ED_LRCDIR, GS.pszLrcDir, iLength + 1);
-
-            GS.bLrcAnimation = !(SendDlgItemMessageW(hWnd, IDC_CB_DISABLEVANIMATION, BM_GETCHECK, 0, 0) == BST_CHECKED);
-            GS.bForceTwoLines = (SendDlgItemMessageW(hWnd, IDC_CB_DISABLEWORDBREAK, BM_GETCHECK, 0, 0) == BST_CHECKED);
-            GS.bDTLrcShandow = !(SendDlgItemMessageW(hWnd, IDC_CB_DISABLEDTLRCSHANDOW, BM_GETCHECK, 0, 0) == BST_CHECKED);
-
-            delete[] GS.pszDTLrcFontName;
-            iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_FONTINFO));
-            GS.pszDTLrcFontName = new WCHAR[iLength + 1];
-            GetDlgItemTextW(hWnd, IDC_ED_FONTINFO, GS.pszDTLrcFontName, iLength + 1);
-
-            int iPos = QKStrInStr(GS.pszDTLrcFontName, L",");
-            *(GS.pszDTLrcFontName + iPos - 1) = L'\0';
-            GS.uDTLrcFontSize = (UINT)GetPropW(GetDlgItem(hWnd, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTSIZE);
-            GS.uDTLrcFontWeight = (UINT)GetPropW(GetDlgItem(hWnd, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTWEIGHT);
-
-            GS.crDTLrc1 = (COLORREF)GetPropW(GetDlgItem(hWnd, IDC_ST_DTLRCCLR1), PROP_DTLRCCLR1);
-            GS.crDTLrc2 = (COLORREF)GetPropW(GetDlgItem(hWnd, IDC_ST_DTLRCCLR2), PROP_DTLRCCLR2);
-
-            GS.uDTLrcTransparent = SendDlgItemMessageW(hWnd, IDC_TB_DTLRCTRANSPARENT, TBM_GETPOS, 0, 0);
-            delete[] GS.pszDTLrcSpaceLine;
-            iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_DTLRCSPACELINE));
-            GS.pszDTLrcSpaceLine = new WCHAR[iLength + 1];
-            GetDlgItemTextW(hWnd, IDC_ED_DTLRCSPACELINE, GS.pszDTLrcSpaceLine, iLength + 1);
-
-            Settings_Save();
-            EndDialog(hDlg, 0);
-        }
-        return TRUE;
-        case IDCANCEL:
-            EndDialog(hDlg, 0);
-            return TRUE;
-        }
-
-    }
-    return TRUE;
-    case WM_MOUSEWHEEL:
-    {
-        int iDistance = -GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
-
-        int iPos;
-        SCROLLINFO si;
-        si.cbSize = sizeof(SCROLLINFO);
-        si.fMask = SIF_ALL;
-        GetScrollInfo(GetDlgItem(hDlg, IDC_SB_SETTINGS), SB_CTL, &si);
-        iPos = si.nPos;
-        si.nPos += (si.nPage / 3 * iDistance);
-        if (si.nPos < 0)
-            si.nPos = 0;
-        else if (si.nPos > si.nMax - si.nPage)
-            si.nPos = si.nMax - si.nPage;
-
-        SetScrollPos(GetDlgItem(hDlg, IDC_SB_SETTINGS), SB_CTL, si.nPos, TRUE);
-        ScrollWindow(hWnd, 0, iPos - si.nPos, NULL, NULL);
-    }
-    return TRUE;
-    case WM_VSCROLL:
-    {
-        int iPos;
-        SCROLLINFO si;
-        si.cbSize = sizeof(SCROLLINFO);
-        si.fMask = SIF_ALL;
-        GetScrollInfo((HWND)lParam, SB_CTL, &si);
-        iPos = si.nPos;
-        switch (LOWORD(wParam))
-        {
-        case SB_LEFT:
-            si.nPos = 0;
-            break;
-        case SB_RIGHT:
-            si.nPos = si.nMax;
-            break;
-        case SB_LINELEFT:
-            si.nPos--;
-            break;
-        case SB_LINERIGHT:
-            si.nPos++;
-            break;
-        case SB_PAGELEFT:
-            si.nPos -= si.nPage;
-            break;
-        case SB_PAGERIGHT:
-            si.nPos += si.nPage;
-            break;
-        case SB_THUMBTRACK:
-            si.nPos = si.nTrackPos;
-            break;
-        }
-
-        SetScrollPos((HWND)lParam, SB_CTL, si.nPos, TRUE);
-        ScrollWindow(hWnd, 0, iPos - si.nPos, NULL, NULL);
-    }
-    return TRUE;
-    case WM_CLOSE:
-        EndDialog(hDlg, 0);
-        return TRUE;
-    }
-    return FALSE;
-}
 
 
 void UI_PreProcessAlbumImage(IWICBitmap** ppWICBitmap)
@@ -2019,6 +1660,19 @@ void UI_RefreshBmpBrush()
 		cy = m_D2DRcAlbum.bottom - m_D2DRcAlbum.top - GC.DS_ALBUMLEVEL * 2;
 		fRadius = min(cx / 2.f, cy / 2.f);
 		float xStart = m_D2DRcAlbum.left + GC.DS_ALBUMLEVEL + cx / 2.f - fRadius, yStart = m_D2DRcAlbum.top + GC.DS_ALBUMLEVEL + cy / 2.f - fRadius;
+        float fSize = fRadius * 2;
+		float fScaleFactor;
+		D2D1_SIZE_F D2DSize = m_CurrSongInfo.pD2DBmpOrgAlbum->GetSize();
+		if (D2DSize.width > D2DSize.height)// 宽度较大
+		{
+			fScaleFactor = fSize / D2DSize.height;
+			xStart -= ((D2DSize.width - D2DSize.height) / 2.f * fSize / D2DSize.height);
+		}
+		else// 高度较大
+		{
+			fScaleFactor = fSize / D2DSize.width;
+			yStart -= ((D2DSize.height - D2DSize.width) / 2.f * fSize / D2DSize.width);
+		}
 
 		ID2D1BitmapBrush* pD2DBmpBrush;
 		D2D1_MATRIX_3X2_F Matrix, Matrix2;
@@ -2026,9 +1680,7 @@ void UI_RefreshBmpBrush()
 		Matrix = D2D1::Matrix3x2F::Translation(xStart, yStart);// 制平移矩阵
 		D2D1::Matrix3x2F* MatrixObj1 = D2D1::Matrix3x2F::ReinterpretBaseType(&Matrix);// 转类
 
-		D2D1_SIZE_F D2DSize = m_CurrSongInfo.pD2DBmpOrgAlbum->GetSize();
-
-		Matrix2 = D2D1::Matrix3x2F::Scale((fRadius * 2) / D2DSize.width, (fRadius * 2) / D2DSize.height, D2D1::Point2F(xStart, yStart));// 制缩放矩阵
+		Matrix2 = D2D1::Matrix3x2F::Scale(fScaleFactor, fScaleFactor, D2D1::Point2F(xStart, yStart));// 制缩放矩阵
 		D2D1::Matrix3x2F* MatrixObj2 = D2D1::Matrix3x2F::ReinterpretBaseType(&Matrix2);// 转类
 
 		Matrix = static_cast<D2D1_MATRIX_3X2_F>((*MatrixObj1) * (*MatrixObj2));// 矩阵相乘
@@ -2750,7 +2402,7 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             }
             break;
             case 8:// 设置
-                DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_OPTIONS), g_hMainWnd, DlgProc_Settings, 0);
+                DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_OPTIONS), g_hMainWnd, DlgProc_Options, 0);
                 break;
             case 9:// 关于
                 DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_ABOUT), g_hMainWnd, DlgProc_About, 0);

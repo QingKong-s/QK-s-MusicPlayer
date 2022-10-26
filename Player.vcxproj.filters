@@ -51,6 +51,9 @@
     <ClInclude Include="GlobalDef.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="WndOptions.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WndMain.cpp">
@@ -78,6 +81,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="WndList.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WndOptions.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

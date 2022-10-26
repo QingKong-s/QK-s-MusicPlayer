@@ -29,6 +29,7 @@
 #define IDD_DAYLYTIP                    199
 #define IDD_OPTIONS                     200
 #define IDD_OPTIONS2                    201
+#define IDD_OPTLRC                      201
 #define IDD_123                         202
 #define IDD_CHORUS                      203
 #define IDD_COMPRESSOR                  204
@@ -67,8 +68,11 @@
 #define IDD_ROTATE                      251
 #define IDI_TEMPO                       252
 #define IDI_MIDIFONT                    253
-#define IDI_ICON1                       255
 #define IDI_REVERSE                     255
+#define IDD_OPTPLAYING                  256
+#define IDD_OPTVISIUAL                  257
+#define IDD_OPTVISUAL                   257
+#define IDD_OPTHOTKEY                   258
 #define IDC_LB_FILE                     1031
 #define IDC_ED_NEW                      1032
 #define IDC_ED_FILE                     1032
@@ -125,6 +129,7 @@
 #define IDC_ST_DAYLYTIP                 1082
 #define IDC_SB_SETTINGS                 1083
 #define IDC_CB_DEFTEXTCODE              1086
+#define IDC_CB_SCLRCALIGN               1087
 #define IDC_CB_DISABLEVANIMATION        1088
 #define IDC_CB_DISABLEWORDBREAK         1089
 #define IDC_CB_DISABLEDTLRCSHANDOW      1090
@@ -135,16 +140,22 @@
 #define IDC_BT_CHANGEFONT               1095
 #define IDC_ED_FONTINFO                 1096
 #define IDC_ED_DTLRCFONTINFO            1096
+#define IDC_BT_CHANGEFONT2              1097
+#define IDC_ED_SCLRCFONTINFO            1098
 #define IDC_TB_DTLRCTRANSPARENT         1099
 #define IDC_ST_DTLRCCLR1                1100
 #define IDC_ST_DTLRCCLR2                1101
 #define IDC_TB_REVERBMIX                1102
+#define IDC_ST_SCLRCCLR1                1102
+#define IDC_ST_SCLRCCLR2                1103
 #define IDC_RB_SINEWAVE                 1104
 #define IDC_TB_REVERBDELAY              1104
 #define IDC_RB_TRIANGLEWAVE             1105
 #define IDC_TB_REFLECTIONSDELAY         1105
+#define IDC_ED_SCLRCLINEGAP             1105
 #define IDC_TB_REVERB                   1106
 #define IDC_TB_REVERBTIME               1106
+#define IDC_ED_SCLRCALIGNOFFSET         1106
 #define IDC_TB_HIGHFREQRTRATIO          1107
 #define IDC_TB_DECAYHFRADIO             1108
 #define IDC_TB_DECAYTIME                1109
@@ -185,6 +196,7 @@
 #define IDC_ST_COMPILETIME              1144
 #define IDC_ED_LICENSE                  1144
 #define IDC_ST_COMPILECOUNT             1145
+#define IDC_LB_OPTIONS                  1152
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -192,9 +204,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        256
+#define _APS_NEXT_RESOURCE_VALUE        259
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         1152
+#define _APS_NEXT_CONTROL_VALUE         1153
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

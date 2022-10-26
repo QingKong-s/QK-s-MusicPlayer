@@ -1496,3 +1496,13 @@ HRESULT WICCreateBitmap(IStream* pStream, IWICBitmap** ppWICBitmap)
 
     return S_OK;
 }
+void QKRcClientToScreen(HWND hWnd, RECT* prc)
+{
+    ClientToScreen(hWnd, (POINT*)prc);
+    ClientToScreen(hWnd, (POINT*)(((POINT*)prc) + 1));
+}
+void QKRcScreenToClient(HWND hWnd, RECT* prc)
+{
+    ScreenToClient(hWnd, (POINT*)prc);
+    ScreenToClient(hWnd, (POINT*)(((POINT*)prc) + 1));
+}

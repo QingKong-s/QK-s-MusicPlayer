@@ -180,6 +180,7 @@
     <ClInclude Include="MyProject.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="WndList.h" />
+    <ClInclude Include="WndOptions.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WndEffect.cpp" />
@@ -191,6 +192,7 @@
     <ClCompile Include="Function.cpp" />
     <ClCompile Include="QKCtrl.cpp" />
     <ClCompile Include="WndList.cpp" />
+    <ClCompile Include="WndOptions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Player.rc" />

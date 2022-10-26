@@ -247,6 +247,11 @@ struct CURRMUSICINFO
 #define PROP_DTLRCCLR1			L"QKProp.Settings.DTLrcColor1"
 #define PROP_DTLRCCLR2			L"QKProp.Settings.DTLrcColor2"
 
+#define PROP_SCLRCFONTSIZE		L"QKProp.Settings.SCLrcFontSize"
+#define PROP_SCLRCFONTWEIGHT	L"QKProp.Settings.SCLrcFontWeight"
+#define PROP_SCLRCCLR1			L"QKProp.Settings.SCLrcColor1"
+#define PROP_SCLRCCLR2			L"QKProp.Settings.SCLrcColor2"
+
 #define GDIOBJOPE_REFRESH		0
 #define GDIOBJOPE_DELETE		1
 
@@ -318,13 +323,21 @@ struct CURRMUSICINFO
 #define PPF_KEY_DISABLEVANIMATION	L"DisableVAnimation"
 #define PPF_KEY_DISABLEWORDBREAK	L"DisableWordBreak"
 #define PPF_KEY_DISABLEDTLRCSHANDOW L"DisableDTLrcShandow"
-#define PPF_KEY_FONTNAME			L"DTLrcFontName"
-#define PPF_KEY_FONTSIZE			L"DTLrcFontSize"
-#define PPF_KEY_FONTWEIGHT			L"DTLrcFontWeight"
+#define PPF_KEY_DTFONTNAME			L"DTLrcFontName"
+#define PPF_KEY_DTFONTSIZE			L"DTLrcFontSize"
+#define PPF_KEY_DTFONTWEIGHT		L"DTLrcFontWeight"
 #define PPF_KEY_DTLRCCLR1			L"DTLrcClr1"
 #define PPF_KEY_DTLRCCLR2			L"DTLrcClr2"
 #define PPF_KEY_DTLRCTRANSPARENT	L"DTLrcTransparent"
 #define PPF_KEY_DTLRCSPACELINE		L"DTLrcSpaceLine"
+#define PPF_KEY_SCFONTNAME			L"SCLrcFontName"
+#define PPF_KEY_SCFONTSIZE			L"SCLrcFontSize"
+#define PPF_KEY_SCFONTWEIGHT		L"SCLrcFontWeight"
+#define PPF_KEY_SCLRCCLR1			L"SCLrcClr1"
+#define PPF_KEY_SCLRCCLR2			L"SCLrcClr2"
+#define PPF_KEY_SCLINEGAP			L"SCLrcLineGap"
+#define PPF_KEY_SCALIGN				L"SCLrcAlign"
+#define PPF_KEY_SCOFFSET			L"SCLrcOffset"
 
 #define MUSICTYPE_NORMAL			0
 #define MUSICTYPE_MOD				1
@@ -519,13 +532,23 @@ struct SETTINGS
 	UINT crDTLrc1;
 	UINT crDTLrc2;
 	PWSTR pszDTLrcSpaceLine;
+
+	PWSTR pszSCLrcFontName;
+	UINT uSCLrcFontSize;
+	UINT uSCLrcFontWeight;
+	UINT uSCLrcTransparent;
+	UINT crSCLrc1;
+	UINT crSCLrc2;
+	UINT uSCLrcAlign;
+	UINT uSCLrcLineGap;
+	UINT uSCLrcOffset;
 };
 
 const D2D_COLOR_F c_D2DClrCyanDeeper = { 0,0.3764,0.7529,1 };// 易语言青蓝
 
-#define DPI(i) i * g_iDPI / USER_DEFAULT_SCREEN_DPI					// 将尺寸按DPI放大
-#define DPIF(f) f * (float)g_iDPI / (float)USER_DEFAULT_SCREEN_DPI	// 将尺寸按DPI放大（浮点版）
-#define RDPI(i) i * USER_DEFAULT_SCREEN_DPI / g_iDPI				// 将尺寸按DPI缩小
+#define DPI(i) (i * g_iDPI / USER_DEFAULT_SCREEN_DPI)					// 将尺寸按DPI放大
+#define DPIF(f) (f * (float)g_iDPI / (float)USER_DEFAULT_SCREEN_DPI)	// 将尺寸按DPI放大（浮点版）
+#define RDPI(i) (i * USER_DEFAULT_SCREEN_DPI / g_iDPI)					// 将尺寸按DPI缩小
 #define SAFE_RELEASE(p) if(p){p->Release();p=NULL;}
 
 ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS = 0, DWORD dwFlagsHM = 0, DWORD dwFlagsHMIDI = 0);

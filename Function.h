@@ -263,3 +263,5 @@ HRESULT WICCreateBitmap(PWSTR pszFile, IWICBitmap** ppWICBitmap);
 * 备注：
 */
 HRESULT WICCreateBitmap(IStream* pStream, IWICBitmap** ppWICBitmap);
+void QKRcClientToScreen(HWND hWnd, RECT* prc);
+void QKRcScreenToClient(HWND hWnd, RECT* prc);

@@ -25,23 +25,30 @@ int             m_iDragTimerElapse      = 0;
 int             m_iDragDirection        = 0;// 0 无效   1 向上   2 向下
 void UI_SetRitCtrlPos()
 {
+    // 列表名称 
 	SetWindowPos(GetDlgItem(g_hBKRight, IDC_ST_LISTNAME), NULL, 0, 0,
 		g_cxBKList - DPIS_GAP,
 		DPIS_CYSTLISTNAME,
 		SWP_NOZORDER | SWP_NOMOVE);
-
+    // 搜索框
 	HWND hEdit = GetDlgItem(g_hBKRight, IDC_ED_SEARCH);
 	SetWindowPos(hEdit, NULL, 0, 0,
 		g_cxBKList - GC.cyBT - DPIS_GAP,
         GC.cyBT,
 		SWP_NOZORDER | SWP_NOMOVE);
-	RECT rcText;
-	SendMessageW(hEdit, EM_GETRECT, 0, (LPARAM)&rcText);
-	rcText.left = DPIS_GAP;
-	rcText.right = g_cxBKList - GC.cyBT - DPIS_GAP * 2;
-	OffsetRect(&rcText, 0, (GC.cyBT - (rcText.bottom - rcText.top)) / 2 - rcText.top);
-	SendMessageW(hEdit, EM_SETRECT, 0, (LPARAM)&rcText);
-
+    // 置居中对齐
+    RECT rc;
+    GetClientRect(hEdit, &rc);
+    TEXTMETRICW tm;
+	HDC hDC = GetDC(hEdit);
+	GetTextMetricsW(hDC, &tm);
+	ReleaseDC(hEdit, hDC);
+	rc.left = DPI(1);
+	rc.right--;
+	rc.top = (rc.bottom - rc.top - DPI(tm.tmHeight)) / 2 + DPI(1);
+	rc.bottom = rc.top + DPI(tm.tmHeight);
+	SendMessageW(hEdit, EM_SETRECT, 0, (LPARAM)&rc);
+    // 搜索按钮
 	SetWindowPos(GetDlgItem(g_hBKRight, IDC_BT_SEARCH), NULL,
 		g_cxBKList - GC.cyBT - DPIS_GAP,
 		DPIS_CYSTLISTNAME + DPIS_GAP * 2,
@@ -309,7 +316,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFontDrawing, FALSE);
 		SetWindowTextW(hCtrl, L"/*当前无播放列表*/");
 		///////////////////////////搜索编辑框
-		hCtrl = CreateWindowExW(0, WC_EDITW, NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_WANTRETURN,
+		hCtrl = CreateWindowExW(WS_EX_CLIENTEDGE, WC_EDITW, NULL, WS_CHILD | WS_VISIBLE| ES_MULTILINE | ES_WANTRETURN,
 			0, DPIS_CYSTLISTNAME + DPIS_GAP * 2, 0, 0,
 			hCtrl2, (HMENU)IDC_ED_SEARCH, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
@@ -815,7 +822,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		{
 			if (g_iSearchResult == -1)
 			{
-				HGDIOBJ hOldPen = SelectObject(hDC, CreatePen(PS_SOLID, 3, MYCLR_LISTPLAYING));
+				HGDIOBJ hOldPen = SelectObject(hDC, CreatePen(PS_SOLID, DPI(3), MYCLR_LISTPLAYING));
 				int y;
 				for (int i = 0; i < g_ItemData->iCount; ++i)
 				{
@@ -1241,6 +1248,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 PWSTR pszEdit;
                 int iLength = GetWindowTextLengthW(GetDlgItem(g_hBKRight, IDC_ED_SEARCH));
                 static int iTopIndex = -1, iVisibleItemCount = 0;
+                static int iTempCurr = -1, iTempLater = -1;
                 if (!iLength)// 没有文本
                 {
                     if (g_iSearchResult != -1)// 做现行播放项LV索引转换
@@ -1248,10 +1256,14 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                         ///////还原现行播放索引和稍后播放索引
                         if (g_iCurrFileIndex < g_iSearchResult && g_iCurrFileIndex != -1)// 索引落在结果数之内，说明搜索时现行索引被转换，现在要转换回来
                             g_iCurrFileIndex = List_GetArrayItemIndex(g_iCurrFileIndex);
-                        // 没有落在结果数之内，搜索时索引未转换，一切保持原状
+                        if (iTempCurr != -1)
+                            g_iCurrFileIndex = iTempCurr;
+
                         // 转换稍后播放，跟上面同理
                         if (g_iLaterPlay < g_iSearchResult && g_iLaterPlay != -1)
                             g_iLaterPlay = List_GetArrayItemIndex(g_iLaterPlay);
+                        if (iTempLater != -1)
+                            g_iLaterPlay = iTempLater;
                         ///////还原位置
                         g_iSearchResult = -1;
                         List_ResetLV();// 数目变了，不是List_Redraw而是List_ResetLV
@@ -1270,6 +1282,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     int iIndex;
                     BOOL b1 = (g_iCurrFileIndex != -1);// 是否要比对并转换现行索引
                     BOOL b2 = (g_iLaterPlay != -1);
+                    BOOL bTransed1 = FALSE, bTransed2 = FALSE;
                     for (int i = 0; i < g_ItemData->iCount; ++i)
                     {
                         iIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort;
@@ -1285,6 +1298,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                                 {
                                     g_iCurrFileIndex = g_iSearchResult;// 转换现行播放索引
                                     b1 = FALSE;
+                                    bTransed1 = TRUE;
                                 }
                             }
                             if (b2)
@@ -1293,11 +1307,24 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                                 {
                                     g_iLaterPlay = g_iSearchResult;// 转换稍后播放索引
                                     b2 = FALSE;
+                                    bTransed2 = TRUE;
                                 }
                             }
                             ++g_iSearchResult;// 结果数递增
                         }
                     }
+
+                    if (!bTransed1)
+                    {
+                        iTempCurr = g_iCurrFileIndex;
+                        g_iCurrFileIndex = -1;
+                    }
+                    if (!bTransed2)
+                    {
+                        iTempLater = g_iLaterPlay;
+                        g_iLaterPlay = -1;
+                    }
+
                     List_ResetLV();
                     UI_RedrawBookMarkPos();
                     SetScrollPos(g_hLV, SB_VERT, 0, TRUE);

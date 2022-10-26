@@ -220,15 +220,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	if (!BASS_Init(-1, 44100, 0, g_hMainWnd, NULL))// 初始化Bass
 		Global_ShowError(L"Bass初始化失败", L"稍后请尝试更换输出设备", ECODESRC_BASS);
 
-	g_hTBGhost = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, TBGHOSTWNDCLASS, NULL, 
+    PCWSTR pszWndCaption = L"未播放 - 晴空的音乐播放器";
+
+	g_hTBGhost = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, TBGHOSTWNDCLASS, pszWndCaption,
         WS_POPUP | WS_BORDER | WS_SYSMENU | WS_CAPTION, -32000, -32000, 10, 10, NULL, NULL, g_hInst, NULL);// WS_CAPTION是必须的，否则选项卡不会注册成功
 
 	if (pGetDpiForSystem)
-		g_hMainWnd = CreateWindowExW(0, MAINWNDCLASS, L"未播放 - 晴空的音乐播放器", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+		g_hMainWnd = CreateWindowExW(0, MAINWNDCLASS, pszWndCaption, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 			CW_USEDEFAULT, 0, pGetDpiForSystem() * 1000 / 96, pGetDpiForSystem() * 640 / 96, NULL, NULL, hInstance, NULL);
 	else
-		g_hMainWnd = CreateWindowExW(0, MAINWNDCLASS, L"未播放 - 晴空的音乐播放器", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+		g_hMainWnd = CreateWindowExW(0, MAINWNDCLASS, pszWndCaption, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 			CW_USEDEFAULT, 0, 1000, 640, NULL, NULL, hInstance, NULL);
+
+    if (!g_hMainWnd)
+    {
+        Global_ShowError(L"创建主窗口失败", NULL, ECODESRC_WINSDK);
+        return 1;
+    }
 
 	ShowWindow(g_hMainWnd, nCmdShow);
 	UpdateWindow(g_hMainWnd);
@@ -252,12 +260,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     tb[2].iId = IDTBB_NEXT;
     lstrcpyW(tb[2].szTip, L"下一曲");
     hr = g_pITaskbarList->ThumbBarAddButtons(g_hTBGhost, 3, tb);
-
-    if (!g_hMainWnd)
-    {
-        Global_ShowError(L"创建主窗口失败", NULL, ECODESRC_WINSDK);
-        return 1;
-    }
     //////////////消息循环
     MSG msg;
     while (GetMessageW(&msg, NULL, 0, 0))
