@@ -239,7 +239,8 @@ struct CURRMUSICINFO
 
 
 
-////////////////////常量
+//////////////////////////////常量
+////////////////////SetPropW
 #define PROP_WNDPROC			L"QKProp.WndProc"
 
 #define PROP_DTLRCFONTSIZE		L"QKProp.Settings.DTLrcFontSize"
@@ -251,40 +252,37 @@ struct CURRMUSICINFO
 #define PROP_SCLRCFONTWEIGHT	L"QKProp.Settings.SCLrcFontWeight"
 #define PROP_SCLRCCLR1			L"QKProp.Settings.SCLrcColor1"
 #define PROP_SCLRCCLR2			L"QKProp.Settings.SCLrcColor2"
-
-#define GDIOBJOPE_REFRESH		0
-#define GDIOBJOPE_DELETE		1
-
+////////////////////线程工作标志
 #define THREADFLAG_STOP			1
 #define THREADFLAG_STOPED		2
 #define THREADFLAG_WORKING		3
 #define THREADFLAG_ERROR		4
-
-#define SPECOUNT				33
-
+////////////////////频谱条数
+#define SPECOUNT				40
+////////////////////歌词标志（桌面歌词窗口用）
 #define LRCSTATE_STOP			1
 #define LRCSTATE_LOADING		2
 #define LRCSTATE_NOLRC			3
 #define LRCSTATE_NORMAL			4
-
+////////////////////颜色
 #define MYCLR_LISTGRAY			0xF3F3F3
 #define MYCLR_LISTPLAYING		0xE6E8B1
 #define MYCLR_LISTGROUP			0xBDFAFF
 #define MYCLR_BTHOT				0xE6E8B1
 #define MYCLR_BTPUSHED			0xE6E88C
 #define MYCLR_TBTRACK			0xCECECE
-
+////////////////////窗口类名
 #define MAINWNDCLASS			L"QKPlayer.WndClass.Main"
 #define BKWNDCLASS				L"QKPlayer.WndClass.BK"
 #define LRCWNDCLASS				L"QKPlayer.WndClass.Lrc"
 #define TBGHOSTWNDCLASS			L"QKPlayer.WndClass.TaskbarGhost"
 #define WNDCLASS_LIST			L"QKPlayer.WndClass.List"
-
+////////////////////错误类型
 #define ECODESRC_NONE			0
 #define ECODESRC_BASS			1
 #define ECODESRC_WINSDK			2
 #define ECODESRC_OTHERS			3
-
+////////////////////定时器
 #define IDT_PGS						101
 #define IDT_DRAWING_WAVES			102
 #define IDT_DRAWING_VU     			103
@@ -308,8 +306,7 @@ struct CURRMUSICINFO
 #define TIMERELAPSE_ANIMATION		60
 #define TIMERELAPSE_ANIMATION2		30
 #define TIMERELAPSE_LISTBKDRAG		800
-
-
+////////////////////配置和其他外围文件
 #define MAXPROFILEBUFFER			48
 #define PROFILENAME					L"\\Data\\QKPlayerConfig.ini"
 #define DEFPICFILENAME				L"\\Data\\DefPic.png"
@@ -317,6 +314,7 @@ struct CURRMUSICINFO
 #define LISTDIR						L"\\List\\"
 
 #define PPF_SECTIONLRC				L"Lyric"
+#define PPF_SECTIONVISUAL			L"Visual"
 
 #define PPF_KEY_DEFTEXTCODE			L"DefTextCode"
 #define PPF_KEY_LRCDIR				L"LyricsDir"
@@ -338,7 +336,11 @@ struct CURRMUSICINFO
 #define PPF_KEY_SCLINEGAP			L"SCLrcLineGap"
 #define PPF_KEY_SCALIGN				L"SCLrcAlign"
 #define PPF_KEY_SCOFFSET			L"SCLrcOffset"
-
+#define PPF_KEY_VISUALMODE			L"VisualMode"
+#define PPF_KEY_HSCROLLTEXT			L"HScrollText"
+#define PPF_KEY_ALBUMPICSIZE1		L"AlbumPicSize1"
+#define PPF_KEY_ALBUMPICSIZE2		L"AlbumPicSize2"
+////////////////////音频文件类型
 #define MUSICTYPE_NORMAL			0
 #define MUSICTYPE_MOD				1
 #define MUSICTYPE_MIDI				2
@@ -429,7 +431,6 @@ struct GLOBALCONTEXT
 	int DS_DTLRCFRAME;
 	int DS_CXDTLRCBTNRGN;
 	int DS_CYLVITEM;
-	int DS_LRCSHOWGAP;
 	int DS_CXDRAGDROPICON;
 	int DS_CYDRAGDROPICON;
 	int DS_LVDRAGEDGE;
@@ -473,7 +474,6 @@ struct GLOBALCONTEXT
 #define SIZE_STDICON			29
 #define SIZE_DTLRCFRAME			8
 #define SIZE_CYLVITEM			22
-#define SIZE_LRCSHOWGAP			10
 #define SIZE_CXDRAGDROPICON		200
 #define SIZE_CYDRAGDROPICON		150
 #define SIZE_LVDRAGEDGE			80
@@ -513,7 +513,6 @@ struct GLOBALCONTEXT
 #define DPIS_DTLRCFRAME GC.DS_DTLRCFRAME
 #define DPIS_CXDTLRCBTNRGN GC.DS_CXDTLRCBTNRGN
 #define DPIS_CYLVITEM GC.DS_CYLVITEM
-#define DPIS_LRCSHOWGAP GC.DS_LRCSHOWGAP
 #define DPIS_CXDRAGDROPICON GC.DS_CXDRAGDROPICON
 #define DPIS_CYDRAGDROPICON GC.DS_CYDRAGDROPICON
 struct SETTINGS
@@ -542,6 +541,12 @@ struct SETTINGS
 	UINT uSCLrcAlign;
 	UINT uSCLrcLineGap;
 	UINT uSCLrcOffset;
+
+	UINT uVisualMode;
+	BOOL bHScrollText;
+
+	UINT uAlbumPicSize1;
+	UINT uAlbumPicSize2;
 };
 
 const D2D_COLOR_F c_D2DClrCyanDeeper = { 0,0.3764,0.7529,1 };// 易语言青蓝
@@ -549,7 +554,7 @@ const D2D_COLOR_F c_D2DClrCyanDeeper = { 0,0.3764,0.7529,1 };// 易语言青蓝
 #define DPI(i) (i * g_iDPI / USER_DEFAULT_SCREEN_DPI)					// 将尺寸按DPI放大
 #define DPIF(f) (f * (float)g_iDPI / (float)USER_DEFAULT_SCREEN_DPI)	// 将尺寸按DPI放大（浮点版）
 #define RDPI(i) (i * USER_DEFAULT_SCREEN_DPI / g_iDPI)					// 将尺寸按DPI缩小
-#define SAFE_RELEASE(p) if(p){p->Release();p=NULL;}
+#define SAFE_RELEASE(p) if(p){p->Release();p=NULL;}						// 安全释放接口
 
 ULONG_PTR BASS_OpenMusic(PWSTR pszFile, DWORD dwFlagsHS = 0, DWORD dwFlagsHM = 0, DWORD dwFlagsHMIDI = 0);
 BOOL BASS_FreeMusic(ULONG_PTR h);

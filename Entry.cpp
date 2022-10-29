@@ -39,17 +39,7 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include "WndMain.h"
 #include "WndList.h"
 #include "resource.h"
-
-/*
- * 目标：
- *
- * 参数：
- *
- * 返回值：
- * 操作简述：
- * 备注：
- */
-
+#include "WndOptions.h"
  /*
   * 目标：入口点
   *
@@ -60,7 +50,6 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
   * nCmdShow 显示方式
   *
   * 返回值：
-  * 操作简述：
   * 备注：
   *
   */
@@ -216,6 +205,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		Global_ShowError(L"窗口类注册失败", NULL);
 		return 1;
 	}
+    //////////////读入设置
+    Settings_Read();
+    GlobalEffect_ResetToDefault(EFFECT_ALL);
 	//////////////创建窗口
 	if (!BASS_Init(-1, 44100, 0, g_hMainWnd, NULL))// 初始化Bass
 		Global_ShowError(L"Bass初始化失败", L"稍后请尝试更换输出设备", ECODESRC_BASS);
@@ -402,7 +394,6 @@ void UI_UpdateDPISize()
     GC.DS_STDICON = DPI(SIZE_STDICON);
     GC.DS_CXDTLRCBTNRGN = DPIS_DTLRCEDGE * 3 + DPIS_BT * 4;
     GC.DS_CYLVITEM = DPI(SIZE_CYLVITEM);
-    GC.DS_LRCSHOWGAP = DPI(SIZE_LRCSHOWGAP);
 	GC.DS_CXDRAGDROPICON = DPI(SIZE_CXDRAGDROPICON);
 	GC.DS_CYDRAGDROPICON = DPI(SIZE_CYDRAGDROPICON);
 	GC.DS_LVDRAGEDGE = DPI(SIZE_LVDRAGEDGE);

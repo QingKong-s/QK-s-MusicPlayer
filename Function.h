@@ -265,3 +265,4 @@ HRESULT WICCreateBitmap(PWSTR pszFile, IWICBitmap** ppWICBitmap);
 HRESULT WICCreateBitmap(IStream* pStream, IWICBitmap** ppWICBitmap);
 void QKRcClientToScreen(HWND hWnd, RECT* prc);
 void QKRcScreenToClient(HWND hWnd, RECT* prc);
+void QKGDIColorToD2DColor(COLORREF cr, D2D1_COLOR_F* D2DCr, int iAlpha = 0xFF);

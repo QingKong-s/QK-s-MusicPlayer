@@ -1456,9 +1456,10 @@ INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         for (int i = 0; i < EFFECTWNDTABCOUNT; ++i)
         {
             hChild[i] = CreateDialogParamW(g_hInst, DialogID[i], hDlg, DialogProc[i], 0);
+
+            SetWindowLongPtrW(hChild[i], GWL_STYLE, WS_CHILD);
             SetParent(hChild[i], hTab);
             SetWindowPos(hChild[i], NULL, 0, rc.bottom, rc2.right + 3, rc2.bottom - rc.bottom + 3, SWP_NOZORDER);
-            SetWindowLongPtrW(hChild[i], GWL_STYLE, WS_CHILD);
             ShowWindow(hChild[i], SW_HIDE);
 
             SendDlgItemMessageW(hChild[i], IDC_CB_ENABLE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiTick);

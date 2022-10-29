@@ -187,15 +187,63 @@ const PCWSTR c_szBtmTip[] =
 
 #define BTMBKBTNCOUNT			10
 
+/*
+* 目标：清除当前信息
+*
+* 参数：
+*
+* 返回值：
+* 备注：
+*/
 void MainWnd_ReleaseCurrInfo();
+/*
+* 目标：播放完成同步过程
+*
+* 参数：
+*
+* 返回值：
+* 备注：回调
+*/
 void CALLBACK SyncProc_End(HSYNC handle, DWORD channel, DWORD data, void* user);
+/*
+ * 目标：画一行歌词
+ *
+ * 参数：
+ * iIndex 歌词索引
+ * y 起始y坐标（顶边或底边），设为-1以使用上次绘画时的顶边，此时bTop参数无效
+ * bTop 是否为顶边
+ * bClearBK 是否擦除背景
+ * bImmdShow 立即显示，若为FALSE，则需另外将后台位图拷贝到前台，设为TRUE，则自动剪辑歌词区域
+ *
+ * 返回值：返回已绘制的歌词高度
+ * 备注：必须保证索引合法；自动处理强制双行设置；自动处理热点和选中项目；擦除背景时仅擦除歌词矩形
+ */
 int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BOOL bCenterLine = FALSE, int* yOut = NULL);
+/*
+ * 目标：按索引播放列表中的文件
+ *
+ * 参数：
+ * iIndex LV索引
+ *
+ * 返回值：
+ * 操作简述：
+ * 备注：
+ */
 void Playing_PlayFile(int iIndex);
 void Playing_Stop(BOOL bNoGap = FALSE);
 void Playing_PlayNext(BOOL bReverse = FALSE);
 void Playing_AutoNext();
 void StopThread_Waves();
 DWORD WINAPI Thread_GetWavesData(void* p);
+/*
+ * 目标：更新左侧内存位图并显示
+ *
+ * 参数：
+ *
+ * 返回值：
+ * 操作简述：
+ * 备注：
+ */
 void UI_UpdateLeftBK();
 void UI_SeparateListWnd(BOOL b);
 void UI_ShowList(BOOL b);
@@ -214,3 +262,12 @@ void UI_VEDrawSpe(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE);
 void UI_VEDrawLrc(int yCenter, BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE);
 BOOL UI_VEProcLrcShowing(BOOL bImmdShow = TRUE, BOOL bIndependlyDrawing = TRUE, BOOL bOnlyDrawDTLrc = FALSE);
 void UI_RefreshBmpBrush();
+/*
+* 目标：更新主窗口设置
+*
+* 参数：
+*
+* 返回值：
+* 备注：
+*/
+void SettingsUpd_WndMain();

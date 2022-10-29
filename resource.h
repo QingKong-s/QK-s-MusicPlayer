@@ -70,7 +70,6 @@
 #define IDI_MIDIFONT                    253
 #define IDI_REVERSE                     255
 #define IDD_OPTPLAYING                  256
-#define IDD_OPTVISIUAL                  257
 #define IDD_OPTVISUAL                   257
 #define IDD_OPTHOTKEY                   258
 #define IDC_LB_FILE                     1031
@@ -143,6 +142,8 @@
 #define IDC_BT_CHANGEFONT2              1097
 #define IDC_ED_SCLRCFONTINFO            1098
 #define IDC_TB_DTLRCTRANSPARENT         1099
+#define FO2                             1099
+#define IDC_ED_ALBUMPICSIZE2            1099
 #define IDC_ST_DTLRCCLR1                1100
 #define IDC_ST_DTLRCCLR2                1101
 #define IDC_TB_REVERBMIX                1102
@@ -197,6 +198,9 @@
 #define IDC_ED_LICENSE                  1144
 #define IDC_ST_COMPILECOUNT             1145
 #define IDC_LB_OPTIONS                  1152
+#define IDC_CB_HSCROLLTEXT              1154
+#define IDC_CB_VISUAL                   1155
+#define IDC_ED_ALBUMPICSIZE1            1156
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -206,7 +210,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        259
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         1153
+#define _APS_NEXT_CONTROL_VALUE         1157
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

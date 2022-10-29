@@ -2,6 +2,8 @@
 * WndList.cpp
 * 包含列表容器窗口相关窗口过程和相关函数的实现
 */
+#define _CRT_SECURE_NO_WARNINGS 1
+
 #include "WndList.h"
 #include <Windows.h>
 #include <UxTheme.h>
@@ -44,7 +46,7 @@ void UI_SetRitCtrlPos()
 	GetTextMetricsW(hDC, &tm);
 	ReleaseDC(hEdit, hDC);
 	rc.left = DPI(1);
-	rc.right--;
+    rc.right -= DPI(1);
 	rc.top = (rc.bottom - rc.top - DPI(tm.tmHeight)) / 2 + DPI(1);
 	rc.bottom = rc.top + DPI(tm.tmHeight);
 	SendMessageW(hEdit, EM_SETRECT, 0, (LPARAM)&rc);
@@ -61,7 +63,6 @@ void UI_SetRitCtrlPos()
  * p 工作参数
  *
  * 返回值：
- * 操作简述：
  * 备注：线程
  */
 DWORD WINAPI Thread_FillTimeColumn(void* p)
@@ -1802,8 +1803,7 @@ INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 }
 INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static HWND hLV,
-        hStatic;
+	static HWND hLV, hStatic;
     static HBRUSH hbrStatic = NULL;
     switch (message)
     {

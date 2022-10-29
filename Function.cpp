@@ -245,7 +245,7 @@ LPVOID QKArray_GetDataPtr(QKARRAY pArray)
 }
 INT_PTR CALLBACK DlgProc_InputBox(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    QKINPUTBOXCOMTEXT* pContext;
+    QKINPUTBOXCOMTEXT* pContext = NULL;
     switch (message)
     {
     case WM_INITDIALOG:
@@ -824,17 +824,17 @@ void MusicInfo_Release(MUSICINFO* mi)
     ZeroMemory(mi, sizeof(MUSICINFO));
 }
 /*
- * 目标：处理歌词时间标签
+ * 目标：处理歌词时间标签，将文本标签转换成浮点数，并将其按次序装载到歌词数组中
  *
  * 参数：
+ * Result 结果数组
  * TimeLabel 时间标签数组
  * pszLrc 与时间标签数组里所有成员都对应的歌词
  *
  * 返回值：
- * 操作简述：将文本标签转换成浮点数，并将其按次序装载到歌词数组中
  * 备注：读取歌词数据辅助函数，处理完成后不销毁原数组
  */
-void GetLrcData_ProcLabel(QKARRAY* Result, QKARRAY TimeLabel, LPWSTR pszLrc)
+void GetLrcData_ProcLabel(QKARRAY* Result, QKARRAY TimeLabel, PWSTR pszLrc)
 {
     if (!TimeLabel)
         return;
@@ -1505,4 +1505,11 @@ void QKRcScreenToClient(HWND hWnd, RECT* prc)
 {
     ScreenToClient(hWnd, (POINT*)prc);
     ScreenToClient(hWnd, (POINT*)(((POINT*)prc) + 1));
+}
+void QKGDIColorToD2DColor(COLORREF cr, D2D1_COLOR_F* D2DCr, int iAlpha)
+{
+    D2DCr->a = (float)iAlpha / 255.f;
+    D2DCr->r = (float)GetRValue(cr) / 255.f;
+    D2DCr->g = (float)GetGValue(cr) / 255.f;
+    D2DCr->b = (float)GetBValue(cr) / 255.f;
 }
