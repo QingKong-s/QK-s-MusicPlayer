@@ -264,7 +264,7 @@ LRESULT CALLBACK WndProc_QKCSeparateBar(HWND hWnd, UINT message, WPARAM wParam, 
         GpSolidFill* pGdipBrush;
         GdipCreateFromHDC(pContext->hDC, &pGdipGraphics);
         GdipCreateSolidFill(pContext->cr2, &pGdipBrush);
-        GdipFillRectangle(pGdipGraphics, pGdipBrush, 0, 0, cx, cy);
+        GdipFillRectangle(pGdipGraphics, pGdipBrush, 0, 0, (REAL)cx, (REAL)cy);
         GdipDeleteBrush(pGdipBrush);
         GdipDeleteGraphics(pGdipGraphics);
     }

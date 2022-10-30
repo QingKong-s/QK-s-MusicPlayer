@@ -170,7 +170,7 @@ INT_PTR CALLBACK DlgProc_EQ(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
         SendDlgItemMessageW(hDlg, IDC_CB_EQ, CB_SETCURSEL, iCBSel, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_BANDWIDTH, TBM_SETRANGE, FALSE, MAKELPARAM(10, 360));
-        SendDlgItemMessageW(hDlg, IDC_TB_BANDWIDTH, TBM_SETPOS, TRUE, g_GlobalEffect.EQ[0].fBandwidth * 10);// 缩小10倍
+        SendDlgItemMessageW(hDlg, IDC_TB_BANDWIDTH, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.EQ[0].fBandwidth * 10));// 缩小10倍
         SendDlgItemMessageW(hDlg, IDC_TB_BANDWIDTH, TBM_SETPAGESIZE, 0, 10);
 
         hTB[0] = GetDlgItem(hDlg, IDC_TB1);
@@ -590,23 +590,23 @@ INT_PTR CALLBACK DlgProc_Chorus(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         SendDlgItemMessageW(hDlg, IDC_CB_ENABLE, BM_SETCHECK, bApply ? BST_CHECKED : BST_UNCHECKED, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_WETDRYMIX, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_WETDRYMIX, TBM_SETPOS, TRUE, g_GlobalEffect.Chorus.fWetDryMix);
+        SendDlgItemMessageW(hDlg, IDC_TB_WETDRYMIX, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Chorus.fWetDryMix);
 
         SendDlgItemMessageW(hDlg, IDC_TB_LFODEPTH, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_LFODEPTH, TBM_SETPOS, TRUE, g_GlobalEffect.Chorus.fDepth);
+        SendDlgItemMessageW(hDlg, IDC_TB_LFODEPTH, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Chorus.fDepth);
 
         SendDlgItemMessageW(hDlg, IDC_TB_FEEDBACK, TBM_SETRANGE, FALSE, MAKELPARAM(0, 99 * 2));
-        SendDlgItemMessageW(hDlg, IDC_TB_FEEDBACK, TBM_SETPOS, TRUE, g_GlobalEffect.Chorus.fFeedback + 99);// 减去99
+        SendDlgItemMessageW(hDlg, IDC_TB_FEEDBACK, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Chorus.fFeedback + 99));// 减去99
 
         SendDlgItemMessageW(hDlg, IDC_TB_LFOFREQUENCY, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_LFOFREQUENCY, TBM_SETPOS, TRUE, g_GlobalEffect.Chorus.fFrequency * 10);// 缩小十倍
+        SendDlgItemMessageW(hDlg, IDC_TB_LFOFREQUENCY, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Chorus.fFrequency * 10));// 缩小十倍
 
         SendDlgItemMessageW(hDlg, IDC_RB_SINEWAVE, BM_SETCHECK, BST_UNCHECKED, 0);
         SendDlgItemMessageW(hDlg, IDC_RB_TRIANGLEWAVE, BM_SETCHECK, BST_UNCHECKED, 0);
         SendDlgItemMessageW(hDlg, g_GlobalEffect.Chorus.lWaveform == 1 ? IDC_RB_SINEWAVE : IDC_RB_TRIANGLEWAVE, BM_SETCHECK, BST_CHECKED, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_DELAY, TBM_SETRANGE, FALSE, MAKELPARAM(0, 40));
-        SendDlgItemMessageW(hDlg, IDC_TB_DELAY, TBM_SETPOS, TRUE, g_GlobalEffect.Chorus.fDelay);
+        SendDlgItemMessageW(hDlg, IDC_TB_DELAY, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Chorus.fDelay);
 
         SendDlgItemMessageW(hDlg, IDC_CB_LFOPHASE, CB_INSERTSTRING, -1, (LPARAM)L"-180");
         SendDlgItemMessageW(hDlg, IDC_CB_LFOPHASE, CB_INSERTSTRING, -1, (LPARAM)L"-90");
@@ -617,11 +617,11 @@ INT_PTR CALLBACK DlgProc_Chorus(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         int iIndex = BASS_DX8_PHASE_90;
         switch (g_GlobalEffect.Chorus.lPhase)
         {
-        case BASS_DX8_PHASE_NEG_180:iIndex = 0;
-        case BASS_DX8_PHASE_NEG_90:iIndex = 1;
-        case BASS_DX8_PHASE_ZERO:iIndex = 2;
-        case BASS_DX8_PHASE_90:iIndex = 3;
-        case BASS_DX8_PHASE_180:iIndex = 4;
+        case BASS_DX8_PHASE_NEG_180:iIndex = 0; break;
+        case BASS_DX8_PHASE_NEG_90:iIndex = 1; break;
+        case BASS_DX8_PHASE_ZERO:iIndex = 2; break;
+        case BASS_DX8_PHASE_90:iIndex = 3; break;
+        case BASS_DX8_PHASE_180:iIndex = 4; break;
         }
 
         SendDlgItemMessageW(hDlg, IDC_CB_LFOPHASE, CB_SETCURSEL, iIndex, 0);
@@ -678,11 +678,11 @@ INT_PTR CALLBACK DlgProc_Chorus(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         DWORD dwPhase = BASS_DX8_PHASE_90;
         switch (SendDlgItemMessageW(hDlg, IDC_CB_LFOPHASE, CB_GETCURSEL, 0, 0))
         {
-        case 0:dwPhase = BASS_DX8_PHASE_NEG_180;
-        case 1:dwPhase = BASS_DX8_PHASE_NEG_90;
-        case 2:dwPhase = BASS_DX8_PHASE_ZERO;
-        case 3:dwPhase = BASS_DX8_PHASE_90;
-        case 4:dwPhase = BASS_DX8_PHASE_180;
+        case 0:dwPhase = BASS_DX8_PHASE_NEG_180; break;
+        case 1:dwPhase = BASS_DX8_PHASE_NEG_90; break;
+        case 2:dwPhase = BASS_DX8_PHASE_ZERO; break;
+        case 3:dwPhase = BASS_DX8_PHASE_90; break;
+        case 4:dwPhase = BASS_DX8_PHASE_180; break;
         }
 
         g_GlobalEffect.Chorus =
@@ -713,23 +713,23 @@ INT_PTR CALLBACK DlgProc_Compressor(HWND hDlg, UINT message, WPARAM wParam, LPAR
         SendDlgItemMessageW(hDlg, IDC_CB_ENABLE, BM_SETCHECK, bApply ? BST_CHECKED : BST_UNCHECKED, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_GAIN, TBM_SETRANGE, FALSE, MAKELPARAM(0, 60 * 2));
-        SendDlgItemMessageW(hDlg, IDC_TB_GAIN, TBM_SETPOS, TRUE, g_GlobalEffect.Compressor.fGain);
+        SendDlgItemMessageW(hDlg, IDC_TB_GAIN, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Compressor.fGain);
 
         SendDlgItemMessageW(hDlg, IDC_TB_ATTACK, TBM_SETRANGEMIN, FALSE, 1);
         SendDlgItemMessageW(hDlg, IDC_TB_ATTACK, TBM_SETRANGEMAX, FALSE, 50000);
-        SendDlgItemMessageW(hDlg, IDC_TB_ATTACK, TBM_SETPOS, TRUE, g_GlobalEffect.Compressor.fAttack * 100);// 缩小100倍
+        SendDlgItemMessageW(hDlg, IDC_TB_ATTACK, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Compressor.fAttack * 100));// 缩小100倍
 
         SendDlgItemMessageW(hDlg, IDC_TB_RELEASE, TBM_SETRANGE, FALSE, MAKELPARAM(50, 3000));
-        SendDlgItemMessageW(hDlg, IDC_TB_RELEASE, TBM_SETPOS, TRUE, g_GlobalEffect.Compressor.fRelease);
+        SendDlgItemMessageW(hDlg, IDC_TB_RELEASE, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Compressor.fRelease);
 
         SendDlgItemMessageW(hDlg, IDC_TB_THRESHOLD, TBM_SETRANGE, FALSE, MAKELPARAM(0, 60));
-        SendDlgItemMessageW(hDlg, IDC_TB_THRESHOLD, TBM_SETPOS, TRUE, g_GlobalEffect.Compressor.fThreshold + 60);// 减去60
+        SendDlgItemMessageW(hDlg, IDC_TB_THRESHOLD, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Compressor.fThreshold + 60));// 减去60
 
         SendDlgItemMessageW(hDlg, IDC_TB_RATIO, TBM_SETRANGE, FALSE, MAKELPARAM(1, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_RATIO, TBM_SETPOS, TRUE, g_GlobalEffect.Compressor.fRatio);
+        SendDlgItemMessageW(hDlg, IDC_TB_RATIO, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Compressor.fRatio);
 
         SendDlgItemMessageW(hDlg, IDC_TB_PREDELAY, TBM_SETRANGE, FALSE, MAKELPARAM(0, 40));
-        SendDlgItemMessageW(hDlg, IDC_TB_PREDELAY, TBM_SETPOS, TRUE, g_GlobalEffect.Compressor.fPredelay * 10);// 缩小10倍
+        SendDlgItemMessageW(hDlg, IDC_TB_PREDELAY, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Compressor.fPredelay * 10));// 缩小10倍
     }
     return FALSE;
     case WM_COMMAND:
@@ -793,19 +793,19 @@ INT_PTR CALLBACK DlgProc_Distortion(HWND hDlg, UINT message, WPARAM wParam, LPAR
         SendDlgItemMessageW(hDlg, IDC_CB_ENABLE, BM_SETCHECK, bApply ? BST_CHECKED : BST_UNCHECKED, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_GAIN, TBM_SETRANGE, FALSE, MAKELPARAM(0, 60));
-        SendDlgItemMessageW(hDlg, IDC_TB_GAIN, TBM_SETPOS, TRUE, g_GlobalEffect.Distortion.fGain + 60);// 减去60
+        SendDlgItemMessageW(hDlg, IDC_TB_GAIN, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Distortion.fGain + 60));// 减去60
 
         SendDlgItemMessageW(hDlg, IDC_TB_EDGE, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_EDGE, TBM_SETPOS, TRUE, g_GlobalEffect.Distortion.fEdge);
+        SendDlgItemMessageW(hDlg, IDC_TB_EDGE, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Distortion.fEdge);
 
         SendDlgItemMessageW(hDlg, IDC_TB_CENTERFREQUENCY, TBM_SETRANGE, FALSE, MAKELPARAM(100, 8000));
-        SendDlgItemMessageW(hDlg, IDC_TB_CENTERFREQUENCY, TBM_SETPOS, TRUE, g_GlobalEffect.Distortion.fPostEQCenterFrequency);
+        SendDlgItemMessageW(hDlg, IDC_TB_CENTERFREQUENCY, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Distortion.fPostEQCenterFrequency);
 
         SendDlgItemMessageW(hDlg, IDC_TB_BANDWIDTH, TBM_SETRANGE, FALSE, MAKELPARAM(100, 8000));
-        SendDlgItemMessageW(hDlg, IDC_TB_BANDWIDTH, TBM_SETPOS, TRUE, g_GlobalEffect.Distortion.fPostEQBandwidth);
+        SendDlgItemMessageW(hDlg, IDC_TB_BANDWIDTH, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Distortion.fPostEQBandwidth);
 
         SendDlgItemMessageW(hDlg, IDC_TB_PRELOWPASSCUTOFF, TBM_SETRANGE, FALSE, MAKELPARAM(100, 8000));
-        SendDlgItemMessageW(hDlg, IDC_TB_PRELOWPASSCUTOFF, TBM_SETPOS, TRUE, g_GlobalEffect.Distortion.fPreLowpassCutoff);
+        SendDlgItemMessageW(hDlg, IDC_TB_PRELOWPASSCUTOFF, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Distortion.fPreLowpassCutoff);
     }
     return FALSE;
     case WM_COMMAND:
@@ -869,16 +869,16 @@ INT_PTR CALLBACK DlgProc_Echo(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
         SendDlgItemMessageW(hDlg, IDC_CB_ENABLE, BM_SETCHECK, bApply ? BST_CHECKED : BST_UNCHECKED, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_WETDRYMIX, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_WETDRYMIX, TBM_SETPOS, TRUE, g_GlobalEffect.Echo.fWetDryMix);
+        SendDlgItemMessageW(hDlg, IDC_TB_WETDRYMIX, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Echo.fWetDryMix);
 
         SendDlgItemMessageW(hDlg, IDC_TB_FEEDBACK, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_FEEDBACK, TBM_SETPOS, TRUE, g_GlobalEffect.Echo.fFeedback);
+        SendDlgItemMessageW(hDlg, IDC_TB_FEEDBACK, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Echo.fFeedback);
 
         SendDlgItemMessageW(hDlg, IDC_TB_LEFTDELAY, TBM_SETRANGE, FALSE, MAKELPARAM(1, 2000));
-        SendDlgItemMessageW(hDlg, IDC_TB_LEFTDELAY, TBM_SETPOS, TRUE, g_GlobalEffect.Echo.fLeftDelay);
+        SendDlgItemMessageW(hDlg, IDC_TB_LEFTDELAY, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Echo.fLeftDelay);
 
         SendDlgItemMessageW(hDlg, IDC_TB_RIGHTDELAY, TBM_SETRANGE, FALSE, MAKELPARAM(1, 2000));
-        SendDlgItemMessageW(hDlg, IDC_TB_RIGHTDELAY, TBM_SETPOS, TRUE, g_GlobalEffect.Echo.fRightDelay);
+        SendDlgItemMessageW(hDlg, IDC_TB_RIGHTDELAY, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Echo.fRightDelay);
 
         SendDlgItemMessageW(hDlg, IDC_CB_PANDELAY, BM_SETCHECK, g_GlobalEffect.Echo.lPanDelay ? BST_CHECKED : BST_UNCHECKED, 0);
     }
@@ -948,23 +948,23 @@ INT_PTR CALLBACK DlgProc_Flanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
         SendDlgItemMessageW(hDlg, IDC_CB_ENABLE, BM_SETCHECK, bApply ? BST_CHECKED : BST_UNCHECKED, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_WETDRYMIX, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_WETDRYMIX, TBM_SETPOS, TRUE, g_GlobalEffect.Flanger.fWetDryMix);
+        SendDlgItemMessageW(hDlg, IDC_TB_WETDRYMIX, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Flanger.fWetDryMix);
 
         SendDlgItemMessageW(hDlg, IDC_TB_LFODEPTH, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_LFODEPTH, TBM_SETPOS, TRUE, g_GlobalEffect.Flanger.fDepth);
+        SendDlgItemMessageW(hDlg, IDC_TB_LFODEPTH, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Flanger.fDepth);
 
         SendDlgItemMessageW(hDlg, IDC_TB_FEEDBACK, TBM_SETRANGE, FALSE, MAKELPARAM(0, 99 * 2));
-        SendDlgItemMessageW(hDlg, IDC_TB_FEEDBACK, TBM_SETPOS, TRUE, g_GlobalEffect.Flanger.fFeedback + 99);// 减去99
+        SendDlgItemMessageW(hDlg, IDC_TB_FEEDBACK, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Flanger.fFeedback + 99));// 减去99
 
         SendDlgItemMessageW(hDlg, IDC_TB_LFOFREQUENCY, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_LFOFREQUENCY, TBM_SETPOS, TRUE, g_GlobalEffect.Flanger.fFrequency * 10);// 缩小十倍
+        SendDlgItemMessageW(hDlg, IDC_TB_LFOFREQUENCY, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Flanger.fFrequency * 10));// 缩小十倍
 
         SendDlgItemMessageW(hDlg, IDC_RB_SINEWAVE, BM_SETCHECK, BST_UNCHECKED, 0);
         SendDlgItemMessageW(hDlg, IDC_RB_TRIANGLEWAVE, BM_SETCHECK, BST_UNCHECKED, 0);
         SendDlgItemMessageW(hDlg, g_GlobalEffect.Flanger.lWaveform == 1 ? IDC_RB_SINEWAVE : IDC_RB_TRIANGLEWAVE, BM_SETCHECK, BST_CHECKED, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_DELAY, TBM_SETRANGE, FALSE, MAKELPARAM(0, 40));
-        SendDlgItemMessageW(hDlg, IDC_TB_DELAY, TBM_SETPOS, TRUE, g_GlobalEffect.Flanger.fDelay);
+        SendDlgItemMessageW(hDlg, IDC_TB_DELAY, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Flanger.fDelay);
 
         SendDlgItemMessageW(hDlg, IDC_CB_LFOPHASE, CB_INSERTSTRING, -1, (LPARAM)L"-180");
         SendDlgItemMessageW(hDlg, IDC_CB_LFOPHASE, CB_INSERTSTRING, -1, (LPARAM)L"-90");
@@ -975,11 +975,11 @@ INT_PTR CALLBACK DlgProc_Flanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
         int iIndex = BASS_DX8_PHASE_90;
         switch (g_GlobalEffect.Flanger.lPhase)
         {
-        case BASS_DX8_PHASE_NEG_180:iIndex = 0;
-        case BASS_DX8_PHASE_NEG_90:iIndex = 1;
-        case BASS_DX8_PHASE_ZERO:iIndex = 2;
-        case BASS_DX8_PHASE_90:iIndex = 3;
-        case BASS_DX8_PHASE_180:iIndex = 4;
+        case BASS_DX8_PHASE_NEG_180:iIndex = 0; break;
+        case BASS_DX8_PHASE_NEG_90:iIndex = 1; break;
+        case BASS_DX8_PHASE_ZERO:iIndex = 2; break;
+        case BASS_DX8_PHASE_90:iIndex = 3; break;
+        case BASS_DX8_PHASE_180:iIndex = 4; break;
         }
 
         SendDlgItemMessageW(hDlg, IDC_CB_LFOPHASE, CB_SETCURSEL, iIndex, 0);
@@ -1036,11 +1036,11 @@ INT_PTR CALLBACK DlgProc_Flanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
         DWORD dwPhase = BASS_DX8_PHASE_90;
         switch (SendDlgItemMessageW(hDlg, IDC_CB_LFOPHASE, CB_GETCURSEL, 0, 0))
         {
-        case 0:dwPhase = BASS_DX8_PHASE_NEG_180;
-        case 1:dwPhase = BASS_DX8_PHASE_NEG_90;
-        case 2:dwPhase = BASS_DX8_PHASE_ZERO;
-        case 3:dwPhase = BASS_DX8_PHASE_90;
-        case 4:dwPhase = BASS_DX8_PHASE_180;
+        case 0:dwPhase = BASS_DX8_PHASE_NEG_180; break;
+        case 1:dwPhase = BASS_DX8_PHASE_NEG_90; break;
+        case 2:dwPhase = BASS_DX8_PHASE_ZERO; break;
+        case 3:dwPhase = BASS_DX8_PHASE_90; break;
+        case 4:dwPhase = BASS_DX8_PHASE_180; break;
         }
 
         g_GlobalEffect.Flanger =
@@ -1071,7 +1071,7 @@ INT_PTR CALLBACK DlgProc_Gargle(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         SendDlgItemMessageW(hDlg, IDC_CB_ENABLE, BM_SETCHECK, bApply ? BST_CHECKED : BST_UNCHECKED, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_RATEHZ, TBM_SETRANGE, FALSE, MAKELPARAM(1, 1000));
-        SendDlgItemMessageW(hDlg, IDC_TB_RATEHZ, TBM_SETPOS, TRUE, g_GlobalEffect.Gargle.dwRateHz);
+        SendDlgItemMessageW(hDlg, IDC_TB_RATEHZ, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.Gargle.dwRateHz);
 
         SendDlgItemMessageW(hDlg, IDC_RB_SINEWAVE, BM_SETCHECK, BST_UNCHECKED, 0);
         SendDlgItemMessageW(hDlg, IDC_RB_TRIANGLEWAVE, BM_SETCHECK, BST_UNCHECKED, 0);
@@ -1142,40 +1142,40 @@ INT_PTR CALLBACK DlgProc_I3DL2Reverb(HWND hDlg, UINT message, WPARAM wParam, LPA
         SendDlgItemMessageW(hDlg, IDC_CB_ENABLE, BM_SETCHECK, bApply ? BST_CHECKED : BST_UNCHECKED, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_ROOM, TBM_SETRANGE, FALSE, MAKELPARAM(0, 10000));
-        SendDlgItemMessageW(hDlg, IDC_TB_ROOM, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.lRoom + 10000);// 减去10000
+        SendDlgItemMessageW(hDlg, IDC_TB_ROOM, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.I3DL2Reverb.lRoom + 10000));// 减去10000
 
         SendDlgItemMessageW(hDlg, IDC_TB_ROOMHF, TBM_SETRANGE, FALSE, MAKELPARAM(0, 10000));
-        SendDlgItemMessageW(hDlg, IDC_TB_ROOMHF, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.lRoomHF + 10000);// 减去10000
+        SendDlgItemMessageW(hDlg, IDC_TB_ROOMHF, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.I3DL2Reverb.lRoomHF + 10000));// 减去10000
 
         SendDlgItemMessageW(hDlg, IDC_TB_ROOMROLLOFFFACTOR, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_ROOMROLLOFFFACTOR, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.flRoomRolloffFactor * 10);// 缩小10倍
+        SendDlgItemMessageW(hDlg, IDC_TB_ROOMROLLOFFFACTOR, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.I3DL2Reverb.flRoomRolloffFactor * 10));// 缩小10倍
 
         SendDlgItemMessageW(hDlg, IDC_TB_DECAYTIME, TBM_SETRANGE, FALSE, MAKELPARAM(10, 2000));
-        SendDlgItemMessageW(hDlg, IDC_TB_DECAYTIME, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.flDecayTime * 100);// 缩小100倍
+        SendDlgItemMessageW(hDlg, IDC_TB_DECAYTIME, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.I3DL2Reverb.flDecayTime * 100));// 缩小100倍
 
         SendDlgItemMessageW(hDlg, IDC_TB_DECAYHFRADIO, TBM_SETRANGE, FALSE, MAKELPARAM(10, 2000));
-        SendDlgItemMessageW(hDlg, IDC_TB_DECAYHFRADIO, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.flDecayHFRatio * 100);// 缩小100倍
+        SendDlgItemMessageW(hDlg, IDC_TB_DECAYHFRADIO, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.I3DL2Reverb.flDecayHFRatio * 100));// 缩小100倍
 
         SendDlgItemMessageW(hDlg, IDC_TB_REFLECTIONS, TBM_SETRANGE, FALSE, MAKELPARAM(0, 11000));
-        SendDlgItemMessageW(hDlg, IDC_TB_REFLECTIONS, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.lReflections + 10000);// 减去10000
+        SendDlgItemMessageW(hDlg, IDC_TB_REFLECTIONS, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.I3DL2Reverb.lReflections + 10000));// 减去10000
 
         SendDlgItemMessageW(hDlg, IDC_TB_REFLECTIONSDELAY, TBM_SETRANGE, FALSE, MAKELPARAM(0, 300));
-        SendDlgItemMessageW(hDlg, IDC_TB_REFLECTIONSDELAY, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.flReflectionsDelay * 1000);// 缩小1000倍
+        SendDlgItemMessageW(hDlg, IDC_TB_REFLECTIONSDELAY, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.I3DL2Reverb.flReflectionsDelay * 1000));// 缩小1000倍
 
         SendDlgItemMessageW(hDlg, IDC_TB_REVERB, TBM_SETRANGE, FALSE, MAKELPARAM(0, 12000));
-        SendDlgItemMessageW(hDlg, IDC_TB_REVERB, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.lReverb + 10000);// 减去10000
+        SendDlgItemMessageW(hDlg, IDC_TB_REVERB, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.I3DL2Reverb.lReverb + 10000));// 减去10000
 
         SendDlgItemMessageW(hDlg, IDC_TB_REVERBDELAY, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_REVERBDELAY, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.flReverbDelay * 1000);// 缩小1000倍
+        SendDlgItemMessageW(hDlg, IDC_TB_REVERBDELAY, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.I3DL2Reverb.flReverbDelay * 1000));// 缩小1000倍
 
         SendDlgItemMessageW(hDlg, IDC_TB_DIFFUSION, TBM_SETRANGE, FALSE, MAKELPARAM(0, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_DIFFUSION, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.flDiffusion);
+        SendDlgItemMessageW(hDlg, IDC_TB_DIFFUSION, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.I3DL2Reverb.flDiffusion);
 
         SendDlgItemMessageW(hDlg, IDC_TB_DENSITY, TBM_SETRANGE, FALSE, MAKELPARAM(1, 100));
-        SendDlgItemMessageW(hDlg, IDC_TB_DENSITY, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.flDensity);
+        SendDlgItemMessageW(hDlg, IDC_TB_DENSITY, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.I3DL2Reverb.flDensity);
 
         SendDlgItemMessageW(hDlg, IDC_TB_HFREFERENCE, TBM_SETRANGE, FALSE, MAKELPARAM(20, 20000));
-        SendDlgItemMessageW(hDlg, IDC_TB_HFREFERENCE, TBM_SETPOS, TRUE, g_GlobalEffect.I3DL2Reverb.flHFReference);
+        SendDlgItemMessageW(hDlg, IDC_TB_HFREFERENCE, TBM_SETPOS, TRUE, (LPARAM)g_GlobalEffect.I3DL2Reverb.flHFReference);
     }
     return FALSE;
     case WM_COMMAND:
@@ -1246,17 +1246,17 @@ INT_PTR CALLBACK DlgProc_Reverb(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         SendDlgItemMessageW(hDlg, IDC_CB_ENABLE, BM_SETCHECK, bApply ? BST_CHECKED : BST_UNCHECKED, 0);
 
         SendDlgItemMessageW(hDlg, IDC_TB_GAIN, TBM_SETRANGE, FALSE, MAKELPARAM(0, 96));
-        SendDlgItemMessageW(hDlg, IDC_TB_GAIN, TBM_SETPOS, TRUE, g_GlobalEffect.Reverb.fInGain + 96);// 减去96
+        SendDlgItemMessageW(hDlg, IDC_TB_GAIN, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Reverb.fInGain + 96));// 减去96
 
         SendDlgItemMessageW(hDlg, IDC_TB_REVERBMIX, TBM_SETRANGE, FALSE, MAKELPARAM(0, 96));
-        SendDlgItemMessageW(hDlg, IDC_TB_REVERBMIX, TBM_SETPOS, TRUE, g_GlobalEffect.Reverb.fReverbMix + 96);// 减去96
+        SendDlgItemMessageW(hDlg, IDC_TB_REVERBMIX, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Reverb.fReverbMix + 96));// 减去96
 
         SendDlgItemMessageW(hDlg, IDC_TB_REVERBTIME, TBM_SETRANGEMIN, FALSE, 1);
         SendDlgItemMessageW(hDlg, IDC_TB_REVERBTIME, TBM_SETRANGEMAX, FALSE, 3000000);
-        SendDlgItemMessageW(hDlg, IDC_TB_REVERBTIME, TBM_SETPOS, TRUE, g_GlobalEffect.Reverb.fReverbTime * 1000);// 缩小1000
+        SendDlgItemMessageW(hDlg, IDC_TB_REVERBTIME, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Reverb.fReverbTime * 1000));// 缩小1000
 
         SendDlgItemMessageW(hDlg, IDC_TB_HIGHFREQRTRATIO, TBM_SETRANGE, FALSE, MAKELPARAM(1, 999));
-        SendDlgItemMessageW(hDlg, IDC_TB_HIGHFREQRTRATIO, TBM_SETPOS, TRUE, g_GlobalEffect.Reverb.fHighFreqRTRatio * 1000);// 缩小1000倍
+        SendDlgItemMessageW(hDlg, IDC_TB_HIGHFREQRTRATIO, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Reverb.fHighFreqRTRatio * 1000));// 缩小1000倍
     }
     return FALSE;
     case WM_COMMAND:
@@ -1318,7 +1318,7 @@ INT_PTR CALLBACK DlgProc_Rotate(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
     {
         SendDlgItemMessageW(hDlg, IDC_TB_SPEED, TBM_SETRANGEMIN, TRUE, -250);// 扩大100倍
         SendDlgItemMessageW(hDlg, IDC_TB_SPEED, TBM_SETRANGEMAX, TRUE, 250);
-        SendDlgItemMessageW(hDlg, IDC_TB_SPEED, TBM_SETPOS, TRUE, g_GlobalEffect.Rotate.fRate * 100);
+        SendDlgItemMessageW(hDlg, IDC_TB_SPEED, TBM_SETPOS, TRUE, (LPARAM)(g_GlobalEffect.Rotate.fRate * 100));
     }
     return FALSE;
     case WM_COMMAND:
@@ -1452,7 +1452,7 @@ INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             DlgProc_Reverb,
             DlgProc_Rotate
         };
-        HWND hWnd;
+
         for (int i = 0; i < EFFECTWNDTABCOUNT; ++i)
         {
             hChild[i] = CreateDialogParamW(g_hInst, DialogID[i], hDlg, DialogProc[i], 0);

@@ -1,16 +1,21 @@
-﻿#include "WndOptions.h"
+﻿/*
+* WndOptions.cpp
+* 包含设置对话框窗口过程和函数的实现
+*/
+#include "WndOptions.h"
 
 #include <Windows.h>
+#include <strsafe.h>
 
 #include "MyProject.h"
 #include "GlobalVar.h"
 #include "resource.h"
 #include "WndMain.h"
+#include "WndLrc.h"
 
 void Settings_Read()
 {
     WCHAR szBuffer[MAXPROFILEBUFFER];
-    UINT u;
     // 缺省编码
     GS.uDefTextCode = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, 0, g_pszProfie);
     // 歌词目录
@@ -171,9 +176,9 @@ void Settings_GetFromCtrl(HWND* hChild)
     GS.bDTLrcShandow = !(SendDlgItemMessageW(hWnd, IDC_CB_DISABLEDTLRCSHANDOW, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
     delete[] GS.pszDTLrcFontName;
-    iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_FONTINFO));
+    iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_DTLRCFONTINFO));
     GS.pszDTLrcFontName = new WCHAR[iLength + 1];
-    GetDlgItemTextW(hWnd, IDC_ED_FONTINFO, GS.pszDTLrcFontName, iLength + 1);
+    GetDlgItemTextW(hWnd, IDC_ED_DTLRCFONTINFO, GS.pszDTLrcFontName, iLength + 1);
 
     iPos = QKStrInStr(GS.pszDTLrcFontName, L",");
     *(GS.pszDTLrcFontName + iPos - 1) = L'\0';
@@ -190,9 +195,9 @@ void Settings_GetFromCtrl(HWND* hChild)
     GetDlgItemTextW(hWnd, IDC_ED_DTLRCSPACELINE, GS.pszDTLrcSpaceLine, iLength + 1);
 
     delete[] GS.pszSCLrcFontName;
-    iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_FONTINFO));
+    iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_SCLRCFONTINFO));
     GS.pszSCLrcFontName = new WCHAR[iLength + 1];
-    GetDlgItemTextW(hWnd, IDC_ED_FONTINFO, GS.pszSCLrcFontName, iLength + 1);
+    GetDlgItemTextW(hWnd, IDC_ED_SCLRCFONTINFO, GS.pszSCLrcFontName, iLength + 1);
 
     iPos = QKStrInStr(GS.pszSCLrcFontName, L",");
     *(GS.pszSCLrcFontName + iPos - 1) = L'\0';
@@ -430,10 +435,19 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             case IDC_BT_CHANGEFONT:
             {
                 LOGFONTW lf = { 0 };
-                lstrcpyW(lf.lfFaceName, GS.pszDTLrcFontName);
+
+                int iLength = GetWindowTextLengthW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO));
+                PWSTR psz = new WCHAR[iLength + 1];
+                GetDlgItemTextW(hDlg, IDC_ED_DTLRCFONTINFO, psz, iLength + 1);
+                *(psz + QKStrInStr(psz, L",") - 1) = L'\0';
+                StringCchPrintfW(lf.lfFaceName, LF_FACESIZE, L"%s", psz);
+                delete[] psz;
 
                 HDC hDC = GetDC(NULL);
-				lf.lfHeight = -MulDiv(GS.uDTLrcFontSize, GetDeviceCaps(hDC, LOGPIXELSY), 72);
+				lf.lfHeight = -MulDiv(
+                    (int)GetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTSIZE), 
+                    GetDeviceCaps(hDC, LOGPIXELSY), 
+                    72);
                 ReleaseDC(NULL, hDC);
 
                 CHOOSEFONTW cf = { 0 };
@@ -444,26 +458,22 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 
                 if (ChooseFontW(&cf))
                 {
-                    delete[] GS.pszSCLrcFontName;
-                    GS.pszSCLrcFontName = new WCHAR[lstrlenW(lf.lfFaceName) + 1];
-                    lstrcpyW(GS.pszSCLrcFontName, lf.lfFaceName);
-
-					GS.uSCLrcFontSize = cf.iPointSize / 10;
-                    GS.uSCLrcFontWeight = lf.lfWeight;
+					UINT uFontSize = cf.iPointSize / 10;
+                    UINT uFontWeight = lf.lfWeight;
 
                     WCHAR sz[MAXPROFILEBUFFER];
-                    SetDlgItemTextW(hDlg, IDC_ED_DTLRCFONTINFO, GS.pszDTLrcFontName);
+                    SetDlgItemTextW(hDlg, IDC_ED_DTLRCFONTINFO, lf.lfFaceName);
 
                     SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_SETSEL, -2, -1);
                     SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)L",");// 加入文本
 
-                    wsprintfW(sz, L"%u,", GS.uDTLrcFontSize);
-                    SetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTSIZE, (HANDLE)GS.uDTLrcFontSize);
+                    wsprintfW(sz, L"%u,", uFontSize);
+                    SetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTSIZE, (HANDLE)uFontSize);
                     SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_SETSEL, -2, -1);
                     SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)sz);
 
-                    wsprintfW(sz, L"%u", GS.uDTLrcFontWeight);
-                    SetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTWEIGHT, (HANDLE)GS.uDTLrcFontWeight);
+                    wsprintfW(sz, L"%u", uFontWeight);
+                    SetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTWEIGHT, (HANDLE)uFontWeight);
                     SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_SETSEL, -2, -1);
                     SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)sz);// 加入文本
                 }
@@ -472,11 +482,20 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             case IDC_BT_CHANGEFONT2:
             {
                 LOGFONTW lf = { 0 };
-				lstrcpyW(lf.lfFaceName, GS.pszSCLrcFontName);
 
-				HDC hDC = GetDC(NULL);
-				lf.lfHeight = -MulDiv(GS.uSCLrcFontSize, GetDeviceCaps(hDC, LOGPIXELSY), 72);
-				ReleaseDC(NULL, hDC);
+                int iLength = GetWindowTextLengthW(GetDlgItem(hDlg, IDC_ED_SCLRCFONTINFO));
+                PWSTR psz = new WCHAR[iLength + 1];
+                GetDlgItemTextW(hDlg, IDC_ED_SCLRCFONTINFO, psz, iLength + 1);
+                *(psz + QKStrInStr(psz, L",") - 1) = L'\0';
+                StringCchPrintfW(lf.lfFaceName, LF_FACESIZE, L"%s", psz);
+                delete[] psz;
+
+                HDC hDC = GetDC(NULL);
+                lf.lfHeight = -MulDiv(
+                    (int)GetPropW(GetDlgItem(hDlg, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTSIZE),
+                    GetDeviceCaps(hDC, LOGPIXELSY),
+                    72);
+                ReleaseDC(NULL, hDC);
 
 				CHOOSEFONTW cf = { 0 };
 				cf.lStructSize = sizeof(CHOOSEFONTW);
@@ -486,26 +505,22 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 
 				if (ChooseFontW(&cf))
 				{
-					delete[] GS.pszSCLrcFontName;
-					GS.pszSCLrcFontName = new WCHAR[lstrlenW(lf.lfFaceName) + 1];
-					lstrcpyW(GS.pszSCLrcFontName, lf.lfFaceName);
-
-					GS.uSCLrcFontSize = cf.iPointSize / 10;
-					GS.uSCLrcFontWeight = lf.lfWeight;
+					UINT uFontSize = cf.iPointSize / 10;
+					UINT uFontWeight = lf.lfWeight;
 
 					WCHAR sz[MAXPROFILEBUFFER];
-					SetDlgItemTextW(hDlg, IDC_ED_SCLRCFONTINFO, GS.pszSCLrcFontName);
+					SetDlgItemTextW(hDlg, IDC_ED_SCLRCFONTINFO, lf.lfFaceName);
 
                     SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_SETSEL, -2, -1);
                     SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)L",");// 加入文本
 
-                    wsprintfW(sz, L"%u,", GS.uSCLrcFontSize);
-                    SetPropW(GetDlgItem(hDlg, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTSIZE, (HANDLE)GS.uSCLrcFontSize);
+                    wsprintfW(sz, L"%u,", uFontSize);
+                    SetPropW(GetDlgItem(hDlg, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTSIZE, (HANDLE)uFontSize);
                     SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_SETSEL, -2, -1);
                     SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)sz);
 
-                    wsprintfW(sz, L"%u", GS.uSCLrcFontWeight);
-                    SetPropW(GetDlgItem(hDlg, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTWEIGHT, (HANDLE)GS.uSCLrcFontWeight);
+                    wsprintfW(sz, L"%u", uFontWeight);
+                    SetPropW(GetDlgItem(hDlg, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTWEIGHT, (HANDLE)uFontWeight);
                     SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_SETSEL, -2, -1);
                     SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)sz);// 加入文本
                 }
@@ -676,7 +691,7 @@ INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
         MEASUREITEMSTRUCT* p = (MEASUREITEMSTRUCT*)lParam;
         if (p->CtlID == IDC_LB_OPTIONS && p->CtlType == ODT_LISTBOX)
         {
-            p->itemHeight = DPI(30);
+            p->itemHeight = DPI(30);// 项目高度
         }
     }
     return TRUE;
@@ -705,10 +720,10 @@ INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 
                 RECT rcText;
                 CopyRect(&rcText, &p->rcItem);
-                rcText.left += DPI(10);
+                rcText.left += DPI(10);// 左边空一点
                 if (p->itemData)
                     DrawTextW(p->hDC, (PCWSTR)p->itemData, -1, &rcText, DT_SINGLELINE | DT_VCENTER);
-
+                // 还原
                 SelectObject(p->hDC, hFontOld);
                 SetBkMode(p->hDC, iBKModeOld);
                 SetTextColor(p->hDC, crOld);
@@ -721,24 +736,22 @@ INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
         switch (LOWORD(wParam))
 		{
 		case IDOK:
+        case IDOK2:
 		{
             Settings_GetFromCtrl(hChild);
-            Settings_Save();
-            SettingsUpd_WndMain();
-            EndDialog(hDlg, 0);
-        }
-        return TRUE;
-        case IDOK2:
-        {
-            Settings_GetFromCtrl(hChild);
-            Settings_Save();
-            SettingsUpd_WndMain();
-        }
-        return TRUE;
-        case IDCANCEL:
-            EndDialog(hDlg, 0);
-            return TRUE;
-        case IDC_LB_OPTIONS:
+			Settings_Save();
+
+			SettingsUpd_WndMain();
+			SettingsUpd_WndLrc();
+
+			if (LOWORD(wParam) == IDOK)
+				EndDialog(hDlg, 0);
+		}
+		return TRUE;
+		case IDCANCEL:
+			EndDialog(hDlg, 0);
+			return TRUE;
+		case IDC_LB_OPTIONS:
         {
             if (HIWORD(wParam) == LBN_SELCHANGE)
             {
@@ -796,7 +809,7 @@ INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
         si.nPos += (si.nPage / 3 * iDistance);
         if (si.nPos < 0)
             si.nPos = 0;
-        else if (si.nPos > si.nMax - si.nPage)
+        else if (si.nPos > (int)(si.nMax - si.nPage))
             si.nPos = si.nMax - si.nPage;
 
         iScrollOffset[iOptionIndex] = si.nPos;

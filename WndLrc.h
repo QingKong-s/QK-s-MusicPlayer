@@ -14,16 +14,15 @@ BOOL LrcWnd_Init();
 void LrcWnd_Show();
 void LrcWnd_DrawLrc();
 int LrcWnd_HitTest();
+void SettingsUpd_WndLrc();
 LRESULT CALLBACK WndProc_Lrc(HWND, UINT, WPARAM, LPARAM);
 class QKDWTextRenderer_DrawOutline : public IDWriteTextRenderer
 {
-protected:
-	ULONG m_uRef;
-
+private:
+	LONG m_uRefCount;
 	ID2D1Brush* m_pD2DBrushBody;
 	ID2D1SolidColorBrush* m_pD2DBrushOutline;
 	ID2D1RenderTarget* m_pD2DRenderTarget_Outline;
-	float mStrokeWidth;
 
 public:
 	QKDWTextRenderer_DrawOutline(ID2D1RenderTarget* pD2DRenderTarget, ID2D1Brush* pD2DBrushBody, ID2D1SolidColorBrush* pD2DBrushOutline);
@@ -98,36 +97,36 @@ public:
 		FLOAT* pixelsPerDip
 		)
 	{
-		float x, yUnused;
+		float x, y;
 
-		m_pD2DRenderTarget_Outline->GetDpi(&x, &yUnused);
+		m_pD2DRenderTarget_Outline->GetDpi(&x, &y);
 		*pixelsPerDip = x / 96;
 		return S_OK;
 	}
 
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void FAR* FAR* ppvObj)
 	{
-		if (iid == IID_IUnknown /*|| iid == IID_IDWritePixelSnapping || iid == IID_IDWriteTextRenderer*/)
+		if (iid == IID_IUnknown)
 		{
 			*ppvObj = this;
 			AddRef();
-			return NOERROR;
+			return S_OK;
 		}
 		return E_NOINTERFACE;
 	}
 
 	ULONG STDMETHODCALLTYPE AddRef()
 	{
-		return ++m_uRef;
+		++m_uRefCount;
+		return m_uRefCount;
 	}
 
 	ULONG STDMETHODCALLTYPE Release()
 	{
-		// Decrement the object's internal counter.
-		if (0 == --m_uRef)
-		{
+		--m_uRefCount;
+		ULONG i = m_uRefCount;
+		if (m_uRefCount == 0)
 			delete this;
-		}
-		return m_uRef;
+		return i;
 	}
 };

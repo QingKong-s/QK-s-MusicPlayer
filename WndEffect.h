@@ -51,7 +51,7 @@ struct GLOBALEFFECT
 struct// ³­µÄÍøÒ×ÔÆ
 {
 	PCWSTR pszText;
-	int Setting[10];
+	float Setting[10];
 }
 const c_EQSetting[23] =
 {

@@ -106,10 +106,8 @@
 #define IDC_ST_SPEED2                   1066
 #define IDC_ST_VU                       1067
 #define IDC_BT_VOL                      1068
-#define IDC_ST_BLANCE3                  1069
 #define IDC_ST_BLANCE2                  1069
 #define IDC_ED_INPUT                    1069
-#define IDC_ST_BLANCE4                  1070
 #define IDC_ST_VOL2                     1070
 #define IDC_ST_INPUT                    1070
 #define IDC_ST_ABOUT                    1071
@@ -137,12 +135,10 @@
 #define IDC_ED_LRCDIR2                  1094
 #define IDC_ED_DTLRCSPACELINE           1094
 #define IDC_BT_CHANGEFONT               1095
-#define IDC_ED_FONTINFO                 1096
 #define IDC_ED_DTLRCFONTINFO            1096
 #define IDC_BT_CHANGEFONT2              1097
 #define IDC_ED_SCLRCFONTINFO            1098
 #define IDC_TB_DTLRCTRANSPARENT         1099
-#define FO2                             1099
 #define IDC_ED_ALBUMPICSIZE2            1099
 #define IDC_ST_DTLRCCLR1                1100
 #define IDC_ST_DTLRCCLR2                1101

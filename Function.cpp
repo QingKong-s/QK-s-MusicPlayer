@@ -163,7 +163,7 @@ void QKArray_Set(QKARRAY pArray, DWORD dwIndex, LPVOID pMember, DWORD dwDeleteFl
 {
     if (pArray == NULL)
         return;
-    if (dwIndex > ((QKARRAYHEADER*)pArray)->iCount - 1 || dwIndex < 0)
+    if (dwIndex > (UINT)((QKARRAYHEADER*)pArray)->iCount - 1 || dwIndex < 0)
     {
         return;
     }
@@ -245,10 +245,11 @@ LPVOID QKArray_GetDataPtr(QKARRAY pArray)
 }
 INT_PTR CALLBACK DlgProc_InputBox(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    QKINPUTBOXCOMTEXT* pContext = NULL;
-    switch (message)
-    {
-    case WM_INITDIALOG:
+	QKINPUTBOXCOMTEXT* pContext = NULL;
+	pContext = (QKINPUTBOXCOMTEXT*)GetPropW(hDlg, PROP_INPUTBOXCONTEXT);
+	switch (message)
+	{
+	case WM_INITDIALOG:
     {
         pContext = (QKINPUTBOXCOMTEXT*)lParam;
         SetPropW(hDlg, PROP_INPUTBOXCONTEXT, pContext);
@@ -258,7 +259,6 @@ INT_PTR CALLBACK DlgProc_InputBox(HWND hDlg, UINT message, WPARAM wParam, LPARAM
         SetFocus(GetDlgItem(hDlg, IDC_ED_INPUT));
     }
     return FALSE;
-
     case WM_COMMAND:
     {
         if (LOWORD(wParam) == IDOK)
@@ -276,14 +276,12 @@ INT_PTR CALLBACK DlgProc_InputBox(HWND hDlg, UINT message, WPARAM wParam, LPARAM
         }
 	}
 	return TRUE;
-
 	case WM_CLOSE:
 	{
 		pContext->iButton = IDCANCEL;
 		EndDialog(hDlg, 0);
 	}
 	return TRUE;
-
 	}
 	return FALSE;
 }
@@ -732,7 +730,7 @@ void MusicInfo_Get(PCWSTR pszFile, MUSICINFO* pmi)
                 UINT uCount;
                 ReadFile(hFile, &uCount, 4, &dwLengthRead, NULL);// 标签数
 
-                for (int i = 0; i < uCount; ++i)
+                for (UINT i = 0; i < uCount; ++i)
                 {
                     ReadFile(hFile, &t, 4, &dwLengthRead, NULL);// 标签大小
                     pBuffer = HeapAlloc(GetProcessHeap(), 0, t + 1);

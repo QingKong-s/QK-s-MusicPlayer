@@ -26,7 +26,7 @@ private:
     BOOL                m_isAllowDrag = FALSE;
     BOOL                m_isDataAvailable = FALSE;
     HWND                m_hTargetWnd = NULL;
-    volatile LONG       m_lRefCount = 1;
+    volatile ULONG      m_uRefCount = 1;
 
     QKONDRAGENTER       m_pOnEnter;
     QKONDRAGOVER        m_pOnOver;
@@ -46,7 +46,7 @@ public:
     HRESULT STDMETHODCALLTYPE QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState);
     HRESULT STDMETHODCALLTYPE GiveFeedback(DWORD dwEffect);
 private:
-    LONG                m_lRefCount;
+    ULONG               m_uRefCount;
     QKDRAGGIVEFEEDBACK  m_pGiveFeedBack;
 };
 
@@ -70,8 +70,8 @@ public:
     HRESULT STDMETHODCALLTYPE DUnadvise(DWORD      dwConnection);
     HRESULT STDMETHODCALLTYPE EnumDAdvise(IEnumSTATDATA** ppEnumAdvise);
 private:
-    LONG                m_lRefCount;
-    LONG                m_nNumFormats;
+    ULONG               m_uRefCount;
+    int                 m_nNumFormats;
     FORMATETC*          m_pFormatEtc;
     STGMEDIUM*          m_pStgMedium;
     BOOL*               m_pbRelease;

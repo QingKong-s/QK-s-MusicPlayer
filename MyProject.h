@@ -10,7 +10,8 @@
 #include "bass.h"
 #define CURRVER L"0.3"
 ////////////////////GDI+Flat定义
-enum GpStatus {
+enum GpStatus 
+{
 	Ok,
 	GenericError,
 	InvalidParameter,
@@ -34,13 +35,15 @@ enum GpStatus {
 	PropertyNotSupported,
 	ProfileNotFound
 };
-enum SmoothingMode {
+enum SmoothingMode 
+{
 	SmoothingModeDefault,
 	SmoothingModeHighSpeed,
 	SmoothingModeHighQuality,
 	SmoothingModeNone,
 };
-enum TextRenderingHint {
+enum TextRenderingHint 
+{
 	TextRenderingHintSystemDefault,
 	TextRenderingHintSingleBitPerPixelGridFit,
 	TextRenderingHintSingleBitPerPixel,
@@ -48,13 +51,15 @@ enum TextRenderingHint {
 	TextRenderingHintAntiAlias,
 	TextRenderingHintClearTypeGridFit
 };
-struct GdiplusStartupInput {
+struct GdiplusStartupInput 
+{
 	UINT32         GdiplusVersion;
 	void*		   DebugEventCallback;
 	BOOL           SuppressBackgroundThread;
 	BOOL           SuppressExternalCodecs;
 };
-enum Unit {
+enum Unit 
+{
 	UnitWorld,
 	UnitDisplay,
 	UnitPixel,
@@ -63,44 +68,51 @@ enum Unit {
 	UnitDocument,
 	UnitMillimeter
 };
-typedef enum StringFormatFlags {
-	StringFormatFlagsDirectionRightToLeft = 0x00000001,
-	StringFormatFlagsDirectionVertical = 0x00000002,
-	StringFormatFlagsNoFitBlackBox = 0x00000004,
-	StringFormatFlagsDisplayFormatControl = 0x00000020,
-	StringFormatFlagsNoFontFallback = 0x00000400,
-	StringFormatFlagsMeasureTrailingSpaces = 0x00000800,
-	StringFormatFlagsNoWrap = 0x00001000,
-	StringFormatFlagsLineLimit = 0x00002000,
-	StringFormatFlagsNoClip = 0x00004000,
-	StringFormatFlagsBypassGDI = 0x80000000
+enum StringFormatFlags 
+{
+	StringFormatFlagsDirectionRightToLeft		= 0x00000001,
+	StringFormatFlagsDirectionVertical			= 0x00000002,
+	StringFormatFlagsNoFitBlackBox				= 0x00000004,
+	StringFormatFlagsDisplayFormatControl		= 0x00000020,
+	StringFormatFlagsNoFontFallback				= 0x00000400,
+	StringFormatFlagsMeasureTrailingSpaces		= 0x00000800,
+	StringFormatFlagsNoWrap						= 0x00001000,
+	StringFormatFlagsLineLimit					= 0x00002000,
+	StringFormatFlagsNoClip						= 0x00004000,
+	StringFormatFlagsBypassGDI					= 0x80000000
 };
-struct RectF {
+struct RectF 
+{
 	float Left;
 	float Top;
 	float Width;
 	float Height;
 };
-struct PointF {
+struct PointF 
+{
 	float x;
 	float y;
 };
-struct BlurParams {
+struct BlurParams 
+{
 	float radius;
 	BOOL  expandEdge;
 };
-enum FillMode {
+enum FillMode 
+{
 	FillModeAlternate,
 	FillModeWinding
 };
-enum WrapMode {
+enum WrapMode 
+{
 	WrapModeTile,
 	WrapModeTileFlipX,
 	WrapModeTileFlipY,
 	WrapModeTileFlipXY,
 	WrapModeClamp
 };
-enum FontStyle {
+enum FontStyle 
+{
 	FontStyleRegular,
 	FontStyleBold,
 	FontStyleItalic,
@@ -108,7 +120,8 @@ enum FontStyle {
 	FontStyleUnderline,
 	FontStyleStrikeout
 };
-enum StringAlignment {
+enum StringAlignment 
+{
 	StringAlignmentNear,
 	StringAlignmentCenter,
 	StringAlignmentFar
@@ -549,7 +562,7 @@ struct SETTINGS
 	UINT uAlbumPicSize2;
 };
 
-const D2D_COLOR_F c_D2DClrCyanDeeper = { 0,0.3764,0.7529,1 };// 易语言青蓝
+const D2D_COLOR_F c_D2DClrCyanDeeper = { 0.f,0.3764f,0.7529f,1.f };// 易语言青蓝
 
 #define DPI(i) (i * g_iDPI / USER_DEFAULT_SCREEN_DPI)					// 将尺寸按DPI放大
 #define DPIF(f) (f * (float)g_iDPI / (float)USER_DEFAULT_SCREEN_DPI)	// 将尺寸按DPI放大（浮点版）

@@ -1,6 +1,6 @@
-/*
+ï»¿/*
 * GlobalVar.h
-* ¶¨ÒåÈ«¾Ö±äÁ¿
+* å®šä¹‰å…¨å±€å˜é‡
 */
 #pragma once
 #include <Windows.h>
@@ -18,36 +18,36 @@
 #include "MyProject.h"
 #include "Function.h"
 #include "WndEffect.h"
-// ´°¿Ú¾ä±úÀà
-extern HWND				g_hMainWnd;             // Ö÷´°¿Ú
-extern HWND				g_hLV;                  // ÁĞ±íListView
-//extern HWND				g_hTBProgess;           // ½ø¶ÈÌõ
-extern HWND				g_hLrcWnd;              // ×ÀÃæ¸è´Ê
-extern HWND				g_hBKLeft;              // ×ó²à±³¾°
-//extern HWND				g_hBKBtm;               // ÏÂ²¿°´Å¥±³¾°
-extern HWND				g_hBKRight;             // ÁĞ±í¹¤¾ß±³¾°
-extern HWND				g_hSEB;                 // ·Ö¸ôÌõ
-extern HWND				g_hBKList;              // ÁĞ±í±³¾°
+// çª—å£å¥æŸ„ç±»
+extern HWND				g_hMainWnd;             // ä¸»çª—å£
+extern HWND				g_hLV;                  // åˆ—è¡¨ListView
+//extern HWND				g_hTBProgess;           // è¿›åº¦æ¡
+extern HWND				g_hLrcWnd;              // æ¡Œé¢æ­Œè¯
+extern HWND				g_hBKLeft;              // å·¦ä¾§èƒŒæ™¯
+//extern HWND				g_hBKBtm;               // ä¸‹éƒ¨æŒ‰é’®èƒŒæ™¯
+extern HWND				g_hBKRight;             // åˆ—è¡¨å·¥å…·èƒŒæ™¯
+extern HWND				g_hSEB;                 // åˆ†éš”æ¡
+extern HWND				g_hBKList;              // åˆ—è¡¨èƒŒæ™¯
 extern HWND				g_hTBGhost;
-// È«¾ÖÀà
-extern HINSTANCE		g_hInst;                // È«¾ÖÊµÀı¾ä±ú
-extern GLOBALRES		GR;                     // È«¾Ö×ÊÔ´
-extern GLOBALCONTEXT	GC;                     // È«¾ÖÉÏÏÂÎÄ£¨³ß´çµÈ£©
-extern SETTINGS			GS;                     // È«¾ÖÉèÖÃ
-extern HFONT            g_hFontDrawing;         // »æÖÆÓÃ´ó×ÖÌå
-extern HFONT			g_hFont;                // ½çÃæ×ÖÌå
-extern HFONT			g_hFontCenterLrc;		// ÖĞ¼ä¸è´Ê×ÖÌå
-extern int				WM_TASKBARBUTTONCREATED;// ÈÎÎñÀ¸°´Å¥´´½¨Íê±Ï
-extern UINT				g_uMyClipBoardFmt;      // ÄÚ²¿ÍÏ·Å¼ôÌù°å¸ñÊ½
-extern ITaskbarList4*	g_pITaskbarList;        // ITaskbarList½Ó¿ÚÖ¸Õë£¬¸ºÔğÈÎÎñÀ¸²Ù×÷
-extern pFuncGetDpiForSystem pGetDpiForSystem;   // GetDpiForSystemº¯ÊıÖ¸Õë
-extern pFuncGetDpiForWindow pGetDpiForWindow;   // GetDpiForWindowº¯ÊıÖ¸Õë
-extern int				g_iDPI;                 // µ±Ç°DPI
-extern PWSTR			g_pszDefPic;            // Â·¾¶£ºÄ¬ÈÏÍ¼Æ¬
-extern PWSTR			g_pszDataDir;           // Â·¾¶£º³ÌĞòÊı¾İÄ¿Â¼
-extern PWSTR			g_pszListDir;           // Â·¾¶£ºÁĞ±íÄ¿Â¼
-extern PWSTR			g_pszCurrDir;           // Â·¾¶£º³ÌĞòËùÔÚÄ¿Â¼
-extern PWSTR			g_pszProfie;            // Â·¾¶£ºÅäÖÃÎÄ¼ş
+// å…¨å±€ç±»
+extern HINSTANCE		g_hInst;                // å…¨å±€å®ä¾‹å¥æŸ„
+extern GLOBALRES		GR;                     // å…¨å±€èµ„æº
+extern GLOBALCONTEXT	GC;                     // å…¨å±€ä¸Šä¸‹æ–‡ï¼ˆå°ºå¯¸ç­‰ï¼‰
+extern SETTINGS			GS;                     // å…¨å±€è®¾ç½®
+extern HFONT            g_hFontDrawing;         // ç»˜åˆ¶ç”¨å¤§å­—ä½“
+extern HFONT			g_hFont;                // ç•Œé¢å­—ä½“
+extern HFONT			g_hFontCenterLrc;		// ä¸­é—´æ­Œè¯å­—ä½“
+extern int				WM_TASKBARBUTTONCREATED;// ä»»åŠ¡æ æŒ‰é’®åˆ›å»ºå®Œæ¯•
+extern UINT				g_uMyClipBoardFmt;      // å†…éƒ¨æ‹–æ”¾å‰ªè´´æ¿æ ¼å¼
+extern ITaskbarList4*	g_pITaskbarList;        // ITaskbarListæ¥å£æŒ‡é’ˆï¼Œè´Ÿè´£ä»»åŠ¡æ æ“ä½œ
+extern pFuncGetDpiForSystem pGetDpiForSystem;   // GetDpiForSystemå‡½æ•°æŒ‡é’ˆ
+extern pFuncGetDpiForWindow pGetDpiForWindow;   // GetDpiForWindowå‡½æ•°æŒ‡é’ˆ
+extern int				g_iDPI;                 // å½“å‰DPI
+extern PWSTR			g_pszDefPic;            // è·¯å¾„ï¼šé»˜è®¤å›¾ç‰‡
+extern PWSTR			g_pszDataDir;           // è·¯å¾„ï¼šç¨‹åºæ•°æ®ç›®å½•
+extern PWSTR			g_pszListDir;           // è·¯å¾„ï¼šåˆ—è¡¨ç›®å½•
+extern PWSTR			g_pszCurrDir;           // è·¯å¾„ï¼šç¨‹åºæ‰€åœ¨ç›®å½•
+extern PWSTR			g_pszProfie;            // è·¯å¾„ï¼šé…ç½®æ–‡ä»¶
 extern ID2D1Factory1*	g_pD2DFactory;
 extern IDWriteFactory*	g_pDWFactory;
 extern ID2D1Device*		g_pD2DDevice;
@@ -57,35 +57,35 @@ extern IDXGIFactory2*	g_pDXGIFactory;
 extern IDWriteTextFormat* g_pDWTFNormal;
 extern IDWriteTextFormat* g_pDWTFBig;
 extern IDWriteTextFormat* g_pDWTFBig2;
-// BassÓë²¥·ÅÀà
-extern QKARRAY			g_Lrc;                  // È«¾Ö¸è´ÊÊı¾İ
-extern int				g_iLrcState;            // ×ÀÃæ¸è´Ê±êÖ¾
-extern QKARRAY			g_ItemData;             // È«¾ÖÁĞ±íÊı¾İ
+// Bassä¸æ’­æ”¾ç±»
+extern QKARRAY			g_Lrc;                  // å…¨å±€æ­Œè¯æ•°æ®
+extern int				g_iLrcState;            // æ¡Œé¢æ­Œè¯æ ‡å¿—
+extern QKARRAY			g_ItemData;             // å…¨å±€åˆ—è¡¨æ•°æ®
 
-extern HSTREAM			g_hStream;              // È«¾Ö²¥·ÅÁ÷
-extern int				g_iMusicType;			// ÎÄ¼şÀàĞÍ
-extern BOOL				g_bPlaying;				// ÊÇ·ñÕıÔÚ²¥·Å£¬ÓÃÀ´ÅĞ¶ÏÊÇ·ñ²¥Íê
+extern HSTREAM			g_hStream;              // å…¨å±€æ’­æ”¾æµ
+extern int				g_iMusicType;			// æ–‡ä»¶ç±»å‹
+extern BOOL				g_bPlaying;				// æ˜¯å¦æ­£åœ¨æ’­æ”¾ï¼Œç”¨æ¥åˆ¤æ–­æ˜¯å¦æ’­å®Œ
 
-extern ULONGLONG        g_llLength;             // ×Ü³¤¶È£¬µ¥Î»ºÁÃë£¬½ø¶ÈÌõµ¥Î»Îª°ÙºÁÃë
-extern float			g_fTime;                // µ±Ç°½ø¶È
+extern ULONGLONG        g_llLength;             // æ€»é•¿åº¦ï¼Œå•ä½æ¯«ç§’ï¼Œè¿›åº¦æ¡å•ä½ä¸ºç™¾æ¯«ç§’
+extern float			g_fTime;                // å½“å‰è¿›åº¦
 
-extern PWSTR			g_pszFile;				// µ±Ç°ÎÄ¼şÂ·¾¶
-extern int				g_iCurrFileIndex;       // ÕıÔÚ²¥·ÅµÄÎÄ¼ş£¨LVË÷Òı£©
-extern int				g_iCurrLrcIndex;        // ÏÖĞĞ¸è´ÊË÷Òı£¬-1£ºµÚÒ»¾äµ«²»¸ßÁÁ
-extern int				g_iLaterPlay;           // ÉÔºó²¥·Å£¨LVË÷Òı£©
+extern PWSTR			g_pszFile;				// å½“å‰æ–‡ä»¶è·¯å¾„
+extern int				g_iCurrFileIndex;       // æ­£åœ¨æ’­æ”¾çš„æ–‡ä»¶ï¼ˆLVç´¢å¼•ï¼‰
+extern int				g_iCurrLrcIndex;        // ç°è¡Œæ­Œè¯ç´¢å¼•ï¼Œ-1ï¼šç¬¬ä¸€å¥ä½†ä¸é«˜äº®
+extern int				g_iLaterPlay;           // ç¨åæ’­æ”¾ï¼ˆLVç´¢å¼•ï¼‰
 
-extern GLOBALEFFECT		g_GlobalEffect;         // È«¾ÖÒôĞ§
-extern BOOL				g_bSlient;              // ÊÇ·ñ¾²Òô
-extern float            g_fDefSpeed,            // Ä¬ÈÏËÙ¶È
-						g_fSpeedChanged,        // ËÙ¶È£¬-1~5
-						g_fBlanceChanged,       // Æ½ºâ£¬-1~1
-						g_fVolChanged;          // ÒôÁ¿£¬0~1
-// Í¨ĞÅÓë±êÖ¾Àà
-extern BOOL				g_bListSeped;           // ÁĞ±íÊÇ·ñ²ğÀë
-extern BOOL				g_bListHidden;          // ÁĞ±íÊÇ·ñÒş²Ø
-extern int              g_cxBKList;             // ÁĞ±í±³¾°¿í¶È
-extern int              g_iSearchResult;        // ËÑË÷½á¹ûÊı
-extern int              g_bSort;                // ÊÇ·ñ´¦ÓÚÅÅĞòÄ£Ê½
+extern GLOBALEFFECT		g_GlobalEffect;         // å…¨å±€éŸ³æ•ˆ
+extern BOOL				g_bSlient;              // æ˜¯å¦é™éŸ³
+extern float            g_fDefSpeed,            // é»˜è®¤é€Ÿåº¦
+						g_fSpeedChanged,        // é€Ÿåº¦ï¼Œ-1~5
+						g_fBlanceChanged,       // å¹³è¡¡ï¼Œ-1~1
+						g_fVolChanged;          // éŸ³é‡ï¼Œ0~1
+// é€šä¿¡ä¸æ ‡å¿—ç±»
+extern BOOL				g_bListSeped;           // åˆ—è¡¨æ˜¯å¦æ‹†ç¦»
+extern BOOL				g_bListHidden;          // åˆ—è¡¨æ˜¯å¦éšè—
+extern int              g_cxBKList;             // åˆ—è¡¨èƒŒæ™¯å®½åº¦
+extern int              g_iSearchResult;        // æœç´¢ç»“æœæ•°
+extern int              g_bSort;                // æ˜¯å¦å¤„äºæ’åºæ¨¡å¼
 
-extern BOOL				g_bPlayIcon;            // ÊÇ·ñÎª²¥·ÅÍ¼±ê£¨×ÀÃæ¸è´ÊºÍÖ÷´°¿ÚÓÃ£©
-extern BOOL				g_bShowAlbum;			// ÊÇ·ñÏÔÊ¾Ğı×ª·âÃæ
+extern BOOL				g_bPlayIcon;            // æ˜¯å¦ä¸ºæ’­æ”¾å›¾æ ‡ï¼ˆæ¡Œé¢æ­Œè¯å’Œä¸»çª—å£ç”¨ï¼‰
+extern BOOL				g_bShowAlbum;			// æ˜¯å¦æ˜¾ç¤ºæ—‹è½¬å°é¢

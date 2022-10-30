@@ -60,7 +60,7 @@ void QKMakeDropSource(QKARRAY Files, QKDRAGGIVEFEEDBACK pGiveFeedBack, CDataObje
 
 CDataObject::CDataObject(FORMATETC* fmtetc, STGMEDIUM* stgmed, BOOL fRelease, int iCount)
 {
-    m_lRefCount = 1;
+    m_uRefCount = 1;
     m_nNumFormats = iCount;
 
     m_pFormatEtc = new FORMATETC[iCount];
@@ -103,14 +103,14 @@ HRESULT STDMETHODCALLTYPE CDataObject::QueryInterface(REFIID iid, void** ppvObje
 }
 ULONG STDMETHODCALLTYPE CDataObject::AddRef(void)
 {
-    ++m_lRefCount;
-    return m_lRefCount;
+    ++m_uRefCount;
+    return m_uRefCount;
 }
 ULONG STDMETHODCALLTYPE CDataObject::Release(void)
 {
-    --m_lRefCount;
-    int i = m_lRefCount;
-    if (m_lRefCount == 0)
+    --m_uRefCount;
+    ULONG i = m_uRefCount;
+    if (m_uRefCount == 0)
 	{
 		for (int i = 0; i < m_nNumFormats; i++)
 		{
@@ -218,7 +218,7 @@ HRESULT STDMETHODCALLTYPE CDataObject::SetData(FORMATETC* pFormatEtc, STGMEDIUM*
 
 CDropSource::CDropSource(QKDRAGGIVEFEEDBACK pGiveFeedBack)
 {
-    m_lRefCount = 1;
+    m_uRefCount = 1;
     m_pGiveFeedBack = pGiveFeedBack;
 }
 HRESULT STDMETHODCALLTYPE CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
@@ -247,14 +247,14 @@ HRESULT STDMETHODCALLTYPE CDropSource::QueryInterface(REFIID iid, void** ppvObje
 }
 ULONG STDMETHODCALLTYPE CDropSource::AddRef(void)
 {
-    m_lRefCount++;
-    return m_lRefCount;
+    m_uRefCount++;
+    return m_uRefCount;
 }
 ULONG STDMETHODCALLTYPE CDropSource::Release(void)
 {
-    m_lRefCount--;
-    int i = m_lRefCount;
-    if (m_lRefCount == 0)
+    m_uRefCount--;
+    ULONG i = m_uRefCount;
+    if (m_uRefCount == 0)
         delete this;
     return i;
 }
@@ -280,14 +280,14 @@ HRESULT STDMETHODCALLTYPE CDropTarget::QueryInterface(REFIID iid, void** ppvObje
 }
 ULONG STDMETHODCALLTYPE CDropTarget::AddRef(void)
 {
-    m_lRefCount++;
-    return m_lRefCount;
+    m_uRefCount++;
+    return m_uRefCount;
 }
 ULONG STDMETHODCALLTYPE CDropTarget::Release(void)
 {
-    m_lRefCount--;
-    int i = m_lRefCount;
-    if (m_lRefCount == 0)
+    m_uRefCount--;
+    ULONG i = m_uRefCount;
+    if (m_uRefCount == 0)
         delete this;
     return i;
 }

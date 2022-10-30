@@ -408,11 +408,11 @@ void UI_UpdateDPISize()
     SAFE_RELEASE(g_pDWTFBig2);
 
     g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        DPI(12), L"zh-cn", &g_pDWTFNormal);
+        DPIF(12.f), L"zh-cn", &g_pDWTFNormal);
     g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_SEMI_LIGHT, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        DPI(18), L"zh-cn", &g_pDWTFBig);
+        DPIF(18.f), L"zh-cn", &g_pDWTFBig);
     g_pDWFactory->CreateTextFormat(L"Î¢ÈíÑÅºÚ", NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        DPI(20), L"zh-cn", &g_pDWTFBig2);
+        DPIF(20.f), L"zh-cn", &g_pDWTFBig2);
 }
 void Res_Free()
 {

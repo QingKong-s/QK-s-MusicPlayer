@@ -10,7 +10,7 @@
 ////////////////////////////////////
 typedef struct QKARRAYHEADER
 {
-	int iCount;
+    int iCount;
 }*QKARRAY;
 
 struct QKINPUTBOXCOMTEXT
@@ -75,8 +75,6 @@ struct FLAC_Header
 
 #define PROP_INPUTBOXCONTEXT              L"QKProp.InputBox.Context"
 
-//typedef LPVOID QKARRAY;
-////////////////////////////////////
 /*
 * 目标：创建GDI字体
 *
@@ -263,6 +261,37 @@ HRESULT WICCreateBitmap(PWSTR pszFile, IWICBitmap** ppWICBitmap);
 * 备注：
 */
 HRESULT WICCreateBitmap(IStream* pStream, IWICBitmap** ppWICBitmap);
+/*
+* 目标：客户区坐标矩形转屏幕坐标矩形
+*
+* 参数：
+* hWnd 窗口句柄
+* prc 要转换的矩形
+*
+* 返回值：
+* 备注：
+*/
 void QKRcClientToScreen(HWND hWnd, RECT* prc);
+/*
+* 目标：屏幕坐标矩形转客户区坐标矩形
+*
+* 参数：
+* hWnd 窗口句柄
+* prc 要转换的矩形
+*
+* 返回值：
+* 备注：
+*/
 void QKRcScreenToClient(HWND hWnd, RECT* prc);
+/*
+* 目标：COLORREF颜色转D2D1_COLOR_F
+*
+* 参数：
+* cr COLORREF颜色
+* D2DCr 结果
+* iAlpha 透明度，默认不透明
+*
+* 返回值：
+* 备注：
+*/
 void QKGDIColorToD2DColor(COLORREF cr, D2D1_COLOR_F* D2DCr, int iAlpha = 0xFF);

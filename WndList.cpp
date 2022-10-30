@@ -1,6 +1,6 @@
-/*
+ï»¿/*
 * WndList.cpp
-* °üº¬ÁĞ±íÈİÆ÷´°¿ÚÏà¹Ø´°¿Ú¹ı³ÌºÍÏà¹Øº¯ÊıµÄÊµÏÖ
+* åŒ…å«åˆ—è¡¨å®¹å™¨çª—å£ç›¸å…³çª—å£è¿‡ç¨‹å’Œç›¸å…³å‡½æ•°çš„å®ç°
 */
 #define _CRT_SECURE_NO_WARNINGS 1
 
@@ -24,21 +24,21 @@ UINT            m_uThreadFlagMusicTime  = THREADFLAG_STOP;
 CDropTarget*    m_pDropTarget           = NULL;
 
 int             m_iDragTimerElapse      = 0;
-int             m_iDragDirection        = 0;// 0 ÎŞĞ§   1 ÏòÉÏ   2 ÏòÏÂ
+int             m_iDragDirection        = 0;// 0 æ— æ•ˆ   1 å‘ä¸Š   2 å‘ä¸‹
 void UI_SetRitCtrlPos()
 {
-    // ÁĞ±íÃû³Æ 
+    // åˆ—è¡¨åç§° 
 	SetWindowPos(GetDlgItem(g_hBKRight, IDC_ST_LISTNAME), NULL, 0, 0,
 		g_cxBKList - DPIS_GAP,
 		DPIS_CYSTLISTNAME,
 		SWP_NOZORDER | SWP_NOMOVE);
-    // ËÑË÷¿ò
+    // æœç´¢æ¡†
 	HWND hEdit = GetDlgItem(g_hBKRight, IDC_ED_SEARCH);
 	SetWindowPos(hEdit, NULL, 0, 0,
 		g_cxBKList - GC.cyBT - DPIS_GAP,
         GC.cyBT,
 		SWP_NOZORDER | SWP_NOMOVE);
-    // ÖÃ¾ÓÖĞ¶ÔÆë
+    // ç½®å±…ä¸­å¯¹é½
     RECT rc;
     GetClientRect(hEdit, &rc);
     TEXTMETRICW tm;
@@ -50,20 +50,20 @@ void UI_SetRitCtrlPos()
 	rc.top = (rc.bottom - rc.top - DPI(tm.tmHeight)) / 2 + DPI(1);
 	rc.bottom = rc.top + DPI(tm.tmHeight);
 	SendMessageW(hEdit, EM_SETRECT, 0, (LPARAM)&rc);
-    // ËÑË÷°´Å¥
+    // æœç´¢æŒ‰é’®
 	SetWindowPos(GetDlgItem(g_hBKRight, IDC_BT_SEARCH), NULL,
 		g_cxBKList - GC.cyBT - DPIS_GAP,
 		DPIS_CYSTLISTNAME + DPIS_GAP * 2,
 		0, 0, SWP_NOZORDER | SWP_NOSIZE);
 }
 /*
- * Ä¿±ê£ºÌî³äÁĞ±íÊ±¼äÁĞ
+ * ç›®æ ‡ï¼šå¡«å……åˆ—è¡¨æ—¶é—´åˆ—
  *
- * ²ÎÊı£º
- * p ¹¤×÷²ÎÊı
+ * å‚æ•°ï¼š
+ * p å·¥ä½œå‚æ•°
  *
- * ·µ»ØÖµ£º
- * ±¸×¢£ºÏß³Ì
+ * è¿”å›å€¼ï¼š
+ * å¤‡æ³¨ï¼šçº¿ç¨‹
  */
 DWORD WINAPI Thread_FillTimeColumn(void* p)
 {
@@ -119,10 +119,10 @@ PLAYERLISTUNIT* List_GetArrayItem(int iLVIndex)
         return NULL;
 
 	int i = iLVIndex;
-	if (g_iSearchResult != -1)// Ó¦Ö´ĞĞËÑË÷Ê±Ë÷ÒıÓ³Éä
+	if (g_iSearchResult != -1)// åº”æ‰§è¡Œæœç´¢æ—¶ç´¢å¼•æ˜ å°„
 		i = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSearch;
 
-	if (g_bSort)// Ó¦Ö´ĞĞÅÅĞòË÷ÒıÓ³Éä
+	if (g_bSort)// åº”æ‰§è¡Œæ’åºç´¢å¼•æ˜ å°„
 		i = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort;
 
 	if (i == -1)
@@ -132,10 +132,10 @@ PLAYERLISTUNIT* List_GetArrayItem(int iLVIndex)
 }
 int List_GetArrayItemIndex(int iLVIndex)
 {
-	if (g_iSearchResult != -1)// Ó¦Ö´ĞĞËÑË÷Ê±Ë÷ÒıÓ³Éä
+	if (g_iSearchResult != -1)// åº”æ‰§è¡Œæœç´¢æ—¶ç´¢å¼•æ˜ å°„
 		iLVIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iLVIndex))->iMappingIndexSearch;
 
-	if (g_bSort)// Ó¦Ö´ĞĞÅÅĞòË÷ÒıÓ³Éä
+	if (g_bSort)// åº”æ‰§è¡Œæ’åºç´¢å¼•æ˜ å°„
 		iLVIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iLVIndex))->iMappingIndexSort;
 
 	return iLVIndex;
@@ -165,8 +165,8 @@ int List_Add(PWSTR pszFile, PWSTR pszName, int iPos, BOOL bRedraw, DWORD dwFlags
 	{
 		PWSTR pszNameTemp = new WCHAR[lstrlenW(pszFile) + 1];
 		lstrcpyW(pszNameTemp, pszFile);
-		PathStripPathW(pszNameTemp);//È¥µôÂ·¾¶
-		PathRemoveExtensionW(pszNameTemp);//È¥µôÀ©Õ¹Ãû
+		PathStripPathW(pszNameTemp);//å»æ‰è·¯å¾„
+		PathRemoveExtensionW(pszNameTemp);//å»æ‰æ‰©å±•å
 
 		pListUnit->pszName = new WCHAR[lstrlenW(pszNameTemp) + 1];
 		lstrcpyW(pListUnit->pszName, pszNameTemp);
@@ -174,7 +174,7 @@ int List_Add(PWSTR pszFile, PWSTR pszName, int iPos, BOOL bRedraw, DWORD dwFlags
 		delete[] pszNameTemp;
 	}
 
-	if (dwFlags & QKLIF_BOOKMARK)// ÓĞÊéÇ©
+	if (dwFlags & QKLIF_BOOKMARK)// æœ‰ä¹¦ç­¾
 	{
 		pListUnit->crBookMark = crBookMark;
 		if (pszBookMark)
@@ -221,7 +221,7 @@ void List_Delete(int iItem, BOOL bRedraw)
         for (int i = 0; i < g_ItemData->iCount; ++i)
         {
             p = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
-            // ¶Ô¿ÕÖ¸ÕëdeleteÊÇ°²È«µÄ
+            // å¯¹ç©ºæŒ‡é’ˆdeleteæ˜¯å®‰å…¨çš„
             delete[] p->pszFile;
             delete[] p->pszName;
             delete[] p->pszTime;
@@ -256,13 +256,13 @@ void StopThread_MusicTime()
     if (bResult && dwExitCode == STILL_ACTIVE)
     {
         m_uThreadFlagMusicTime = THREADFLAG_STOP;
-        WaitForSingleObject(m_htdMusicTime, INFINITE);//µÈ´ıÏß³ÌÍË³ö
+        WaitForSingleObject(m_htdMusicTime, INFINITE);//ç­‰å¾…çº¿ç¨‹é€€å‡º
         m_uThreadFlagMusicTime = THREADFLAG_STOPED;
     }
 
     CloseHandle(m_htdMusicTime);
     g_iLrcState = LRCSTATE_NOLRC;
-    m_htdMusicTime = NULL;//Çå¿Õ¾ä±ú
+    m_htdMusicTime = NULL;//æ¸…ç©ºå¥æŸ„
 }
 void Sort_End()
 {
@@ -275,12 +275,12 @@ void Sort_End()
             j = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort;
             if (j == g_iCurrFileIndex)
             {
-                g_iCurrFileIndex = i;// ×ª»»ÏÖĞĞ²¥·ÅË÷Òı
+                g_iCurrFileIndex = i;// è½¬æ¢ç°è¡Œæ’­æ”¾ç´¢å¼•
                 b[0] = TRUE;
             }
-            if (j == g_iLaterPlay)// ÕâÁ©ÖĞ¼ä²»ÄÜ¼Óelse£¬ÒòÎªÏÖĞĞ²¥·ÅºÍÉÔºó²¥·Å¿ÉÄÜÊÇÍ¬Ò»Ïî
+            if (j == g_iLaterPlay)// è¿™ä¿©ä¸­é—´ä¸èƒ½åŠ elseï¼Œå› ä¸ºç°è¡Œæ’­æ”¾å’Œç¨åæ’­æ”¾å¯èƒ½æ˜¯åŒä¸€é¡¹
             {
-                g_iLaterPlay = i;// ×ª»»ÉÔºó²¥·ÅË÷Òı
+                g_iLaterPlay = i;// è½¬æ¢ç¨åæ’­æ”¾ç´¢å¼•
                 b[1] = TRUE;
             }
             if (b[0] && b[1])
@@ -300,30 +300,30 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 	static COLORREF CustClr[16] = { 0 };
 	switch (message)
 	{
-	case WM_CREATE:// ºİºİµØ´´½¨´°¿Ú
+	case WM_CREATE:// ç‹ ç‹ åœ°åˆ›å»ºçª—å£
 	{
 		SetPropW(hWnd, PROP_BOOKMARKCLRDLGBUF, (HANDLE)CustClr);
 		HWND hCtrl, hCtrl2;
-		///////////////////////////ÓÒ²¿¹¤¾ßÀ¸
+		///////////////////////////å³éƒ¨å·¥å…·æ 
 		hCtrl2 = CreateWindowExW(0, BKWNDCLASS, NULL, WS_CHILD | WS_VISIBLE,
 			0, 0, g_cxBKList, DPIS_CYRITBK,
 			hWnd, (HMENU)IDC_BK_RIGHTBTBK, g_hInst, NULL);
 		g_hBKRight = hCtrl2;
 		SetWindowLongPtrW(hCtrl2, GWLP_WNDPROC, (LONG_PTR)WndProc_RitBK);
-		///////////////////////////ÁĞ±íÃû³Æ¾²Ì¬
+		///////////////////////////åˆ—è¡¨åç§°é™æ€
 		hCtrl = CreateWindowExW(0, WC_STATICW, NULL, WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE | SS_ELLIPSISMASK,
 			0, DPIS_GAP, 0, 0,
 			hCtrl2, (HMENU)IDC_ST_LISTNAME, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFontDrawing, FALSE);
-		SetWindowTextW(hCtrl, L"/*µ±Ç°ÎŞ²¥·ÅÁĞ±í*/");
-		///////////////////////////ËÑË÷±à¼­¿ò
+		SetWindowTextW(hCtrl, L"/*å½“å‰æ— æ’­æ”¾åˆ—è¡¨*/");
+		///////////////////////////æœç´¢ç¼–è¾‘æ¡†
 		hCtrl = CreateWindowExW(WS_EX_CLIENTEDGE, WC_EDITW, NULL, WS_CHILD | WS_VISIBLE| ES_MULTILINE | ES_WANTRETURN,
 			0, DPIS_CYSTLISTNAME + DPIS_GAP * 2, 0, 0,
 			hCtrl2, (HMENU)IDC_ED_SEARCH, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SetPropW(hCtrl, PROP_WNDPROC,
 			(HANDLE)SetWindowLongPtrW(hCtrl, GWLP_WNDPROC, (LONG_PTR)WndProc_Edit));
-		///////////////////////////ËÑË÷°´Å¥
+		///////////////////////////æœç´¢æŒ‰é’®
 		hCtrl = CreateWindowExW(0, WC_BUTTONW, NULL, WS_CHILD | WS_VISIBLE | BS_ICON,
 			0, 0, GC.cyBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_SEARCH, g_hInst, NULL);
@@ -332,47 +332,47 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		///////////////////////////
         int iLeft = 0, iTop = DPIS_CYSTLISTNAME + DPIS_GAP * 3 + GC.cyBT;
 		///////////////////////////
-		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"¶¨Î»", WS_CHILD | WS_VISIBLE,
+		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"å®šä½", WS_CHILD | WS_VISIBLE,
 			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_JUMP, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiLocate);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
 		///////////////////////////
-		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"Ìí¼Ó", WS_CHILD | WS_VISIBLE,
+		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"æ·»åŠ ", WS_CHILD | WS_VISIBLE,
 			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_OPEN, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiPlus);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
 		///////////////////////////
-		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"¶ÁÈ¡", WS_CHILD | WS_VISIBLE,
+		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"è¯»å–", WS_CHILD | WS_VISIBLE,
 			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_LOADLIST, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiReadFile);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
 		///////////////////////////
-		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"±£´æ", WS_CHILD | WS_VISIBLE,
+		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"ä¿å­˜", WS_CHILD | WS_VISIBLE,
 			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_SAVE, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiSaveFile);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
 		///////////////////////////
-		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"Çå¿Õ", WS_CHILD | WS_VISIBLE,
+		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"æ¸…ç©º", WS_CHILD | WS_VISIBLE,
 			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_EMPTY, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiCross);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
 		///////////////////////////
-		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"¹ÜÀí", WS_CHILD | WS_VISIBLE,
+		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"ç®¡ç†", WS_CHILD | WS_VISIBLE,
 			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
 			hCtrl2, (HMENU)IDC_BT_MANAGING, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiListManaging);
-		///////////////////////////²¥·ÅÁĞ±í
+		///////////////////////////æ’­æ”¾åˆ—è¡¨
 		hCtrl = CreateWindowExW(0, WC_LISTVIEWW, NULL, WS_CHILD | WS_VISIBLE | LVS_OWNERDATA | LVS_SHOWSELALWAYS,
 			0, 0, 0, 0, hWnd, (HMENU)IDC_LV_PLAY, g_hInst, NULL);
 		g_hLV = hCtrl;
@@ -382,20 +382,20 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		SendMessageW(hCtrl, LVM_SETEXTENDEDLISTVIEWSTYLE, uExStyle, uExStyle);
 		LVCOLUMNW lc;
 		lc.mask = LVCF_TEXT | LVCF_WIDTH;
-		lc.pszText = (PWSTR)L"Ãû³Æ";
+		lc.pszText = (PWSTR)L"åç§°";
 		lc.cx = DPI(295);
 		SendMessageW(hCtrl, LVM_INSERTCOLUMNW, 0, (LPARAM)&lc);
-		lc.pszText = (PWSTR)L"Ê±³¤";
+		lc.pszText = (PWSTR)L"æ—¶é•¿";
 		lc.cx = DPI(50);
 		SendMessageW(hCtrl, LVM_INSERTCOLUMNW, 1, (LPARAM)&lc);
 		SetWindowTheme(hCtrl, L"Explorer", NULL);
 		hLVTheme = OpenThemeData(hCtrl, L"ListView");
 		SetPropW(hCtrl, PROP_WNDPROC,
 			(HANDLE)SetWindowLongPtrW(hCtrl, GWLP_WNDPROC, (LONG_PTR)WndProc_ListView));
-		SendMessageW(hCtrl, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)ImageList_Create(1, DPIS_CYLVITEM, 0, 1, 0));// ILC_COLORÈ±Ê¡
+		SendMessageW(hCtrl, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)ImageList_Create(1, DPIS_CYLVITEM, 0, 1, 0));// ILC_COLORç¼ºçœ
 
         m_pDropTarget = new CDropTarget(OLEDrop_OnEnter, OLEDrop_OnOver, OLEDrop_OnLeave, OLEDrop_OnDrop);
-        RegisterDragDrop(hWnd, m_pDropTarget);// ×¢²áÍÏ·ÅÄ¿±ê
+        RegisterDragDrop(hWnd, m_pDropTarget);// æ³¨å†Œæ‹–æ”¾ç›®æ ‡
 	}
 	return 0;
 	case WM_SIZE:
@@ -412,14 +412,14 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 			0,
 			cxClient - DPIS_GAP,
 			DPIS_CYRITBK,
-			SWP_NOZORDER);//ÓÒ²¿°´Å¥ÈİÆ÷
+			SWP_NOZORDER);//å³éƒ¨æŒ‰é’®å®¹å™¨
 
 		SetWindowPos(g_hLV, NULL,
 			iLeft,
 			DPIS_CYRITBK,
 			cxClient - DPIS_GAP - iLeft,
 			cyClient - DPIS_CYRITBK,
-			SWP_NOZORDER);//ÁĞ±í
+			SWP_NOZORDER);//åˆ—è¡¨
 
 		cySBTrack = cyClient - DPIS_CYRITBK - 6 - cyVSBArrow * 2;
 	}
@@ -430,14 +430,14 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		{
 			switch (((NMHDR*)lParam)->code)
 			{
-			case NM_DBLCLK:// Ë«»÷
+			case NM_DBLCLK:// åŒå‡»
 			{
 				NMITEMACTIVATE* p = (NMITEMACTIVATE*)lParam;
 				if (p->iItem != -1)
 					Playing_PlayFile(p->iItem);
 			}
-			break;// ¸ÃÍ¨Öª²»Ê¹ÓÃ·µ»ØÖµ
-			case NM_CUSTOMDRAW://×Ô¶¨Òå»æÖÆ
+			break;// è¯¥é€šçŸ¥ä¸ä½¿ç”¨è¿”å›å€¼
+			case NM_CUSTOMDRAW://è‡ªå®šä¹‰ç»˜åˆ¶
 			{
 				NMLVCUSTOMDRAW* p = (NMLVCUSTOMDRAW*)lParam;
 				switch (p->nmcd.dwDrawStage)
@@ -447,9 +447,9 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 				case CDDS_ITEMPREPAINT:
 				{
 					int iState;
-					/*¶ÔÓÚ¾ßÓĞLVS_SHOWSELALWAYSÑùÊ½µÄËùÓĞÕß»æÖÆµÄÁĞ±íÊÓÍ¼¿Ø¼ş£¬´Ë±êÖ¾(Ö¸CDIS_SELECTED)²»ÄÜÕı³£¹¤×÷
-					¶ÔÓÚÕâĞ©¿Ø¼ş£¬Äú¿ÉÒÔÍ¨¹ıÊ¹ÓÃLVM_GETITEMSTATE²¢¼ì²éLVIS_SELECTED±êÖ¾À´È·¶¨ÊÇ·ñÑ¡ÔñÁËÏîÄ¿(MSDN)*/
-					if (SendMessageW(g_hLV, LVM_GETITEMSTATE, p->nmcd.dwItemSpec, LVIS_SELECTED) == LVIS_SELECTED)//Ñ¡ÖĞ
+					/*å¯¹äºå…·æœ‰LVS_SHOWSELALWAYSæ ·å¼çš„æ‰€æœ‰è€…ç»˜åˆ¶çš„åˆ—è¡¨è§†å›¾æ§ä»¶ï¼Œæ­¤æ ‡å¿—(æŒ‡CDIS_SELECTED)ä¸èƒ½æ­£å¸¸å·¥ä½œ
+					å¯¹äºè¿™äº›æ§ä»¶ï¼Œæ‚¨å¯ä»¥é€šè¿‡ä½¿ç”¨LVM_GETITEMSTATEå¹¶æ£€æŸ¥LVIS_SELECTEDæ ‡å¿—æ¥ç¡®å®šæ˜¯å¦é€‰æ‹©äº†é¡¹ç›®(MSDN)*/
+					if (SendMessageW(g_hLV, LVM_GETITEMSTATE, p->nmcd.dwItemSpec, LVIS_SELECTED) == LVIS_SELECTED)//é€‰ä¸­
 					{
 						if (p->nmcd.uItemState & CDIS_HOT)
 							iState = LISS_HOTSELECTED;
@@ -463,19 +463,19 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 					HBRUSH hBrush;
 
-					if (p->nmcd.dwItemSpec % 2)//½»ÌæĞĞÉ«
+					if (p->nmcd.dwItemSpec % 2)//äº¤æ›¿è¡Œè‰²
 					{
 						hBrush = CreateSolidBrush(MYCLR_LISTGRAY);
 						FillRect(p->nmcd.hdc, &p->nmcd.rc, hBrush);
 						DeleteObject(hBrush);
 					}
-					if (p->nmcd.dwItemSpec == g_iCurrFileIndex)//±ê¼ÇÏÖĞĞ²¥·ÅÏî
+					if (p->nmcd.dwItemSpec == g_iCurrFileIndex)//æ ‡è®°ç°è¡Œæ’­æ”¾é¡¹
 					{
 						hBrush = CreateSolidBrush(MYCLR_LISTPLAYING);
 						FillRect(p->nmcd.hdc, &p->nmcd.rc, hBrush);
 						DeleteObject(hBrush);
 					}
-					if (iState)//»­±íÏî¿ò
+					if (iState)//ç”»è¡¨é¡¹æ¡†
 						DrawThemeBackground(hLVTheme, p->nmcd.hdc, LVP_LISTITEM, iState, &p->nmcd.rc, NULL);
 
 					PLAYERLISTUNIT* pI = List_GetArrayItem(p->nmcd.dwItemSpec);
@@ -507,28 +507,28 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 				}
 			}
 			break;
-			case NM_RCLICK://ÓÒ¼üµ¥»÷
+			case NM_RCLICK://å³é”®å•å‡»
 			{
 				int iItem = ((NMITEMACTIVATE*)lParam)->iItem;
 				UINT uFlags = (iItem == -1) ? MF_GRAYED : 0,
 					uFlags2 = g_bSort || g_iSearchResult != -1 ? MF_GRAYED : uFlags;
 				HMENU hMenu = CreatePopupMenu();
-				AppendMenuW(hMenu, uFlags, IDMI_TL_PLAY, L"²¥·Å");
-				AppendMenuW(hMenu, uFlags, IDMI_TL_PLAYLATER, L"ÉÔºó²¥·Å");
+				AppendMenuW(hMenu, uFlags, IDMI_TL_PLAY, L"æ’­æ”¾");
+				AppendMenuW(hMenu, uFlags, IDMI_TL_PLAYLATER, L"ç¨åæ’­æ”¾");
 				SetMenuDefaultItem(hMenu, IDMI_TL_PLAY, FALSE);
 				AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-				AppendMenuW(hMenu, uFlags, IDMI_TL_OPEN_IN_EXPLORER, L"´ò¿ªÎÄ¼şÎ»ÖÃ");
-				AppendMenuW(hMenu, uFlags2, IDMI_TL_DELETE_FROM_LIST, L"´Ó²¥·ÅÁĞ±íÖĞÉ¾³ı");
-				AppendMenuW(hMenu, uFlags2, IDMI_TL_DELETE, L"´Ó´ÅÅÌÖĞÉ¾³ı");
+				AppendMenuW(hMenu, uFlags, IDMI_TL_OPEN_IN_EXPLORER, L"æ‰“å¼€æ–‡ä»¶ä½ç½®");
+				AppendMenuW(hMenu, uFlags2, IDMI_TL_DELETE_FROM_LIST, L"ä»æ’­æ”¾åˆ—è¡¨ä¸­åˆ é™¤");
+				AppendMenuW(hMenu, uFlags2, IDMI_TL_DELETE, L"ä»ç£ç›˜ä¸­åˆ é™¤");
 				AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-				AppendMenuW(hMenu, uFlags, IDMI_TL_IGNORE, L"ºöÂÔ/È¡ÏûºöÂÔ´ËÏîÄ¿");
-				AppendMenuW(hMenu, uFlags, IDMI_TL_RENAME, L"ÖØÃüÃû");
-				AppendMenuW(hMenu, uFlags, IDMI_TL_INFO, L"ÏêÏ¸ĞÅÏ¢");
+				AppendMenuW(hMenu, uFlags, IDMI_TL_IGNORE, L"å¿½ç•¥/å–æ¶ˆå¿½ç•¥æ­¤é¡¹ç›®");
+				AppendMenuW(hMenu, uFlags, IDMI_TL_RENAME, L"é‡å‘½å");
+				AppendMenuW(hMenu, uFlags, IDMI_TL_INFO, L"è¯¦ç»†ä¿¡æ¯");
 				AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-				AppendMenuW(hMenu, uFlags, IDMI_TL_LASTBOOKMARK, L"Ìøµ½ÉÏÒ»ÊéÇ©");
-				AppendMenuW(hMenu, uFlags, IDMI_TL_NEXTBOOKMARK, L"Ìøµ½ÏÂÒ»ÊéÇ©");
-				AppendMenuW(hMenu, uFlags, IDMI_TL_ADDBOOKMARK, L"Ìí¼ÓÊéÇ©");
-				AppendMenuW(hMenu, uFlags, IDMI_TL_REMOVEBOOKMARK, L"É¾³ıÊéÇ©");
+				AppendMenuW(hMenu, uFlags, IDMI_TL_LASTBOOKMARK, L"è·³åˆ°ä¸Šä¸€ä¹¦ç­¾");
+				AppendMenuW(hMenu, uFlags, IDMI_TL_NEXTBOOKMARK, L"è·³åˆ°ä¸‹ä¸€ä¹¦ç­¾");
+				AppendMenuW(hMenu, uFlags, IDMI_TL_ADDBOOKMARK, L"æ·»åŠ ä¹¦ç­¾");
+				AppendMenuW(hMenu, uFlags, IDMI_TL_REMOVEBOOKMARK, L"åˆ é™¤ä¹¦ç­¾");
 				//SetMenuItemBitmaps()
 
 				POINT pt;
@@ -627,7 +627,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 						if (List_GetArrayItem(i)->dwFlags & QKLIF_BOOKMARK)
 						{
 							SendMessageW(hWnd, LVM_SETITEMSTATE, i, (LPARAM)&li);
-							iIndex = i - SendMessageW(g_hLV, LVM_GETCOUNTPERPAGE, 0, 0);// °ÑÊéÇ©¶¥µ½×îÏÂÃæ
+							iIndex = i - SendMessageW(g_hLV, LVM_GETCOUNTPERPAGE, 0, 0);// æŠŠä¹¦ç­¾é¡¶åˆ°æœ€ä¸‹é¢
 							if (iIndex < 0)
 								iIndex = 0;
 
@@ -647,7 +647,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 						if (List_GetArrayItem(i)->dwFlags & QKLIF_BOOKMARK)
 						{
 							SendMessageW(hWnd, LVM_SETITEMSTATE, i, (LPARAM)&li);
-							iIndex = i + SendMessageW(g_hLV, LVM_GETCOUNTPERPAGE, 0, 0) - 1;// °ÑÊéÇ©¶¥µ½×îÉÏÃæ
+							iIndex = i + SendMessageW(g_hLV, LVM_GETCOUNTPERPAGE, 0, 0) - 1;// æŠŠä¹¦ç­¾é¡¶åˆ°æœ€ä¸Šé¢
 							if (iIndex >= g_ItemData->iCount)
 								iIndex = g_ItemData->iCount - 1;
 							SendMessageW(g_hLV, LVM_ENSUREVISIBLE, iIndex, FALSE);
@@ -658,7 +658,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 				return 0;
 				case IDMI_TL_DELETE:
 				{
-					if (QKMessageBox(L"È·¶¨ÒªÉ¾³ıÑ¡ÖĞµÄÎÄ¼şÂğ", L"É¾³ıºó²»¿É»Ö¸´£¬ÇëÈ·ÈÏÊÇ·ñÒª¼ÌĞøÉ¾³ı", (HICON)TD_INFORMATION_ICON, L"Ñ¯ÎÊ", hWnd, NULL, 2) == QKMSGBOX_BTID_2)
+					if (QKMessageBox(L"ç¡®å®šè¦åˆ é™¤é€‰ä¸­çš„æ–‡ä»¶å—", L"åˆ é™¤åä¸å¯æ¢å¤ï¼Œè¯·ç¡®è®¤æ˜¯å¦è¦ç»§ç»­åˆ é™¤", (HICON)TD_INFORMATION_ICON, L"è¯¢é—®", hWnd, NULL, 2) == QKMSGBOX_BTID_2)
 						return 0;
 					for (int i = g_ItemData->iCount; i >= 0; --i)
 					{
@@ -683,9 +683,9 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 				return 0;
 				case IDMI_TL_RENAME:
 				{
-					PWSTR pBuf;
+                    PWSTR pBuf = NULL;
 					PLAYERLISTUNIT* p;
-					if (QKInputBox(L"ÖØÃüÃû", L"ÊäÈëĞÂÃû³Æ£º", &pBuf, hWnd))
+					if (QKInputBox(L"é‡å‘½å", L"è¾“å…¥æ–°åç§°ï¼š", &pBuf, hWnd))
 					{
 						p = List_GetArrayItem(iItem);
 						delete[] p->pszName;
@@ -730,24 +730,24 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 				return 0;
 				}
 			}
-			return TRUE;// ·µ»Ø·ÇÁãÒÔ²»ÔÊĞíÄ¬ÈÏ´¦Àí£¬»ò·µ»ØÁãÒÔÔÊĞíÄ¬ÈÏ´¦Àí
-			case LVN_BEGINDRAG:// ¿ªÊ¼ÍÏ·Å
+			return TRUE;// è¿”å›éé›¶ä»¥ä¸å…è®¸é»˜è®¤å¤„ç†ï¼Œæˆ–è¿”å›é›¶ä»¥å…è®¸é»˜è®¤å¤„ç†
+			case LVN_BEGINDRAG:// å¼€å§‹æ‹–æ”¾
 			{
-				// Õâ²ÅÊÇLVÍÏ·ÅÕıÍ³´¥·¢·½Ê½£¬ÍÏ·Å²»Ó¦¸ÃÓÉWM_LBUTTONDOWN´¥·¢
+				// è¿™æ‰æ˜¯LVæ‹–æ”¾æ­£ç»Ÿè§¦å‘æ–¹å¼ï¼Œæ‹–æ”¾ä¸åº”è¯¥ç”±WM_LBUTTONDOWNè§¦å‘
 				if (((NMLISTVIEW*)lParam)->iItem != -1)
 				{
                     if (g_iSearchResult != -1 || g_bSort)
                     {
-                        QKMessageBox(L"ÏÖÔÚ²»¿ÉÖØÅÅÏîÄ¿", L"¿ÉÄæÊ½ÅÅĞò»òËÑË÷×´Ì¬ÏÂ²»¿ÉÍÏ¶¯", (HICON)TD_ERROR_ICON, L"´íÎó");
+                        QKMessageBox(L"ç°åœ¨ä¸å¯é‡æ’é¡¹ç›®", L"å¯é€†å¼æ’åºæˆ–æœç´¢çŠ¶æ€ä¸‹ä¸å¯æ‹–åŠ¨", (HICON)TD_ERROR_ICON, L"é”™è¯¯");
                         return 0;
                     }
 					if (g_iCurrFileIndex != -1)
 						((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iCurrFileIndex))->dwFlags |= QKLIF_DRAGMARK_CURRFILE;
                     if (g_iLaterPlay != -1)
                         ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iLaterPlay))->dwFlags |= QKLIF_DRAGMARK_PLLATER;
-					//////////////////È¡Ñ¡ÖĞÏîÄ¿
-					QKARRAY Files = QKArray_Create(0);// ÎÄ¼şÃûÊı×é
-					QKARRAY Items = QKArray_Create(0);// Ë÷ÒıÊı×é
+					//////////////////å–é€‰ä¸­é¡¹ç›®
+					QKARRAY Files = QKArray_Create(0);// æ–‡ä»¶åæ•°ç»„
+					QKARRAY Items = QKArray_Create(0);// ç´¢å¼•æ•°ç»„
 
 					for (int i = 0; i < g_ItemData->iCount; ++i)
 					{
@@ -757,15 +757,15 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 							QKArray_AddValue(&Items, &i);
 						}
 					}
-                    //////////////////ÖÆÍÏ·ÅÔ´
+                    //////////////////åˆ¶æ‹–æ”¾æº
 					CDataObject* pDataObject;
 					CDropSource* pDropSource;
 					QKMakeDropSource(Files, OLEDrag_GiveFeedBack, &pDataObject, &pDropSource, TRUE);
-					QKArray_Delete(Files);// ÇåÀí
-                    //////////////////ÖÆ×Ô¶¨ÒåÍÏ·ÅĞÅÏ¢£¬ÓÃÀ´±£´æË÷ÒıÒÔ±ã×ÔÉí³ÌĞòÍÏ·Å
+					QKArray_Delete(Files);// æ¸…ç†
+                    //////////////////åˆ¶è‡ªå®šä¹‰æ‹–æ”¾ä¿¡æ¯ï¼Œç”¨æ¥ä¿å­˜ç´¢å¼•ä»¥ä¾¿è‡ªèº«ç¨‹åºæ‹–æ”¾
 					FORMATETC fe =
 					{
-						g_uMyClipBoardFmt,
+						(CLIPFORMAT)g_uMyClipBoardFmt,
 						NULL,
 						DVASPECT_CONTENT,
 						-1,
@@ -776,20 +776,20 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 					sm.pUnkForRelease = NULL;
                     sm.hGlobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, (Items->iCount + 2) * sizeof(int) + sizeof(DWORD));
 
-                    // (int)        °æ±¾ĞÅÏ¢
-                    // (DWORD)      ½ø³ÌID
-                    // (int)        ÏîÄ¿Êı
-                    // (void*)      ÏîÄ¿Êı¾İ
+                    // (int)        ç‰ˆæœ¬ä¿¡æ¯
+                    // (DWORD)      è¿›ç¨‹ID
+                    // (int)        é¡¹ç›®æ•°
+                    // (void*)      é¡¹ç›®æ•°æ®
                     // ...
 
 					int* p = (int*)GlobalLock(sm.hGlobal);
-                    *p = QKOLEDRAGVER_1;// ÍÏ·ÅĞÅÏ¢°æ±¾ºÅ
+                    *p = QKOLEDRAGVER_1;// æ‹–æ”¾ä¿¡æ¯ç‰ˆæœ¬å·
                     ++p;
 
-                    *(DWORD*)p = GetCurrentProcessId();// ½ø³ÌID
+                    *(DWORD*)p = GetCurrentProcessId();// è¿›ç¨‹ID
                     p = (int*)((DWORD*)p + 1);
 
-					*p = Items->iCount;// ÏîÄ¿Êı
+					*p = Items->iCount;// é¡¹ç›®æ•°
 					++p;
 
 					for (int i = 0; i < Items->iCount; ++i)
@@ -799,16 +799,16 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 					}
 					GlobalUnlock(sm.hGlobal);
 					pDataObject->SetData(&fe, &sm, TRUE);
-                    //////////////////Ö´ĞĞÍÏ·Å
+                    //////////////////æ‰§è¡Œæ‹–æ”¾
 					DWORD dwEffect = DROPEFFECT_NONE;
 					HRESULT hr = SHDoDragDrop(hWnd, pDataObject, pDropSource, DROPEFFECT_COPY, &dwEffect);
-                    //////////////////ÇåÀí£¬Êı¾İÎªÊı¾İ¶ÔÏóËùÓĞ£¬Êı¾İ¶ÔÏóÊÍ·ÅÊ±»á½«ÆäÒ»²¢ÊÍ·Å
+                    //////////////////æ¸…ç†ï¼Œæ•°æ®ä¸ºæ•°æ®å¯¹è±¡æ‰€æœ‰ï¼Œæ•°æ®å¯¹è±¡é‡Šæ”¾æ—¶ä¼šå°†å…¶ä¸€å¹¶é‡Šæ”¾
 					delete pDataObject;
 					delete pDropSource;
 					return 0;
 				}
 			}
-			break;// Ã»ÓĞ·µ»ØÖµ
+			break;// æ²¡æœ‰è¿”å›å€¼
 			}
 			break;
 		}
@@ -861,12 +861,12 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
     case WM_TIMER:
     {
         int iIndex = SendMessageW(g_hLV, LVM_GETTOPINDEX, 0, 0);
-        if (m_iDragDirection == 1)// ÏòÉÏ
+        if (m_iDragDirection == 1)// å‘ä¸Š
         {
             iIndex -= 1;
             SendMessageW(g_hLV, LVM_ENSUREVISIBLE, iIndex, TRUE);
         }
-        else if (m_iDragDirection == 2)// ÏòÏÂ
+        else if (m_iDragDirection == 2)// å‘ä¸‹
         {
             iIndex += (SendMessageW(g_hLV, LVM_GETCOUNTPERPAGE, 0, 0) + 1);
             SendMessageW(g_hLV, LVM_ENSUREVISIBLE, iIndex, TRUE);
@@ -876,7 +876,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 	}
 	return DefWindowProcW(hWnd, message, wParam, lParam);
 }
-LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)//ÓÒÉÏÈİÆ÷´°¿Ú¹ı³Ì
+LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)//å³ä¸Šå®¹å™¨çª—å£è¿‡ç¨‹
 {
     static WCHAR szListName[MAX_PATH];
     switch (message)
@@ -900,8 +900,8 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             {
                 HMENU hMenu = CreatePopupMenu();
                 UINT uFlags = g_bSort || g_iSearchResult != -1 ? MF_GRAYED : 0;
-                AppendMenuW(hMenu, uFlags, IDMI_OPEN_FILE, L"´ò¿ªÎÄ¼ş");
-                AppendMenuW(hMenu, uFlags, IDMI_OPEN_FOLDER, L"´ò¿ªÎÄ¼ş¼Ğ");
+                AppendMenuW(hMenu, uFlags, IDMI_OPEN_FILE, L"æ‰“å¼€æ–‡ä»¶");
+                AppendMenuW(hMenu, uFlags, IDMI_OPEN_FOLDER, L"æ‰“å¼€æ–‡ä»¶å¤¹");
 
                 RECT rc;
                 GetWindowRect((HWND)lParam, &rc);
@@ -930,13 +930,13 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                         IID_PPV_ARGS(&pfod));
                     if (!SUCCEEDED(hr))
                         return 0;
-                    pfod->SetTitle(L"´ò¿ªÒôÆµÎÄ¼ş");
+                    pfod->SetTitle(L"æ‰“å¼€éŸ³é¢‘æ–‡ä»¶");
                     pfod->SetOptions(FOS_ALLOWMULTISELECT | FOS_FORCEFILESYSTEM | FOS_FILEMUSTEXIST);
                     COMDLG_FILTERSPEC cf[] =
                     {
-                        {L"ÒôÆµÎÄ¼ş(*.mp1;*.mp2;*.xm;*.mp3;*.flac;*.wma;*.wav;*.m4a;*.ogg;*.acc;*.ape;*.aiff)",
+                        {L"éŸ³é¢‘æ–‡ä»¶(*.mp1;*.mp2;*.xm;*.mp3;*.flac;*.wma;*.wav;*.m4a;*.ogg;*.acc;*.ape;*.aiff)",
                         L"*.mp1;*.mp2;*.xm;*.mp3;*.flac;*.wma;*.wav;*.m4a;*.ogg;*.acc;*.ape;*.aiff"},
-                        {L"ËùÓĞÎÄ¼ş",L"*.*"}
+                        {L"æ‰€æœ‰æ–‡ä»¶",L"*.*"}
                     };
                     pfod->SetFileTypes(2, cf);
                     pfod->Show(hWnd);
@@ -1012,7 +1012,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     WCHAR szFile[MAX_PATH];
                     lstrcpyW(szFile, pszPath);
                     lstrcatW(szFile, L"\\*.mp3");
-                    HANDLE hFind = FindFirstFileW(szFile, &wfd);//¿ªÊ¼Ã¶¾Ù
+                    HANDLE hFind = FindFirstFileW(szFile, &wfd);//å¼€å§‹æšä¸¾
                     if (hFind == INVALID_HANDLE_VALUE)
                         return 0;
                     List_SetRedraw(FALSE);
@@ -1031,14 +1031,14 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                         List_Add(szFile, NULL, iIndex, FALSE);
                         ++cItem;
                         ++iIndex;
-                    } while (FindNextFileW(hFind, &wfd));//¼ÌĞøÃ¶¾Ù
+                    } while (FindNextFileW(hFind, &wfd));//ç»§ç»­æšä¸¾
                     if (cItem)
                     {
                         if (iIndex - cItem <= g_iCurrFileIndex && g_iCurrFileIndex != -1)
                             g_iCurrFileIndex += cItem;
                     }
 
-                    FindClose(hFind);//ÊÍ·Å
+                    FindClose(hFind);//é‡Šæ”¾
                     CoTaskMemFree(pszPath);
                     List_SetRedraw(TRUE);
                     List_ResetLV();
@@ -1096,34 +1096,34 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 PLAYERLISTUNIT t = { 0 };
                 int iLenght;
 
-                pCurr += sizeof(LISTFILEHEADER);//Ìø¹ıÎÄ¼şÍ·
+                pCurr += sizeof(LISTFILEHEADER);//è·³è¿‡æ–‡ä»¶å¤´
                 List_SetRedraw(FALSE);
                 for (int i = 0; i < pListHeader->iCount; ++i)
                 {
-                    //¶ÁÏîÄ¿Í·
+                    //è¯»é¡¹ç›®å¤´
                     pListItem = (LISTFILEITEM*)pCurr;
                     pCurr += sizeof(LISTFILEITEM);
-                    //¶ÁÃû³Æ
+                    //è¯»åç§°
                     t.pszName = (PWSTR)pCurr;
                     pCurr += (lstrlenW(t.pszName) + 1) * sizeof(WCHAR);
-                    //¶ÁÎÄ¼şÃû
+                    //è¯»æ–‡ä»¶å
                     t.pszFile = (PWSTR)pCurr;
                     pCurr += (lstrlenW(t.pszFile) + 1) * sizeof(WCHAR);
                     if (pListItem->uFlags & QKLIF_BOOKMARK)
                     {
-                        memcpy(&t.crBookMark, pCurr, sizeof(COLORREF));// ¶ÁÊéÇ©ÑÕÉ«
+                        memcpy(&t.crBookMark, pCurr, sizeof(COLORREF));// è¯»ä¹¦ç­¾é¢œè‰²
                         pCurr += sizeof(COLORREF);
 
                         iLenght = lstrlenW((PWSTR)pCurr);
                         if (iLenght)
-                            t.pszBookMark = (PWSTR)pCurr;// ¶ÁÊéÇ©Ãû³Æ
+                            t.pszBookMark = (PWSTR)pCurr;// è¯»ä¹¦ç­¾åç§°
                         else
                             t.pszBookMark = NULL;
                         pCurr += (iLenght + 1) * sizeof(WCHAR);
 
                         iLenght = lstrlenW((PWSTR)pCurr);
                         if (iLenght)
-                            t.pszBookMarkComment = (PWSTR)pCurr;// ¶ÁÊéÇ©±¸×¢
+                            t.pszBookMarkComment = (PWSTR)pCurr;// è¯»ä¹¦ç­¾å¤‡æ³¨
                         else
                             t.pszBookMarkComment = NULL;
                         pCurr += (iLenght + 1) * sizeof(WCHAR);
@@ -1131,7 +1131,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     else
                         pCurr += sizeof(COLORREF) + sizeof(WCHAR) * 2;
 
-                    if (pListHeader->dwVer >= QKLFVER_2)// °æ±¾2
+                    if (pListHeader->dwVer >= QKLFVER_2)// ç‰ˆæœ¬2
                     {
                         if (pListItem->uFlags & QKLIF_TIME)
                         {
@@ -1183,7 +1183,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     NULL,
                     CREATE_ALWAYS,
                     FILE_ATTRIBUTE_NORMAL,
-                    NULL);// ´ò¿ªÎÄ¼ş
+                    NULL);// æ‰“å¼€æ–‡ä»¶
                 if (hFile == INVALID_HANDLE_VALUE)
                 {
                     delete (DLGRESULT_LIST*)pResult;
@@ -1192,11 +1192,11 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
                 DWORD cbWritten;
                 LISTFILEHEADER ListHeader = { 0 };
-                memcpy(&(ListHeader.cHeader), "QKPL", 4);// ÎÄ¼şÍ·
+                memcpy(&(ListHeader.cHeader), "QKPL", 4);// æ–‡ä»¶å¤´
                 ListHeader.iCount = g_ItemData->iCount;
                 ListHeader.dwVer = QKLFVER_2;
 
-                WriteFile(hFile, &ListHeader, sizeof(LISTFILEHEADER), &cbWritten, NULL);//Ğ´ÎÄ¼şÍ·
+                WriteFile(hFile, &ListHeader, sizeof(LISTFILEHEADER), &cbWritten, NULL);//å†™æ–‡ä»¶å¤´
 
                 int iIndex = 0;
 
@@ -1207,22 +1207,22 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 {
                     p = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
                     ListItem.uFlags = p->dwFlags | (p->pszTime ? QKLIF_TIME : 0);
-                    WriteFile(hFile, &ListItem, sizeof(LISTFILEITEM), &cbWritten, NULL);// ÏîÄ¿Í·
-                    WriteFile(hFile, p->pszName, (lstrlenW(p->pszName) + 1) * sizeof(WCHAR), &cbWritten, NULL);// Ãû³Æ
-                    WriteFile(hFile, p->pszFile, (lstrlenW(p->pszFile) + 1) * sizeof(WCHAR), &cbWritten, NULL);// ÎÄ¼şÃû
-                    WriteFile(hFile, &p->crBookMark, sizeof(COLORREF), &cbWritten, NULL);// ÊéÇ©ÑÕÉ«
+                    WriteFile(hFile, &ListItem, sizeof(LISTFILEITEM), &cbWritten, NULL);// é¡¹ç›®å¤´
+                    WriteFile(hFile, p->pszName, (lstrlenW(p->pszName) + 1) * sizeof(WCHAR), &cbWritten, NULL);// åç§°
+                    WriteFile(hFile, p->pszFile, (lstrlenW(p->pszFile) + 1) * sizeof(WCHAR), &cbWritten, NULL);// æ–‡ä»¶å
+                    WriteFile(hFile, &p->crBookMark, sizeof(COLORREF), &cbWritten, NULL);// ä¹¦ç­¾é¢œè‰²
                     if (p->pszBookMark)
-                        WriteFile(hFile, p->pszBookMark, (lstrlenW(p->pszBookMark) + 1) * sizeof(WCHAR), &cbWritten, NULL);// ÊéÇ©Ãû³Æ
+                        WriteFile(hFile, p->pszBookMark, (lstrlenW(p->pszBookMark) + 1) * sizeof(WCHAR), &cbWritten, NULL);// ä¹¦ç­¾åç§°
                     else
-                        WriteFile(hFile, &cNULL, sizeof(WCHAR), &cbWritten, NULL);// Ã»ÓĞÔòĞ´NULL
+                        WriteFile(hFile, &cNULL, sizeof(WCHAR), &cbWritten, NULL);// æ²¡æœ‰åˆ™å†™NULL
                     if (p->pszBookMarkComment)
-                        WriteFile(hFile, p->pszBookMarkComment, (lstrlenW(p->pszBookMarkComment) + 1) * sizeof(WCHAR), &cbWritten, NULL);// ÊéÇ©±¸×¢
+                        WriteFile(hFile, p->pszBookMarkComment, (lstrlenW(p->pszBookMarkComment) + 1) * sizeof(WCHAR), &cbWritten, NULL);// ä¹¦ç­¾å¤‡æ³¨
                     else
-                        WriteFile(hFile, &cNULL, sizeof(WCHAR), &cbWritten, NULL);// Ã»ÓĞÔòĞ´NULL
+                        WriteFile(hFile, &cNULL, sizeof(WCHAR), &cbWritten, NULL);// æ²¡æœ‰åˆ™å†™NULL
                     if (p->pszTime)
-                        WriteFile(hFile, p->pszTime, (lstrlenW(p->pszTime) + 1) * sizeof(WCHAR), &cbWritten, NULL);// ÊéÇ©±¸×¢
+                        WriteFile(hFile, p->pszTime, (lstrlenW(p->pszTime) + 1) * sizeof(WCHAR), &cbWritten, NULL);// ä¹¦ç­¾å¤‡æ³¨
                     else
-                        WriteFile(hFile, &cNULL, sizeof(WCHAR), &cbWritten, NULL);// Ã»ÓĞÔòĞ´NULL
+                        WriteFile(hFile, &cNULL, sizeof(WCHAR), &cbWritten, NULL);// æ²¡æœ‰åˆ™å†™NULL
                 }
                 CloseHandle(hFile);
                 delete (DLGRESULT_LIST*)pResult;
@@ -1234,11 +1234,11 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             return 0;
             case IDC_BT_EMPTY:
             {
-				if (QKMessageBox(L"È·¶¨ÒªÇå¿Õ²¥·ÅÁĞ±íÂğ£¿", NULL, (HICON)TD_WARNING_ICON, L"Ñ¯ÎÊ", g_hBKList, NULL, 2) == QKMSGBOX_BTID_1)
+				if (QKMessageBox(L"ç¡®å®šè¦æ¸…ç©ºæ’­æ”¾åˆ—è¡¨å—ï¼Ÿ", NULL, (HICON)TD_WARNING_ICON, L"è¯¢é—®", g_hBKList, NULL, 2) == QKMSGBOX_BTID_1)
                 {
                     Playing_Stop();
                     List_Delete(-1, TRUE);
-                    SetWindowTextW(GetDlgItem(g_hBKRight, IDC_ST_LISTNAME), L"/*µ±Ç°ÎŞ²¥·ÅÁĞ±í*/");
+                    SetWindowTextW(GetDlgItem(g_hBKRight, IDC_ST_LISTNAME), L"/*å½“å‰æ— æ’­æ”¾åˆ—è¡¨*/");
                     UI_RedrawBookMarkPos();
                     g_iLaterPlay = -1;
                 }
@@ -1250,25 +1250,25 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 int iLength = GetWindowTextLengthW(GetDlgItem(g_hBKRight, IDC_ED_SEARCH));
                 static int iTopIndex = -1, iVisibleItemCount = 0;
                 static int iTempCurr = -1, iTempLater = -1;
-                if (!iLength)// Ã»ÓĞÎÄ±¾
+                if (!iLength)// æ²¡æœ‰æ–‡æœ¬
                 {
-                    if (g_iSearchResult != -1)// ×öÏÖĞĞ²¥·ÅÏîLVË÷Òı×ª»»
+                    if (g_iSearchResult != -1)// åšç°è¡Œæ’­æ”¾é¡¹LVç´¢å¼•è½¬æ¢
                     {
-                        ///////»¹Ô­ÏÖĞĞ²¥·ÅË÷ÒıºÍÉÔºó²¥·ÅË÷Òı
-                        if (g_iCurrFileIndex < g_iSearchResult && g_iCurrFileIndex != -1)// Ë÷ÒıÂäÔÚ½á¹ûÊıÖ®ÄÚ£¬ËµÃ÷ËÑË÷Ê±ÏÖĞĞË÷Òı±»×ª»»£¬ÏÖÔÚÒª×ª»»»ØÀ´
+                        ///////è¿˜åŸç°è¡Œæ’­æ”¾ç´¢å¼•å’Œç¨åæ’­æ”¾ç´¢å¼•
+                        if (g_iCurrFileIndex < g_iSearchResult && g_iCurrFileIndex != -1)// ç´¢å¼•è½åœ¨ç»“æœæ•°ä¹‹å†…ï¼Œè¯´æ˜æœç´¢æ—¶ç°è¡Œç´¢å¼•è¢«è½¬æ¢ï¼Œç°åœ¨è¦è½¬æ¢å›æ¥
                             g_iCurrFileIndex = List_GetArrayItemIndex(g_iCurrFileIndex);
                         if (iTempCurr != -1)
                             g_iCurrFileIndex = iTempCurr;
 
-                        // ×ª»»ÉÔºó²¥·Å£¬¸úÉÏÃæÍ¬Àí
+                        // è½¬æ¢ç¨åæ’­æ”¾ï¼Œè·Ÿä¸Šé¢åŒç†
                         if (g_iLaterPlay < g_iSearchResult && g_iLaterPlay != -1)
                             g_iLaterPlay = List_GetArrayItemIndex(g_iLaterPlay);
                         if (iTempLater != -1)
                             g_iLaterPlay = iTempLater;
-                        ///////»¹Ô­Î»ÖÃ
+                        ///////è¿˜åŸä½ç½®
                         g_iSearchResult = -1;
-                        List_ResetLV();// ÊıÄ¿±äÁË£¬²»ÊÇList_Redraw¶øÊÇList_ResetLV
-                        SendMessageW(g_hLV, LVM_ENSUREVISIBLE, iTopIndex + iVisibleItemCount - 1, TRUE);// »Øµ½Ô­À´µÄÎ»ÖÃ£¨»°ËµÎ¢Èí¾Í²»ÄÜ¸ã¸öÉèÖÃLV¹ö¶¯ÌõÎ»ÖÃµÄÏûÏ¢£¿£©
+                        List_ResetLV();// æ•°ç›®å˜äº†ï¼Œä¸æ˜¯List_Redrawè€Œæ˜¯List_ResetLV
+                        SendMessageW(g_hLV, LVM_ENSUREVISIBLE, iTopIndex + iVisibleItemCount - 1, TRUE);// å›åˆ°åŸæ¥çš„ä½ç½®ï¼ˆè¯è¯´å¾®è½¯å°±ä¸èƒ½æä¸ªè®¾ç½®LVæ»šåŠ¨æ¡ä½ç½®çš„æ¶ˆæ¯ï¼Ÿï¼‰
                         UI_RedrawBookMarkPos();
                     }
                 }
@@ -1278,10 +1278,10 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     iVisibleItemCount = SendMessageW(g_hLV, LVM_GETCOUNTPERPAGE, 0, 0);
 
                     pszEdit = new WCHAR[iLength + 1];
-                    GetWindowTextW(GetDlgItem(g_hBKRight, IDC_ED_SEARCH), pszEdit, iLength + 1);// È¡±à¼­¿òÎÄ±¾
-                    g_iSearchResult = 0;// ËÑË÷½á¹ûÖÃ0
+                    GetWindowTextW(GetDlgItem(g_hBKRight, IDC_ED_SEARCH), pszEdit, iLength + 1);// å–ç¼–è¾‘æ¡†æ–‡æœ¬
+                    g_iSearchResult = 0;// æœç´¢ç»“æœç½®0
                     int iIndex;
-                    BOOL b1 = (g_iCurrFileIndex != -1);// ÊÇ·ñÒª±È¶Ô²¢×ª»»ÏÖĞĞË÷Òı
+                    BOOL b1 = (g_iCurrFileIndex != -1);// æ˜¯å¦è¦æ¯”å¯¹å¹¶è½¬æ¢ç°è¡Œç´¢å¼•
                     BOOL b2 = (g_iLaterPlay != -1);
                     BOOL bTransed1 = FALSE, bTransed2 = FALSE;
                     for (int i = 0; i < g_ItemData->iCount; ++i)
@@ -1289,15 +1289,15 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                         iIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort;
                         if (iIndex == -1)
                             iIndex = i;
-                        // ÉÏÃæÊÇ´¦ÀíË÷ÒıÓ³Éä
-                        if (QKStrInStr(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iIndex))->pszName, pszEdit))// ±È¶ÔÎÄ±¾
+                        // ä¸Šé¢æ˜¯å¤„ç†ç´¢å¼•æ˜ å°„
+                        if (QKStrInStr(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iIndex))->pszName, pszEdit))// æ¯”å¯¹æ–‡æœ¬
                         {
-                            ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iSearchResult))->iMappingIndexSearch = iIndex;// Ó³Éä£¬Õâ¸öÒª´ÓÁĞ±íµÄ¿ªÍ·¿ªÊ¼Ó³Éä£¬Ë³´ÎÍùÏÂ£¬Ê¹ÓÃg_iSearchResult×öµ½ÕâÒ»µã
+                            ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iSearchResult))->iMappingIndexSearch = iIndex;// æ˜ å°„ï¼Œè¿™ä¸ªè¦ä»åˆ—è¡¨çš„å¼€å¤´å¼€å§‹æ˜ å°„ï¼Œé¡ºæ¬¡å¾€ä¸‹ï¼Œä½¿ç”¨g_iSearchResultåšåˆ°è¿™ä¸€ç‚¹
                             if (b1)
                             {
                                 if (i == g_iCurrFileIndex)
                                 {
-                                    g_iCurrFileIndex = g_iSearchResult;// ×ª»»ÏÖĞĞ²¥·ÅË÷Òı
+                                    g_iCurrFileIndex = g_iSearchResult;// è½¬æ¢ç°è¡Œæ’­æ”¾ç´¢å¼•
                                     b1 = FALSE;
                                     bTransed1 = TRUE;
                                 }
@@ -1306,12 +1306,12 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                             {
                                 if (i == g_iLaterPlay)
                                 {
-                                    g_iLaterPlay = g_iSearchResult;// ×ª»»ÉÔºó²¥·ÅË÷Òı
+                                    g_iLaterPlay = g_iSearchResult;// è½¬æ¢ç¨åæ’­æ”¾ç´¢å¼•
                                     b2 = FALSE;
                                     bTransed2 = TRUE;
                                 }
                             }
-                            ++g_iSearchResult;// ½á¹ûÊıµİÔö
+                            ++g_iSearchResult;// ç»“æœæ•°é€’å¢
                         }
                     }
 
@@ -1336,35 +1336,35 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             return 0;
             case IDC_BT_MANAGING:
             {
-                static BOOL bAscending = TRUE;// ÉıĞò£º´ÓĞ¡µ½´ó£»½µĞò£º´Ó´óµ½Ğ¡
+                static BOOL bAscending = TRUE;// å‡åºï¼šä»å°åˆ°å¤§ï¼›é™åºï¼šä»å¤§åˆ°å°
                 HMENU hMenu = CreatePopupMenu();
 				UINT uFlags = ((g_iSearchResult != -1) || !g_ItemData->iCount) ? MF_GRAYED : 0;
-                AppendMenuW(hMenu, g_bSort ? uFlags : MF_GRAYED, IDMI_LM_SORT_DEF, L"Ä¬ÈÏÅÅĞò");
-                AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_FILENAME, L"°´ÎÄ¼şÃûÅÅĞò");
-                AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_NAME, L"°´Ãû³ÆÅÅĞò");
-                AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_CTIME, L"°´´´½¨Ê±¼äÅÅĞò");
-                AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_MTIME, L"°´ĞŞ¸ÄÊ±¼äÅÅĞò");
-                AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_REVERSE, L"µ¹ÖÃÅÅĞò");
+                AppendMenuW(hMenu, g_bSort ? uFlags : MF_GRAYED, IDMI_LM_SORT_DEF, L"é»˜è®¤æ’åº");
+                AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_FILENAME, L"æŒ‰æ–‡ä»¶åæ’åº");
+                AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_NAME, L"æŒ‰åç§°æ’åº");
+                AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_CTIME, L"æŒ‰åˆ›å»ºæ—¶é—´æ’åº");
+                AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_MTIME, L"æŒ‰ä¿®æ”¹æ—¶é—´æ’åº");
+                AppendMenuW(hMenu, uFlags, IDMI_LM_SORT_REVERSE, L"å€’ç½®æ’åº");
                 AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-                AppendMenuW(hMenu, 0, IDMI_LM_SORT_ASCENDING, L"ÉıĞò");
-                AppendMenuW(hMenu, 0, IDMI_LM_SORT_DESCENDING, L"½µĞò");
+                AppendMenuW(hMenu, 0, IDMI_LM_SORT_ASCENDING, L"å‡åº");
+                AppendMenuW(hMenu, 0, IDMI_LM_SORT_DESCENDING, L"é™åº");
                 CheckMenuRadioItem(hMenu, IDMI_LM_SORT_ASCENDING, IDMI_LM_SORT_DESCENDING,
-                    GS.bAscending ? IDMI_LM_SORT_ASCENDING : IDMI_LM_SORT_DESCENDING, MF_BYCOMMAND);// ´¦Àíµ¥Ñ¡Ïî
+                    GS.bAscending ? IDMI_LM_SORT_ASCENDING : IDMI_LM_SORT_DESCENDING, MF_BYCOMMAND);// å¤„ç†å•é€‰é¡¹
 
-                AppendMenuW(hMenu, GS.bNoBookMarkWhenSort ? MF_CHECKED : 0, IDMI_LM_NOBOOKMARK, L"ÅÅĞòÊ±²»ÏÔÊ¾ÊéÇ©±ê¼Ç");
-                AppendMenuW(hMenu, g_bSort ? uFlags : MF_GRAYED, IDMI_LM_FIXSORT, L"¹Ì¶¨ÎªÄ¬ÈÏÅÅĞò");
+                AppendMenuW(hMenu, GS.bNoBookMarkWhenSort ? MF_CHECKED : 0, IDMI_LM_NOBOOKMARK, L"æ’åºæ—¶ä¸æ˜¾ç¤ºä¹¦ç­¾æ ‡è®°");
+                AppendMenuW(hMenu, g_bSort ? uFlags : MF_GRAYED, IDMI_LM_FIXSORT, L"å›ºå®šä¸ºé»˜è®¤æ’åº");
                 AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-                AppendMenuW(hMenu, uFlags, IDMI_LM_BOOKMARK, L"ÊéÇ©...");
-                AppendMenuW(hMenu, 0, IDMI_LM_DETAIL, L"ÏêÏ¸ĞÅÏ¢...");
-                AppendMenuW(hMenu, 0, IDMI_LM_SETLVDEFWIDTH, L"½«ÁĞ±íµ÷ÖÁÄ¬ÈÏ¿í¶È");
-                AppendMenuW(hMenu, 0, IDMI_LM_UPDATETIME, L"Ç¿ÖÆ¸üĞÂÁĞ±íÊ±¼äĞÅÏ¢");
+                AppendMenuW(hMenu, uFlags, IDMI_LM_BOOKMARK, L"ä¹¦ç­¾...");
+                AppendMenuW(hMenu, 0, IDMI_LM_DETAIL, L"è¯¦ç»†ä¿¡æ¯...");
+                AppendMenuW(hMenu, 0, IDMI_LM_SETLVDEFWIDTH, L"å°†åˆ—è¡¨è°ƒè‡³é»˜è®¤å®½åº¦");
+                AppendMenuW(hMenu, 0, IDMI_LM_UPDATETIME, L"å¼ºåˆ¶æ›´æ–°åˆ—è¡¨æ—¶é—´ä¿¡æ¯");
                 RECT rc;
                 GetWindowRect((HWND)lParam, &rc);
                 int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, rc.left, rc.bottom, 0, hWnd, NULL);
                 DestroyMenu(hMenu);
                 switch (iRet)
                 {
-                case IDMI_LM_SORT_DEF:// ·µ»ØÄ¬ÈÏÅÅĞò
+                case IDMI_LM_SORT_DEF:// è¿”å›é»˜è®¤æ’åº
                 {
                     if (g_iCurrFileIndex != -1)
                         g_iCurrFileIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iCurrFileIndex))->iMappingIndexSort;
@@ -1380,15 +1380,15 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     UI_RedrawBookMarkPos();
                 }
                 return 0;
-                case IDMI_LM_SORT_FILENAME:// °´ÎÄ¼şÃûÅÅĞò
+                case IDMI_LM_SORT_FILENAME:// æŒ‰æ–‡ä»¶åæ’åº
                 {
                     g_bSort = TRUE;
                     int iCount = g_ItemData->iCount;
                     PLAYERLISTUNIT* p1, * p2;
                     int m, n;
                     int iResult = GS.bAscending ? 1 : -1;
-                    // StrCmpLogicalW£º×Ö·û´®ÏàÍ¬·µ»ØÁã£»psz1´óÓÚpsz2·µ»Ø1£»psz1Ğ¡ÓÚpsz2·µ»Ø-1
-                    // Ã°Åİ.........
+                    // StrCmpLogicalWï¼šå­—ç¬¦ä¸²ç›¸åŒè¿”å›é›¶ï¼›psz1å¤§äºpsz2è¿”å›1ï¼›psz1å°äºpsz2è¿”å›-1
+                    // å†’æ³¡.........
                     for (int i = 0; i < iCount - 1; ++i)
                     {
                         for (int j = 0; j < iCount - i - 1; ++j)
@@ -1409,14 +1409,14 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     Sort_End();
                 }
                 return 0;
-                case IDMI_LM_SORT_NAME:// °´ÁĞ±íÃû³ÆÅÅĞò
+                case IDMI_LM_SORT_NAME:// æŒ‰åˆ—è¡¨åç§°æ’åº
                 {
                     g_bSort = TRUE;
                     int iCount = g_ItemData->iCount;
                     PLAYERLISTUNIT* p1, * p2;
                     int m, n;
                     int iResult = GS.bAscending ? 1 : -1;
-                    // StrCmpLogicalW£º×Ö·û´®ÏàÍ¬·µ»ØÁã£»psz1´óÓÚpsz2·µ»Ø1£»psz1Ğ¡ÓÚpsz2·µ»Ø-1
+                    // StrCmpLogicalWï¼šå­—ç¬¦ä¸²ç›¸åŒè¿”å›é›¶ï¼›psz1å¤§äºpsz2è¿”å›1ï¼›psz1å°äºpsz2è¿”å›-1
                     for (int i = 0; i < iCount - 1; ++i)
                     {
                         for (int j = 0; j < iCount - i - 1; ++j)
@@ -1437,15 +1437,15 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     Sort_End();
                 }
                 return 0;
-                case IDMI_LM_SORT_CTIME:// °´´´½¨Ê±¼äÅÅĞò
-                case IDMI_LM_SORT_MTIME:// °´ĞŞ¸ÄÊ±¼äÅÅĞò
+                case IDMI_LM_SORT_CTIME:// æŒ‰åˆ›å»ºæ—¶é—´æ’åº
+                case IDMI_LM_SORT_MTIME:// æŒ‰ä¿®æ”¹æ—¶é—´æ’åº
                 {
                     g_bSort = TRUE;
                     int iCount = g_ItemData->iCount;
                     PLAYERLISTUNIT* p1, * p2;
                     int m, n;
                     int iResult = GS.bAscending ? 1 : -1;
-                    // CompareFileTime£ºµÚÒ»¸öÎÄ¼şÊ±¼äÔçÓÚµÚ¶ş¸ö·µ»Ø-1£»µÚÒ»¸öµÈÓÚµÚ¶ş¸ö·µ»Ø0£»µÚÒ»¸öÍíÓÚµÚ¶ş¸ö·µ»Ø1
+                    // CompareFileTimeï¼šç¬¬ä¸€ä¸ªæ–‡ä»¶æ—¶é—´æ—©äºç¬¬äºŒä¸ªè¿”å›-1ï¼›ç¬¬ä¸€ä¸ªç­‰äºç¬¬äºŒä¸ªè¿”å›0ï¼›ç¬¬ä¸€ä¸ªæ™šäºç¬¬äºŒä¸ªè¿”å›1
                     WIN32_FIND_DATAW wfd;
                     HANDLE hFind;
                     FILETIME* ft = new FILETIME[iCount];
@@ -1453,7 +1453,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     {
                         for (int i = 0; i < iCount; ++i)
                         {
-                            hFind = FindFirstFileW(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->pszFile, &wfd);// ÕâÑù±ÈÏÈCreateFileÔÙGetFileTime¿ì
+                            hFind = FindFirstFileW(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->pszFile, &wfd);// è¿™æ ·æ¯”å…ˆCreateFileå†GetFileTimeå¿«
                             memcpy(ft + i, &wfd.ftCreationTime, sizeof(FILETIME));
                             FindClose(hFind);
                         }
@@ -1462,7 +1462,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     {
                         for (int i = 0; i < iCount; ++i)
                         {
-                            hFind = FindFirstFileW(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->pszFile, &wfd);// ÕâÑù±ÈÏÈCreateFileÔÙGetFileTime¿ì
+                            hFind = FindFirstFileW(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->pszFile, &wfd);// è¿™æ ·æ¯”å…ˆCreateFileå†GetFileTimeå¿«
                             memcpy(ft + i, &wfd.ftLastWriteTime, sizeof(FILETIME));
                             FindClose(hFind);
                         }
@@ -1486,13 +1486,13 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     Sort_End();
                 }
                 return 0;
-                case IDMI_LM_SORT_ASCENDING:// ÉıĞò
+                case IDMI_LM_SORT_ASCENDING:// å‡åº
                     GS.bAscending = TRUE;
                     return 0;
-                case IDMI_LM_SORT_DESCENDING:// ½µĞò
+                case IDMI_LM_SORT_DESCENDING:// é™åº
                     GS.bAscending = FALSE;
                     return 0;
-                case IDMI_LM_FIXSORT:// ¹Ì¶¨ÎªÄ¬ÈÏÅÅĞò
+                case IDMI_LM_FIXSORT:// å›ºå®šä¸ºé»˜è®¤æ’åº
                 {
                     g_bSort = FALSE;
                     PLAYERLISTUNIT** p;
@@ -1512,15 +1512,15 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     List_Redraw();
                 }
                 return 0;
-                case IDMI_LM_DETAIL:// ²é¿´ÁĞ±íÏêÏ¸ĞÅÏ¢
+                case IDMI_LM_DETAIL:// æŸ¥çœ‹åˆ—è¡¨è¯¦ç»†ä¿¡æ¯
                 {
 
                 }
                 return 0;
-                case IDMI_LM_BOOKMARK:// ÊéÇ©¹ÜÀí
+                case IDMI_LM_BOOKMARK:// ä¹¦ç­¾ç®¡ç†
                     DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_BOOKMARK), g_hBKList, DlgProc_BookMark, 0);
                     return 0;
-                case IDMI_LM_SORT_REVERSE:// µ¹ÖÃÅÅĞò
+                case IDMI_LM_SORT_REVERSE:// å€’ç½®æ’åº
                 {
                     g_bSort = TRUE;
                     int m;
@@ -1555,7 +1555,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     UI_RedrawBookMarkPos();
                 }
                 return 0;
-                case IDMI_LM_SETLVDEFWIDTH:// ÖÃÄ¬ÈÏÁĞ±í¿í
+                case IDMI_LM_SETLVDEFWIDTH:// ç½®é»˜è®¤åˆ—è¡¨å®½
 				{
 					if (g_bListSeped)
 					{
@@ -1602,7 +1602,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
         EndPaint(hWnd, &ps);
     }
     return 0;
-    case WM_CTLCOLORSTATIC:// ¾²Ì¬×ÅÉ«
+    case WM_CTLCOLORSTATIC:// é™æ€ç€è‰²
         SetTextColor((HDC)wParam, QKCOLOR_CYANDEEPER);
         return (LRESULT)GetStockObject(WHITE_BRUSH);
     }
@@ -1614,7 +1614,7 @@ LRESULT CALLBACK WndProc_Edit(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     {
     case WM_KEYDOWN:
     {
-        if (wParam == VK_RETURN)//°´»Ø³µ¼ü
+        if (wParam == VK_RETURN)//æŒ‰å›è½¦é”®
             SendMessageW(g_hBKRight, WM_COMMAND, MAKELONG(IDC_BT_SEARCH, 0), (LPARAM)GetDlgItem(g_hBKRight, IDC_BT_SEARCH));
     }
     }
@@ -1629,12 +1629,12 @@ LRESULT CALLBACK WndProc_ListView(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
     switch (message)
     {
-    case WM_LBUTTONDOWN:// °¡°¡°¡ÎÒÃ»°ì·¨ÁË£¬²»ÕâÃ´Ğ´´Ó±ğµÄ¿Ø¼şµã¹ıÀ´µÄÊ±ºòLV²»»á»ñµÃ½¹µã£¬WM_KEYDOWNÒ²¾Í²»»á·¢¸øLV......
+    case WM_LBUTTONDOWN:// å•Šå•Šå•Šæˆ‘æ²¡åŠæ³•äº†ï¼Œä¸è¿™ä¹ˆå†™ä»åˆ«çš„æ§ä»¶ç‚¹è¿‡æ¥çš„æ—¶å€™LVä¸ä¼šè·å¾—ç„¦ç‚¹ï¼ŒWM_KEYDOWNä¹Ÿå°±ä¸ä¼šå‘ç»™LV......
         SetFocus(hWnd);
         break;
     case WM_KEYDOWN:
     {
-        if (wParam == VK_RETURN)// °´»Ø³µ¼ü²¥·ÅÇúÄ¿
+        if (wParam == VK_RETURN)// æŒ‰å›è½¦é”®æ’­æ”¾æ›²ç›®
         {
             int iCount = QKArray_GetCount(g_ItemData);
             int i;
@@ -1647,14 +1647,14 @@ LRESULT CALLBACK WndProc_ListView(HWND hWnd, UINT message, WPARAM wParam, LPARAM
             if (i != iCount)
                 Playing_PlayFile(i);
         }
-        else if (wParam == 0x41)// A¼ü°´ÏÂ
+        else if (wParam == 0x41)// Aé”®æŒ‰ä¸‹
         {
-            if (GetKeyState(VK_CONTROL) & 0x80000000)// Ctrl + A È«Ñ¡
+            if (GetKeyState(VK_CONTROL) & 0x80000000)// Ctrl + A å…¨é€‰
             {
                 LVITEMW li;
                 li.stateMask = LVIS_SELECTED;
                 li.state = LVIS_SELECTED;
-                SendMessageW(hWnd, LVM_SETITEMSTATE, -1, (LPARAM)&li);// wParam = -1£ºÓ¦ÓÃÓÚËùÓĞÏîÄ¿
+                SendMessageW(hWnd, LVM_SETITEMSTATE, -1, (LPARAM)&li);// wParam = -1ï¼šåº”ç”¨äºæ‰€æœ‰é¡¹ç›®
             }
         }
     }
@@ -1669,53 +1669,52 @@ INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
     {
     case WM_INITDIALOG:
     {
-        // ÉèÖÃÌáÊ¾ÎÄ±¾
+        // è®¾ç½®æç¤ºæ–‡æœ¬
         if (lParam == DLGTYPE_SAVELIST)
         {
-            SetDlgItemTextW(hDlg, IDC_ST_TIP, L"Ñ¡ÔñÒ»¸öÎÄ¼ş¸²¸Ç£¬»òĞÂ½¨Ò»¸öĞÂÎÄ¼ş");
-            SetWindowTextW(hDlg, L"±£´æ¸èÇúÁĞ±í");
+            SetDlgItemTextW(hDlg, IDC_ST_TIP, L"é€‰æ‹©ä¸€ä¸ªæ–‡ä»¶è¦†ç›–ï¼Œæˆ–æ–°å»ºä¸€ä¸ªæ–°æ–‡ä»¶");
+            SetWindowTextW(hDlg, L"ä¿å­˜æ­Œæ›²åˆ—è¡¨");
         }
         else if (lParam == DLGTYPE_LOADLIST)
         {
-            SetDlgItemTextW(hDlg, IDC_ST_TIP, L"Ñ¡ÔñÒ»¸öÎÄ¼şÔØÈë");
-            SetWindowTextW(hDlg, L"ÔØÈë¸èÇúÁĞ±í");
+            SetDlgItemTextW(hDlg, IDC_ST_TIP, L"é€‰æ‹©ä¸€ä¸ªæ–‡ä»¶è½½å…¥");
+            SetWindowTextW(hDlg, L"è½½å…¥æ­Œæ›²åˆ—è¡¨");
         }
         else
             EndDialog(hDlg, NULL);
         dwDlgType = lParam;
         HWND hLV = GetDlgItem(hDlg, IDC_LV_LISTFILE);
-        // ²åÈëÁĞ
+        // æ’å…¥åˆ—
         LVCOLUMNW lc = { 0 };
         WCHAR szTitle[5];
         lc.mask = LVCF_TEXT | LVCF_WIDTH;
 
-        lstrcpyW(szTitle, L"ÁĞ±íÎÄ¼ş");
+        lstrcpyW(szTitle, L"åˆ—è¡¨æ–‡ä»¶");
         lc.pszText = szTitle;
         lc.cx = DPI(300);
         SendMessageW(hLV, LVM_INSERTCOLUMNW, 0, (LPARAM)&lc);
 
-        lstrcpyW(szTitle, L"ĞŞ¸ÄÊ±¼ä");
+        lstrcpyW(szTitle, L"ä¿®æ”¹æ—¶é—´");
         lc.pszText = szTitle;
         lc.cx = DPI(150);
         SendMessageW(hLV, LVM_INSERTCOLUMNW, 1, (LPARAM)&lc);
-        // ÉèÖÃ·ç¸ñ
-        SetWindowLongPtrW(hLV, GWL_STYLE, GetWindowLongW(hLV, GWL_STYLE) | LVS_SINGLESEL);// µ¥Ò»Ñ¡Ôñ
+        // è®¾ç½®é£æ ¼
+        SetWindowLongPtrW(hLV, GWL_STYLE, GetWindowLongW(hLV, GWL_STYLE) | LVS_SINGLESEL);// å•ä¸€é€‰æ‹©
         DWORD dwStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
-        SendMessageW(hLV, LVM_SETEXTENDEDLISTVIEWSTYLE, dwStyle, dwStyle);// ÕûĞĞÑ¡Ôñ£¬Ë«»º³å
-        SetWindowTheme(hLV, L"Explorer", NULL);// ¿ÉÊÓ·ç¸ñ
-        // Ã¶¾ÙÎÄ¼ş
+        SendMessageW(hLV, LVM_SETEXTENDEDLISTVIEWSTYLE, dwStyle, dwStyle);// æ•´è¡Œé€‰æ‹©ï¼ŒåŒç¼“å†²
+        SetWindowTheme(hLV, L"Explorer", NULL);// å¯è§†é£æ ¼
+        // æšä¸¾æ–‡ä»¶
         WIN32_FIND_DATAW wfd;
         WCHAR szListFile[MAX_PATH];
         lstrcpyW(szListFile, g_pszListDir);
-        lstrcatW(szListFile, L"*.QKList");// ×ª»»QKListÀ©Õ¹Ãû
-        HANDLE hFind = FindFirstFileW(szListFile, &wfd);// ¿ªÊ¼Ã¶¾Ù
+        lstrcatW(szListFile, L"*.QKList");// è½¬æ¢QKListæ‰©å±•å
+        HANDLE hFind = FindFirstFileW(szListFile, &wfd);// å¼€å§‹æšä¸¾
         if (hFind == INVALID_HANDLE_VALUE)
             return FALSE;
         int iIndex;
         FILETIME ft;
         SYSTEMTIME st;
         WCHAR szTime[20];
-        WCHAR szBuffer[3];
         LVITEMW li;
         do
         {
@@ -1724,7 +1723,7 @@ INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
             li.iSubItem = 0;
             PathRemoveExtensionW(wfd.cFileName);
             li.pszText = wfd.cFileName;
-            iIndex = SendMessageW(hLV, LVM_INSERTITEMW, 0, (LPARAM)&li);// ²åÈë±íÏî
+            iIndex = SendMessageW(hLV, LVM_INSERTITEMW, 0, (LPARAM)&li);// æ’å…¥è¡¨é¡¹
 
             FileTimeToLocalFileTime(&wfd.ftLastWriteTime, &ft);
             FileTimeToSystemTime(&ft, &st);
@@ -1734,11 +1733,11 @@ INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
             li.iSubItem = 1;
             li.pszText = szTime;
-            SendMessageW(hLV, LVM_SETITEMTEXTW, iIndex, (LPARAM)&li);// ÖÃ±êÌâ
-        } while (FindNextFileW(hFind, &wfd));// ¼ÌĞøÃ¶¾Ù
-        FindClose(hFind);// ÊÍ·Å
+            SendMessageW(hLV, LVM_SETITEMTEXTW, iIndex, (LPARAM)&li);// ç½®æ ‡é¢˜
+        } while (FindNextFileW(hFind, &wfd));// ç»§ç»­æšä¸¾
+        FindClose(hFind);// é‡Šæ”¾
     }
-    return FALSE;// ·µ»ØTRUE½«Éè¶¨¾ßÓĞWS_TABSTOP·ç¸ñµÄµÚÒ»¸ö¿Ø¼ş£¨wParamÎª´°¿Ú¾ä±ú£©£¬·µ»ØFALSEÔò²»Éè¶¨½¹µã
+    return FALSE;// è¿”å›TRUEå°†è®¾å®šå…·æœ‰WS_TABSTOPé£æ ¼çš„ç¬¬ä¸€ä¸ªæ§ä»¶ï¼ˆwParamä¸ºçª—å£å¥æŸ„ï¼‰ï¼Œè¿”å›FALSEåˆ™ä¸è®¾å®šç„¦ç‚¹
     case WM_CLOSE:
         EndDialog(hDlg, NULL);
         return TRUE;
@@ -1762,7 +1761,7 @@ INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
                 if (PathFileExistsW(pResult->szFileName))
                     EndDialog(hDlg, (INT_PTR)pResult);
                 else
-					QKMessageBox(L"ÁĞ±íÎÄ¼şÎŞĞ§", L"Ñ¡¶¨µÄÁĞ±íÎÄ¼ş²»´æÔÚ", (HICON)TD_ERROR_ICON, L"´íÎó", hDlg);
+					QKMessageBox(L"åˆ—è¡¨æ–‡ä»¶æ— æ•ˆ", L"é€‰å®šçš„åˆ—è¡¨æ–‡ä»¶ä¸å­˜åœ¨", (HICON)TD_ERROR_ICON, L"é”™è¯¯", hDlg);
             }
             else
                 EndDialog(hDlg, (INT_PTR)pResult);
@@ -1799,7 +1798,7 @@ INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
     }
     return FALSE;
     }
-    return FALSE;// ´¦ÀíÒ»ÌõÏûÏ¢Ê±»á·µ»ØTRUE£¬²»´¦ÀíÒ»ÌõÏûÏ¢Ê±·µ»ØFALSE
+    return FALSE;// å¤„ç†ä¸€æ¡æ¶ˆæ¯æ—¶ä¼šè¿”å›TRUEï¼Œä¸å¤„ç†ä¸€æ¡æ¶ˆæ¯æ—¶è¿”å›FALSE
 }
 INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -1811,30 +1810,30 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
     {
         hLV = GetDlgItem(hDlg, IDC_LV_BOOKMARK);
         hStatic = GetDlgItem(hDlg, IDC_ST_BMCLR);
-        ///////////////ÉèÖÃ·ç¸ñ
+        ///////////////è®¾ç½®é£æ ¼
         DWORD dwStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
         SendMessageW(hLV, LVM_SETEXTENDEDLISTVIEWSTYLE, dwStyle, dwStyle);
         SetWindowTheme(hLV, L"Explorer", NULL);
-        ///////////////²åÈëÁĞ
+        ///////////////æ’å…¥åˆ—
         LVCOLUMNW lc;
         lc.mask = LVCF_TEXT | LVCF_WIDTH;
-        lc.pszText = (PWSTR)L"Ë÷Òı";
+        lc.pszText = (PWSTR)L"ç´¢å¼•";
         lc.cx = DPI(34);
         SendMessageW(hLV, LVM_INSERTCOLUMNW, 0, (LPARAM)&lc);
 
-        lc.pszText = (PWSTR)L"Ãû³Æ";
+        lc.pszText = (PWSTR)L"åç§°";
         lc.cx = DPI(110);
         SendMessageW(hLV, LVM_INSERTCOLUMNW, 1, (LPARAM)&lc);
 
-        lc.pszText = (PWSTR)L"ÑÕÉ«";
+        lc.pszText = (PWSTR)L"é¢œè‰²";
         lc.cx = DPI(70);
         SendMessageW(hLV, LVM_INSERTCOLUMNW, 2, (LPARAM)&lc);
 
-        lc.pszText = (PWSTR)L"±¸×¢";
+        lc.pszText = (PWSTR)L"å¤‡æ³¨";
         lc.cx = DPI(170);
         SendMessageW(hLV, LVM_INSERTCOLUMNW, 3, (LPARAM)&lc);
         LVITEMW li;
-        ///////////////²åÈë±íÏî
+        ///////////////æ’å…¥è¡¨é¡¹
         SendMessageW(hLV, WM_SETREDRAW, FALSE, 0);
         li.mask = LVIF_TEXT | LVIF_PARAM;
         PLAYERLISTUNIT* p;
@@ -1852,18 +1851,18 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
                 wsprintfW(szBuf, L"%d", iIndex);
                 li.pszText = szBuf;
                 li.lParam = iIndex;
-                SendMessageW(hLV, LVM_INSERTITEMW, 0, (LPARAM)&li);// Ë÷Òı
+                SendMessageW(hLV, LVM_INSERTITEMW, 0, (LPARAM)&li);// ç´¢å¼•
 
                 li.iSubItem = 1;
                 li.pszText = p->pszBookMark;
-                SendMessageW(hLV, LVM_SETITEMTEXTW, j, (LPARAM)&li);// Ãû³Æ
+                SendMessageW(hLV, LVM_SETITEMTEXTW, j, (LPARAM)&li);// åç§°
                 li.iSubItem = 2;
-                wsprintfW(szBuf, L"0x%06X", QKGDIClrToCommonClr(p->crBookMark));// Èç¹ûÔÚ¸ñÊ½»¯ÎÄ±¾Àï¼Ó#»á°Ñ0xÀïµÄxÒ»Æğ´óĞ´£¬ÄÇÑù²»Ì«ºÃ¿´...
+                wsprintfW(szBuf, L"0x%06X", QKGDIClrToCommonClr(p->crBookMark));// å¦‚æœåœ¨æ ¼å¼åŒ–æ–‡æœ¬é‡ŒåŠ #ä¼šæŠŠ0xé‡Œçš„xä¸€èµ·å¤§å†™ï¼Œé‚£æ ·ä¸å¤ªå¥½çœ‹...
                 li.pszText = szBuf;
-                SendMessageW(hLV, LVM_SETITEMTEXTW, j, (LPARAM)&li);// ÑÕÉ«
+                SendMessageW(hLV, LVM_SETITEMTEXTW, j, (LPARAM)&li);// é¢œè‰²
                 li.iSubItem = 3;
                 li.pszText = p->pszBookMarkComment;
-                SendMessageW(hLV, LVM_SETITEMTEXTW, j, (LPARAM)&li);// ±¸×¢
+                SendMessageW(hLV, LVM_SETITEMTEXTW, j, (LPARAM)&li);// å¤‡æ³¨
                 ++j;
             }
         }
@@ -1894,7 +1893,7 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
                     SendMessageW(hLV, LVM_DELETEITEM, i, 0);
                 }
             }
-            ///////////////Çå³ıÏÖĞĞĞÅÏ¢
+            ///////////////æ¸…é™¤ç°è¡Œä¿¡æ¯
             SetWindowTextW(GetDlgItem(hDlg, IDC_ED_BMNAME), NULL);
             SetWindowTextW(GetDlgItem(hDlg, IDC_ED_BMCOMMENT), NULL);
             SetWindowTextW(GetDlgItem(hDlg, IDC_ED_BMCLR), NULL);
@@ -1906,7 +1905,7 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
         return TRUE;
         case IDC_BT_BMSAVE:
         {
-            ///////////////È¡Ê×Ñ¡ÖĞÏî
+            ///////////////å–é¦–é€‰ä¸­é¡¹
             int i;
             int iCount = SendMessageW(hLV, LVM_GETITEMCOUNT, 0, 0);
             for (i = 0; i < iCount; ++i)
@@ -1923,7 +1922,7 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
             SendMessageW(hLV, LVM_GETITEMW, 0, (LPARAM)&li);
             PLAYERLISTUNIT* p = List_GetArrayItem(li.lParam);
             int iLength;
-            ///////////////Ãû³Æ
+            ///////////////åç§°
             iLength = GetWindowTextLengthW(GetDlgItem(hDlg, IDC_ED_BMNAME));
             delete[] p->pszBookMark;
             if (!iLength)
@@ -1936,7 +1935,7 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
             li.iSubItem = 1;
             li.pszText = p->pszBookMark;
             SendMessageW(hLV, LVM_SETITEMTEXTW, i, (LPARAM)&li);
-            ///////////////±¸×¢
+            ///////////////å¤‡æ³¨
             iLength = GetWindowTextLengthW(GetDlgItem(hDlg, IDC_ED_BMCOMMENT));
             delete[] p->pszBookMarkComment;
             if (!iLength)
@@ -1949,7 +1948,7 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
             li.iSubItem = 3;
             li.pszText = p->pszBookMarkComment;
             SendMessageW(hLV, LVM_SETITEMTEXTW, i, (LPARAM)&li);
-            ///////////////ÑÕÉ«
+            ///////////////é¢œè‰²
             PWSTR pszBuf;
             iLength = GetWindowTextLengthW(GetDlgItem(hDlg, IDC_ED_BMCLR));
             pszBuf = new WCHAR[iLength + 1];
@@ -1962,7 +1961,7 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
             delete[] pszBuf;
         }
         return TRUE;
-        case IDC_BT_BMJUMP:// Ìø×ªÇÒ²»¹Ø±Õ¶Ô»°¿ò
+        case IDC_BT_BMJUMP:// è·³è½¬ä¸”ä¸å…³é—­å¯¹è¯æ¡†
         {
             int i;
             int iCount = SendMessageW(hLV, LVM_GETITEMCOUNT, 0, 0);
@@ -1983,7 +1982,7 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
         return TRUE;
         case IDC_ST_BMCLR:
         {
-            if (HIWORD(wParam) == STN_DBLCLK)// ÒªÇóSS_NOTIFYÑùÊ½£»Ë«»÷¾²Ì¬ÖØĞÂÑ¡ÔñÑÕÉ«
+            if (HIWORD(wParam) == STN_DBLCLK)// è¦æ±‚SS_NOTIFYæ ·å¼ï¼›åŒå‡»é™æ€é‡æ–°é€‰æ‹©é¢œè‰²
             {
                 CHOOSECOLORW cc = { sizeof(CHOOSECOLORW) };
                 cc.hwndOwner = hDlg;
@@ -1993,11 +1992,11 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
                 {
                     if (hbrStatic)
                         DeleteObject(hbrStatic);
-                    hbrStatic = CreateSolidBrush(cc.rgbResult);// ¸üĞÂ¾²Ì¬»­Ë¢
+                    hbrStatic = CreateSolidBrush(cc.rgbResult);// æ›´æ–°é™æ€ç”»åˆ·
                     InvalidateRect(hStatic, NULL, TRUE);
                     WCHAR szBuf[20];
                     wsprintfW(szBuf, L"0x%06X", QKGDIClrToCommonClr(cc.rgbResult));
-                    SetWindowTextW(GetDlgItem(hDlg, IDC_ED_BMCLR), szBuf);// ÖØÉè±à¼­¿ò
+                    SetWindowTextW(GetDlgItem(hDlg, IDC_ED_BMCLR), szBuf);// é‡è®¾ç¼–è¾‘æ¡†
                 }
             }
         }
@@ -2053,7 +2052,7 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
                 }
             }
             return TRUE;
-            case NM_DBLCLK:// Ìø×ªÇÒ¹Ø±Õ¶Ô»°¿ò
+            case NM_DBLCLK:// è·³è½¬ä¸”å…³é—­å¯¹è¯æ¡†
                 DlgProc_BookMark(hDlg, WM_COMMAND, MAKELONG(IDC_BT_BMJUMP, 0), 0);
                 SetFocus(g_hLV);
                 EndDialog(hDlg, 0);
@@ -2062,9 +2061,9 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
         }
     }
     break;
-    case WM_CTLCOLORSTATIC:// ¾²Ì¬×ÅÉ«
+    case WM_CTLCOLORSTATIC:// é™æ€ç€è‰²
         if (lParam == (LPARAM)hStatic)
-            return (INT_PTR)hbrStatic;// Ã»ÓĞ»­Ë¢µÄÊ±ºò»­Ë¢¾ä±úÎªNULL£¬ÕâÊ±ºòÏàµ±ÓÚ·µ»ØFALSE£¬Ò²¾ÍÊÇÊ¹ÓÃÄ¬ÈÏ´¦Àí
+            return (INT_PTR)hbrStatic;// æ²¡æœ‰ç”»åˆ·çš„æ—¶å€™ç”»åˆ·å¥æŸ„ä¸ºNULLï¼Œè¿™æ—¶å€™ç›¸å½“äºè¿”å›FALSEï¼Œä¹Ÿå°±æ˜¯ä½¿ç”¨é»˜è®¤å¤„ç†
         else
             break;
     }
@@ -2072,7 +2071,7 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 }
 HRESULT CALLBACK OLEDrag_GiveFeedBack(DWORD dwEffect)
 {
-    return DRAGDROP_S_USEDEFAULTCURSORS;// Ê¹ÓÃÄ¬ÈÏ¹â±ê
+    return DRAGDROP_S_USEDEFAULTCURSORS;// ä½¿ç”¨é»˜è®¤å…‰æ ‡
 }
 HRESULT CALLBACK OLEDrop_OnEnter(IDataObject* pDataObj, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
@@ -2235,7 +2234,7 @@ HRESULT CALLBACK OLEDrop_OnDrop(IDataObject* pDataObj, DWORD grfKeyState, POINTL
 
     FORMATETC fe =
     {
-        g_uMyClipBoardFmt,
+        (CLIPFORMAT)g_uMyClipBoardFmt,
         NULL,
         DVASPECT_CONTENT,
         -1,
@@ -2246,18 +2245,18 @@ HRESULT CALLBACK OLEDrop_OnDrop(IDataObject* pDataObj, DWORD grfKeyState, POINTL
     sm.tymed = TYMED_HGLOBAL;
     sm.pUnkForRelease = NULL;
 
-    if (SUCCEEDED(pDataObj->GetData(&fe, &sm)))// ÅĞ¶ÏÓĞÃ»ÓĞ×Ô¶¨ÒåÍÏ·ÅĞÅÏ¢
+    if (SUCCEEDED(pDataObj->GetData(&fe, &sm)))// åˆ¤æ–­æœ‰æ²¡æœ‰è‡ªå®šä¹‰æ‹–æ”¾ä¿¡æ¯
     {
         int* p = (int*)GlobalLock(sm.hGlobal);
         if (!p)
             return 0;
 
-        int iVer = *p;// ¶Á°æ±¾ºÅ
+        int iVer = *p;// è¯»ç‰ˆæœ¬å·
         if (iVer == QKOLEDRAGVER_1)
         {
             ++p;
-            DWORD dwProcID = *(DWORD*)p;// ¶Á½ø³ÌID
-            if (dwProcID != GetCurrentProcessId())// ÅĞ¶ÏÊÇ²»ÊÇ×Ô¼ºÏò×Ô¼ºÍÏ·Å
+            DWORD dwProcID = *(DWORD*)p;// è¯»è¿›ç¨‹ID
+            if (dwProcID != GetCurrentProcessId())// åˆ¤æ–­æ˜¯ä¸æ˜¯è‡ªå·±å‘è‡ªå·±æ‹–æ”¾
             {
                 GlobalUnlock(sm.hGlobal);
                 goto CommonDragFile;
@@ -2289,18 +2288,18 @@ HRESULT CALLBACK OLEDrop_OnDrop(IDataObject* pDataObj, DWORD grfKeyState, POINTL
             LVITEMW li;
             li.stateMask = LVIS_SELECTED;
             li.state = 0;
-            SendMessageW(g_hLV, LVM_SETITEMSTATE, -1, (LPARAM)&li);// Çå³ıÑ¡ÖĞ£»wParam = -1£ºÓ¦ÓÃÓÚËùÓĞÏîÄ¿
+            SendMessageW(g_hLV, LVM_SETITEMSTATE, -1, (LPARAM)&li);// æ¸…é™¤é€‰ä¸­ï¼›wParam = -1ï¼šåº”ç”¨äºæ‰€æœ‰é¡¹ç›®
             li.state = LVIS_SELECTED;
 
             iTargetIndex -= n;
             for (int i = 0; i < iCount; ++i)
             {
-                SendMessageW(g_hLV, LVM_SETITEMSTATE, iTargetIndex + i, (LPARAM)&li);// Ñ¡ÖĞĞÂÒÆ¶¯µÄÏî
+                SendMessageW(g_hLV, LVM_SETITEMSTATE, iTargetIndex + i, (LPARAM)&li);// é€‰ä¸­æ–°ç§»åŠ¨çš„é¡¹
             }
 
             PLAYERLISTUNIT* pi;
             BOOL b[2] = { 0 };
-            for (int i = 0; i < g_ItemData->iCount; ++i)// ÄóÂéÂéµØËãÕâËãÄÇµÄÀÍ×ÊÄÔ×Ó²»¹»ÓÃÁË£¬Ö±½ÓÓÃ¸ö¼òµ¥´Ö±©µÄ·½·¨»¹Ô­Ë÷Òı
+            for (int i = 0; i < g_ItemData->iCount; ++i)// æéº»éº»åœ°ç®—è¿™ç®—é‚£çš„åŠ³èµ„è„‘å­ä¸å¤Ÿç”¨äº†ï¼Œç›´æ¥ç”¨ä¸ªç®€å•ç²—æš´çš„æ–¹æ³•è¿˜åŸç´¢å¼•
             {
                 pi = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
                 if (pi->dwFlags & QKLIF_DRAGMARK_CURRFILE)
@@ -2329,21 +2328,21 @@ HRESULT CALLBACK OLEDrop_OnDrop(IDataObject* pDataObj, DWORD grfKeyState, POINTL
             GlobalUnlock(sm.hGlobal);
         }
     }
-    else// ½öÍÏ·ÅÎÄ¼ş
+    else// ä»…æ‹–æ”¾æ–‡ä»¶
     {
-    CommonDragFile:// ½ø³ÌIDÓë×ÔÉí²»ÏàµÈÊ±Ìø¹ıÀ´
+    CommonDragFile:// è¿›ç¨‹IDä¸è‡ªèº«ä¸ç›¸ç­‰æ—¶è·³è¿‡æ¥
         fe.cfFormat = CF_HDROP;
-        if (FAILED(pDataObj->GetData(&fe, &sm)))// È¡»ØHDROP
+        if (FAILED(pDataObj->GetData(&fe, &sm)))// å–å›HDROP
             return S_OK;
         HDROP hDrop = (HDROP)sm.hGlobal;
-        int iFileCount = DragQueryFileW(hDrop, 0xFFFFFFFF, NULL, 0);// È¡ÍÏ·ÅÎÄ¼ş×ÜÊı£¬(int)0xFFFFFFFF == -1
+        int iFileCount = DragQueryFileW(hDrop, 0xFFFFFFFF, NULL, 0);// å–æ‹–æ”¾æ–‡ä»¶æ€»æ•°ï¼Œ(int)0xFFFFFFFF == -1
         UINT iBufferSize;
         LPWSTR pszFile;
         for (int i = 0; i < iFileCount; i++)
         {
-            iBufferSize = DragQueryFileW(hDrop, i, NULL, 0);// È¡»º³åÇø´óĞ¡
+            iBufferSize = DragQueryFileW(hDrop, i, NULL, 0);// å–ç¼“å†²åŒºå¤§å°
             pszFile = new WCHAR[iBufferSize + 1];
-            DragQueryFileW(hDrop, i, pszFile, iBufferSize + 1);// ²éÑ¯ÎÄ¼şÃû
+            DragQueryFileW(hDrop, i, pszFile, iBufferSize + 1);// æŸ¥è¯¢æ–‡ä»¶å
             List_Add(pszFile, NULL, iTargetIndex, FALSE);
             delete[] pszFile;
             ++iTargetIndex;
