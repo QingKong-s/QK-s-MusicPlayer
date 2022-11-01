@@ -37,6 +37,8 @@ ID2D1SolidColorBrush*   m_pD2DSolidBrush1       = NULL,// Ãè±ß»­Ë¢
 D2D1_COLOR_F            m_D2DCrDTLrc1 = { 0 };// ½¥±äÉÏ
 D2D1_COLOR_F            m_D2DCrDTLrc2 = { 0 };// ½¥±äÏÂ
 
+D2D1_COLOR_F            m_D2DCrDTLrcBorder = { 0 };// Ãè±ß
+
 QKDWTextRenderer_DrawOutline::QKDWTextRenderer_DrawOutline(ID2D1RenderTarget* pD2DRenderTarget, ID2D1Brush* pD2DBrushBody, ID2D1SolidColorBrush* pD2DBrushOutline)
 {
     m_uRefCount = 1;
@@ -69,15 +71,16 @@ HRESULT QKDWTextRenderer_DrawOutline::DrawGlyphRun(void* clientDrawingContext, f
             D2D1::Matrix3x2F::Translation(baselineOriginX + fShandowOffest, baselineOriginY + fShandowOffest), &pD2DTransformedGeometry);// Æ½ÒÆ
         m_pD2DRenderTarget_Outline->FillGeometry(pD2DTransformedGeometry, m_pD2DSolidBrush2);// »­ÒõÓ°
         pD2DTransformedGeometry->Release();
-    }
+	}
 
-    g_pD2DFactory->CreateTransformedGeometry(pD2DPathGeometry, 
-        D2D1::Matrix3x2F::Translation(baselineOriginX, baselineOriginY), &pD2DTransformedGeometry);
-    m_pD2DRenderTarget_Outline->DrawGeometry(pD2DTransformedGeometry, m_pD2DBrushOutline, DPIF(1.5f));// Ãè±ß
-    m_pD2DRenderTarget_Outline->FillGeometry(pD2DTransformedGeometry, m_pD2DBrushBody);// Ìî³ä
-    pD2DTransformedGeometry->Release();
+	g_pD2DFactory->CreateTransformedGeometry(pD2DPathGeometry,
+		D2D1::Matrix3x2F::Translation(baselineOriginX, baselineOriginY), &pD2DTransformedGeometry);
+	if (GS.bEnableDTLrcBorder)
+		m_pD2DRenderTarget_Outline->DrawGeometry(pD2DTransformedGeometry, m_pD2DBrushOutline, DPIF(1.5f));// Ãè±ß
+	m_pD2DRenderTarget_Outline->FillGeometry(pD2DTransformedGeometry, m_pD2DBrushBody);// Ìî³ä
+	pD2DTransformedGeometry->Release();
 
-    pD2DPathGeometry->Release();
+	pD2DPathGeometry->Release();
     pD2DGeometrySink->Release();
     return S_OK;
 }
@@ -242,12 +245,9 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		ReleaseDC(g_hLrcWnd, hDC);
 		SelectObject(m_hCDCDTLrc, m_hBitmap);
 
-		if (m_pD2DRenderTarget)
-			m_pD2DRenderTarget->Release();
-        if (m_pD2DSolidBrush1)
-            m_pD2DSolidBrush1->Release();
-        if (m_pD2DSolidBrush2)
-            m_pD2DSolidBrush2->Release();
+		SAFE_RELEASE(m_pD2DRenderTarget);
+		SAFE_RELEASE(m_pD2DSolidBrush1);
+		SAFE_RELEASE(m_pD2DSolidBrush2);
 
 		D2D1_RENDER_TARGET_PROPERTIES DCRTProp =
 		{
@@ -261,7 +261,7 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		g_pD2DFactory->CreateDCRenderTarget(&DCRTProp, &m_pD2DRenderTarget);
 		RECT rc = { 0,0,m_cxClient,m_cyClient };
 		m_pD2DRenderTarget->BindDC(m_hCDCDTLrc, &rc);
-        m_pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Black), &m_pD2DSolidBrush1);
+        m_pD2DRenderTarget->CreateSolidColorBrush(m_D2DCrDTLrcBorder, &m_pD2DSolidBrush1);
 		m_pD2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0, 0, 0, 0.4f), &m_pD2DSolidBrush2);
 
 		m_LrcScrollInfo.iIndex = -1;
@@ -275,7 +275,6 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         {
         case IDT_LRC:
         {
-            
             POINT pt;
             GetPhysicalCursorPos(&pt);
 			ScreenToClient(hWnd, &pt);
@@ -763,9 +762,14 @@ int LrcWnd_HitTest()// ¸è´Ê´°¿ÚÃüÖÐ²âÊÔ
 void SettingsUpd_WndLrc()
 {
 	SAFE_RELEASE(m_pDWTextFormat);
+    SAFE_RELEASE(m_pD2DSolidBrush1);
 	LrcWnd_CreateRes();
 	QKGDIColorToD2DColor(GS.crDTLrc1, &m_D2DCrDTLrc1, GS.uDTLrcTransparent);
 	QKGDIColorToD2DColor(GS.crDTLrc2, &m_D2DCrDTLrc2, GS.uDTLrcTransparent);
+
+	QKGDIColorToD2DColor(GS.crDTLrcBorder, &m_D2DCrDTLrcBorder, GS.uDTLrcTransparent);
+	if (m_pD2DRenderTarget)
+		m_pD2DRenderTarget->CreateSolidColorBrush(m_D2DCrDTLrcBorder, &m_pD2DSolidBrush1);
 
 	LrcWnd_DrawLrc();
 }

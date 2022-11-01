@@ -72,6 +72,9 @@ void Settings_Read()
     GS.uAlbumPicSize1= GetPrivateProfileIntW(PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE1, 210, g_pszProfie);
     // 封面尺寸2
     GS.uAlbumPicSize2 = GetPrivateProfileIntW(PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE2, 310, g_pszProfie);
+    // DT边框
+    GS.crDTLrcBorder = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTLRCBORDERCLR, QKCOLOR_BLACK, g_pszProfie);
+    GS.bEnableDTLrcBorder = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_ENABLEDTLRCBORDER, TRUE, g_pszProfie);
 }
 void Settings_Save()
 {
@@ -142,6 +145,12 @@ void Settings_Save()
 
     wsprintfW(sz, L"%u", GS.uAlbumPicSize2);
     WritePrivateProfileStringW(PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE2, sz, g_pszProfie);
+
+    wsprintfW(sz, L"%u", GS.crDTLrcBorder);
+    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCBORDERCLR, sz, g_pszProfie);
+
+    wsprintfW(sz, L"%u", GS.bEnableDTLrcBorder);
+    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_ENABLEDTLRCBORDER, sz, g_pszProfie);
 }
 void Settings_GetFromCtrl(HWND* hChild)
 {
@@ -214,6 +223,9 @@ void Settings_GetFromCtrl(HWND* hChild)
 
     GetDlgItemTextW(hWnd, IDC_ED_SCLRCALIGNOFFSET, sz, MAXPROFILEBUFFER);
     GS.uSCLrcOffset = StrToIntW(sz);
+
+    GS.crDTLrcBorder = (COLORREF)GetPropW(GetDlgItem(hWnd, IDC_ST_DTLRCBORDERCLR), PROP_DTLRCBORDERCLR);
+    GS.bEnableDTLrcBorder = (SendDlgItemMessageW(hWnd, IDC_CB_ENABLEDTLRCBORDER, BM_GETCHECK, 0, 0) == BST_CHECKED);
 }
 INT_PTR CALLBACK DlgProc_OptVisual(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -299,8 +311,8 @@ INT_PTR CALLBACK DlgProc_OptPlaying(HWND hDlg, UINT message, WPARAM wParam, LPAR
 }
 INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	static HBRUSH hbr1 = NULL/*DT左*/, hbr2 = NULL/*DT右*/, hbr3 = NULL/*SC左*/, hbr4 = NULL/*SC右*/;
-	static HWND hST1 = NULL/*DT左*/, hST2 = NULL/*DT右*/, hST3 = NULL/*SC左*/, hST4 = NULL/*SC右*/;
+    static HBRUSH hbr1 = NULL/*DT左*/, hbr2 = NULL/*DT右*/, hbr3 = NULL/*SC左*/, hbr4 = NULL/*SC右*/, hbr5 = NULL/*边框*/;
+    static HWND hST1 = NULL/*DT左*/, hST2 = NULL/*DT右*/, hST3 = NULL/*SC左*/, hST4 = NULL/*SC右*/, hST5 = NULL/*边框*/;
 	static COLORREF CustClr[16] = { 0 };
 	switch (message)
     {
@@ -312,6 +324,7 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         hST2 = GetDlgItem(hDlg, IDC_ST_DTLRCCLR2);
 		hST3 = GetDlgItem(hDlg, IDC_ST_SCLRCCLR1);
 		hST4 = GetDlgItem(hDlg, IDC_ST_SCLRCCLR2);
+        hST5 = GetDlgItem(hDlg, IDC_ST_DTLRCBORDERCLR);
 		////////////////////////////////////////////////全局
 		////////////////缺省编码
 		hCtrl = GetDlgItem(hDlg, IDC_CB_DEFTEXTCODE);
@@ -392,6 +405,10 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         SendDlgItemMessageW(hDlg, IDC_TB_DTLRCTRANSPARENT, TBM_SETPOS, TRUE, GS.uDTLrcTransparent);
         ////////////////空行替代
         SetDlgItemTextW(hDlg, IDC_ED_DTLRCSPACELINE, GS.pszDTLrcSpaceLine);
+        ////////////////边框
+        hbr5 = CreateSolidBrush(GS.crDTLrcBorder);
+        SetPropW(hST5, PROP_DTLRCBORDERCLR, (HANDLE)GS.crDTLrcBorder);
+        SendDlgItemMessageW(hDlg, IDC_CB_ENABLEDTLRCBORDER, BM_SETCHECK, GS.bEnableDTLrcBorder ? BST_CHECKED : BST_UNCHECKED, 0);
     }
     return FALSE;
     case WM_NCPAINT:
@@ -537,6 +554,7 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             case IDC_ST_DTLRCCLR2:
             case IDC_ST_SCLRCCLR1:
             case IDC_ST_SCLRCCLR2:
+            case IDC_ST_DTLRCBORDERCLR:
             {
                 CHOOSECOLORW cc = { sizeof(CHOOSECOLORW) };
                 cc.hwndOwner = hDlg;
@@ -549,30 +567,32 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
                     case IDC_ST_DTLRCCLR1:
                         DeleteObject(hbr1);
                         hbr1 = CreateSolidBrush(cc.rgbResult);
-                        GS.crDTLrc1 = cc.rgbResult;
-                        SetPropW(hST1, PROP_DTLRCCLR1, (HANDLE)GS.crDTLrc1);
+                        SetPropW(hST1, PROP_DTLRCCLR1, (HANDLE)cc.rgbResult);
                         InvalidateRect(hST1, NULL, FALSE);
                         break;
                     case IDC_ST_DTLRCCLR2:
                         DeleteObject(hbr2);
                         hbr2 = CreateSolidBrush(cc.rgbResult);
-                        GS.crDTLrc2 = cc.rgbResult;
-                        SetPropW(hST2, PROP_DTLRCCLR2, (HANDLE)GS.crDTLrc2);
+                        SetPropW(hST2, PROP_DTLRCCLR2, (HANDLE)cc.rgbResult);
                         InvalidateRect(hST2, NULL, FALSE);
                         break;
                     case IDC_ST_SCLRCCLR1:
                         DeleteObject(hbr3);
                         hbr3 = CreateSolidBrush(cc.rgbResult);
-                        GS.crSCLrc1 = cc.rgbResult;
-                        SetPropW(hST3, PROP_SCLRCCLR1, (HANDLE)GS.crSCLrc1);
+                        SetPropW(hST3, PROP_SCLRCCLR1, (HANDLE)cc.rgbResult);
                         InvalidateRect(hST3, NULL, FALSE);
                         break;
                     case IDC_ST_SCLRCCLR2:
                         DeleteObject(hbr4);
                         hbr4 = CreateSolidBrush(cc.rgbResult);
-                        GS.crSCLrc2 = cc.rgbResult;
-                        SetPropW(hST4, PROP_SCLRCCLR2, (HANDLE)GS.crSCLrc2);
+                        SetPropW(hST4, PROP_SCLRCCLR2, (HANDLE)cc.rgbResult);
                         InvalidateRect(hST4, NULL, FALSE);
+                        break;
+                    case IDC_ST_DTLRCBORDERCLR:
+                        DeleteObject(hbr5);
+                        hbr5 = CreateSolidBrush(cc.rgbResult);
+                        SetPropW(hST5, PROP_DTLRCBORDERCLR, (HANDLE)cc.rgbResult);
+                        InvalidateRect(hST5, NULL, FALSE);
                         break;
                     }
                 }
@@ -594,6 +614,8 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
             return (LRESULT)hbr3;
         else if (lParam == (LPARAM)hST4)
             return (LRESULT)hbr4;
+        else if (lParam == (LPARAM)hST5)
+            return (LRESULT)hbr5;
     }
     return NULL;
     case WM_DESTROY:
@@ -602,6 +624,7 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 		DeleteObject(hbr2);
 		DeleteObject(hbr3);
 		DeleteObject(hbr4);
+        DeleteObject(hbr5);
 	}
     return TRUE;
     }
@@ -742,7 +765,8 @@ INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 			Settings_Save();
 
 			SettingsUpd_WndMain();
-			SettingsUpd_WndLrc();
+			if (IsWindow(g_hLrcWnd))
+				SettingsUpd_WndLrc();
 
 			if (LOWORD(wParam) == IDOK)
 				EndDialog(hDlg, 0);

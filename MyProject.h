@@ -247,11 +247,6 @@ struct CURRMUSICINFO
 };
 
 
-
-
-
-
-
 //////////////////////////////常量
 ////////////////////SetPropW
 #define PROP_WNDPROC			L"QKProp.WndProc"
@@ -265,6 +260,7 @@ struct CURRMUSICINFO
 #define PROP_SCLRCFONTWEIGHT	L"QKProp.Settings.SCLrcFontWeight"
 #define PROP_SCLRCCLR1			L"QKProp.Settings.SCLrcColor1"
 #define PROP_SCLRCCLR2			L"QKProp.Settings.SCLrcColor2"
+#define PROP_DTLRCBORDERCLR		L"QKProp.Settings.DTLrcBorderColor"
 ////////////////////线程工作标志
 #define THREADFLAG_STOP			1
 #define THREADFLAG_STOPED		2
@@ -353,6 +349,8 @@ struct CURRMUSICINFO
 #define PPF_KEY_HSCROLLTEXT			L"HScrollText"
 #define PPF_KEY_ALBUMPICSIZE1		L"AlbumPicSize1"
 #define PPF_KEY_ALBUMPICSIZE2		L"AlbumPicSize2"
+#define PPF_KEY_DTLRCBORDERCLR		L"DTLrcBorderClr"
+#define PPF_KEY_ENABLEDTLRCBORDER	L"EnableDTLrcBorder"
 ////////////////////音频文件类型
 #define MUSICTYPE_NORMAL			0
 #define MUSICTYPE_MOD				1
@@ -560,6 +558,9 @@ struct SETTINGS
 
 	UINT uAlbumPicSize1;
 	UINT uAlbumPicSize2;
+
+	UINT crDTLrcBorder;
+	BOOL bEnableDTLrcBorder;
 };
 
 const D2D_COLOR_F c_D2DClrCyanDeeper = { 0.f,0.3764f,0.7529f,1.f };// 易语言青蓝

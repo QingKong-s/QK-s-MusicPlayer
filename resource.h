@@ -130,6 +130,8 @@
 #define IDC_CB_DISABLEVANIMATION        1088
 #define IDC_CB_DISABLEWORDBREAK         1089
 #define IDC_CB_DISABLEDTLRCSHANDOW      1090
+#define IDC_CB_DTLRCBORDERCLR           1091
+#define IDC_CB_ENABLEDTLRCBORDER        1091
 #define IDC_ED_LRCDIR                   1092
 #define IDC_BT_CHANGELRCDIR             1093
 #define IDC_ED_LRCDIR2                  1094
@@ -147,6 +149,7 @@
 #define IDC_ST_SCLRCCLR2                1103
 #define IDC_RB_SINEWAVE                 1104
 #define IDC_TB_REVERBDELAY              1104
+#define IDC_ST_DTLRCBORDERCLR           1104
 #define IDC_RB_TRIANGLEWAVE             1105
 #define IDC_TB_REFLECTIONSDELAY         1105
 #define IDC_ED_SCLRCLINEGAP             1105
