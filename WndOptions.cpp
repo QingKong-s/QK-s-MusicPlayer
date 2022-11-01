@@ -706,6 +706,7 @@ INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
         SetWindowPos(GetDlgItem(hDlg, IDC_SB_SETTINGS), NULL, rcClient.right - iSBSize, rcLB.top, iSBSize, cyLB, SWP_NOZORDER);
 
         iOptionIndex = 0;
+        SendDlgItemMessageW(hDlg, IDC_LB_OPTIONS, LB_SETCURSEL, iOptionIndex, 0);
         goto SwitchTab;
     }
     return FALSE;

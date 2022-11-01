@@ -1042,13 +1042,12 @@ void UI_UpdateLeftBK()
 }
 void UI_SeparateListWnd(BOOL b)
 {
-	static ULONG_PTR uCommStyle = WS_VISIBLE | WS_CLIPCHILDREN;
+	const ULONG_PTR uCommStyle = WS_VISIBLE | WS_CLIPCHILDREN;
 	RECT rc;
 	if (b)
 	{
 		if (g_bListSeped)
 			return;
-
 		SetWindowLongPtrW(g_hBKList, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_POPUP | uCommStyle);
 		SetParent(g_hBKList, NULL);
 		ShowWindow(g_hSEB, SW_HIDE);
@@ -1064,16 +1063,19 @@ void UI_SeparateListWnd(BOOL b)
 		if (!g_bListSeped)
 			return;
 		SetParent(g_hBKList, g_hMainWnd);
+        ShowWindow(g_hSEB, SW_SHOW);
 		SetWindowLongPtrW(g_hBKList, GWL_STYLE, WS_CHILD | uCommStyle);
 		g_bListSeped = FALSE;
 		if (g_bListHidden)
 		{
 			ShowWindow(g_hBKList, SW_HIDE);
-			ShowWindow(g_hSEB, SW_HIDE);
+            ShowWindow(g_hSEB, SW_HIDE);
 		}
 	}
 	GetClientRect(g_hMainWnd, &rc);
 	SendMessageW(g_hMainWnd, WM_SIZE, 0, MAKELONG(rc.right, rc.bottom));
+    GetClientRect(g_hBKList, &rc);
+    SendMessageW(g_hBKList, WM_SIZE, 0, MAKELONG(rc.right, rc.bottom));
 }
 void UI_ShowList(BOOL b)
 {
