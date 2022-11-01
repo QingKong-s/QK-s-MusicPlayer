@@ -96,16 +96,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     D2DFactoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory1), &D2DFactoryOptions, (void**)&g_pD2DFactory);
 #else
-    D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory1), (void**)&g_pD2DFactory);
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, IID_PPV_ARGS(&g_pD2DFactory));
 #endif // !NDBUG
-	DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&g_pDWFactory));
+    DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&g_pDWFactory);
     ID3D11Device* pD3DDevice;
     D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT
 #ifndef NDEBUG
         | D3D11_CREATE_DEVICE_DEBUG
 #endif // !NDEBUG
         , NULL, 0, D3D11_SDK_VERSION, &pD3DDevice, NULL, NULL);
-    pD3DDevice->QueryInterface(__uuidof(IDXGIDevice1), (void**)&g_pDXGIDevice);
+    pD3DDevice->QueryInterface(IID_PPV_ARGS(&g_pDXGIDevice));
     pD3DDevice->Release();
 
     IDXGIAdapter* pDXGIAdapter;
