@@ -22,6 +22,7 @@
 
 #include "bass.h"
 #include "bass_fx.h"
+#include "bassmidi.h"
 
 #include "GlobalVar.h"
 #include "Function.h"
@@ -547,6 +548,16 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
 		Global_ShowError(L"文件播放失败", NULL, ECODESRC_BASS, g_hMainWnd);
         return;
     }
+
+    if (g_iMusicType == MUSICTYPE_MIDI && g_hSoundFont)
+    {
+        BASS_MIDI_FONT FontInfo;
+        FontInfo.font = g_hSoundFont;
+        FontInfo.preset = -1;
+        FontInfo.bank = 0;
+        BASS_MIDI_StreamSetFonts(g_hStream, &FontInfo, 1);
+    }
+
     BASS_ChannelPlay(g_hStream, TRUE);
     g_bPlaying = TRUE;
     g_llLength = (ULONGLONG)(BASS_ChannelBytes2Seconds(g_hStream, BASS_ChannelGetLength(g_hStream, BASS_POS_BYTE)) * 1000);
@@ -561,7 +572,7 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
 	if (iIndex == g_iLaterPlay)
 		g_iLaterPlay = -1;
 	SendMessageW(g_hLV, LVM_REDRAWITEMS, iIndex, iIndex);
-	//////////////取MP3信息
+	//////////////取音频信息
     MainWnd_ReleaseCurrInfo();
     //////取名称
     m_CurrSongInfo.pszName = new WCHAR[lstrlenW(p->pszName) + 1];
@@ -1665,7 +1676,6 @@ LRESULT CALLBACK WndProc_TBGhost(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
             return 0;
 
         IWICBitmap* pWICBitmapOrg = m_CurrSongInfo.mi.pWICBitmap;
-        pWICBitmapOrg->AddRef();
 
         UINT cx0, cy0, cx, cy, cxMax = HIWORD(lParam), cyMax = LOWORD(lParam);
 
@@ -1712,7 +1722,6 @@ LRESULT CALLBACK WndProc_TBGhost(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
         GdipDisposeImage(pGdipBitmapBK);// 删除GP位图
         DeleteObject(hBitmap);// 删除GDI位图
         pWICBmpLock->Release();// 释放WIC位图锁
-        pWICBitmapOrg->Release();
     }
     return 0;
     case WM_DWMSENDICONICLIVEPREVIEWBITMAP:

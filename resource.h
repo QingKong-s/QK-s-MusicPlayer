@@ -130,7 +130,6 @@
 #define IDC_CB_DISABLEVANIMATION        1088
 #define IDC_CB_DISABLEWORDBREAK         1089
 #define IDC_CB_DISABLEDTLRCSHANDOW      1090
-#define IDC_CB_DTLRCBORDERCLR           1091
 #define IDC_CB_ENABLEDTLRCBORDER        1091
 #define IDC_ED_LRCDIR                   1092
 #define IDC_BT_CHANGELRCDIR             1093
@@ -200,6 +199,8 @@
 #define IDC_CB_HSCROLLTEXT              1154
 #define IDC_CB_VISUAL                   1155
 #define IDC_ED_ALBUMPICSIZE1            1156
+#define IDC_ED_SOUNDFONT                1157
+#define IDC_BT_CHANGESOUNDFONT          1158
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -209,7 +210,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        259
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         1157
+#define _APS_NEXT_CONTROL_VALUE         1159
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

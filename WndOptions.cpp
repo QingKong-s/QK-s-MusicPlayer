@@ -15,14 +15,17 @@
 
 void Settings_Read()
 {
+    HQKINI hINI = QKINIParse(g_pszProfie);
     WCHAR szBuffer[MAXPROFILEBUFFER];
     // 缺省编码
-    GS.uDefTextCode = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, 0, g_pszProfie);
+    GS.uDefTextCode = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, 0);
+    //GS.uDefTextCode = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, 0, g_pszProfie);
     // 歌词目录
-    GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_LRCDIR, NULL, szBuffer, MAXPROFILEBUFFER, g_pszProfie);
+    DWORD dwBufSize = GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_LRCDIR, NULL, szBuffer, 2, g_pszProfie);
     delete[] GS.pszLrcDir;
-    GS.pszLrcDir = new WCHAR[lstrlenW(szBuffer) + 1];
-    lstrcpyW(GS.pszLrcDir, szBuffer);
+    GS.pszLrcDir = new WCHAR[dwBufSize + 1];
+    GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_LRCDIR, NULL, GS.pszLrcDir, dwBufSize + 1, g_pszProfie);
+    //lstrcpyW(GS.pszLrcDir, szBuffer);
     // 禁用过渡动画
     GS.bLrcAnimation = !GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DISABLEVANIMATION, FALSE, g_pszProfie);
     // 禁止换行
@@ -75,6 +78,9 @@ void Settings_Read()
     // DT边框
     GS.crDTLrcBorder = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTLRCBORDERCLR, QKCOLOR_BLACK, g_pszProfie);
     GS.bEnableDTLrcBorder = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_ENABLEDTLRCBORDER, TRUE, g_pszProfie);
+    // 音色库
+    //delete[] GS.pszSoundFont;
+
 }
 void Settings_Save()
 {
@@ -299,6 +305,40 @@ INT_PTR CALLBACK DlgProc_OptPlaying(HWND hDlg, UINT message, WPARAM wParam, LPAR
                 SendDlgItemMessageW(hDlg, IDC_CB_DEVICES, CB_SETCURSEL, BASS_GetDevice() - 1, 0);
             }
             return TRUE;
+            case IDC_BT_CHANGESOUNDFONT:
+            {
+                IFileOpenDialog* pfod;
+                HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog,
+                    NULL,
+                    CLSCTX_INPROC_SERVER,
+                    IID_PPV_ARGS(&pfod));
+                if (!SUCCEEDED(hr))
+                    return 0;
+                pfod->SetOptions(FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
+                COMDLG_FILTERSPEC cf[] =
+                {
+                    {L"音色库文件(*.sf2)",L"*.sf2"},
+                    {L"所有文件",L"*.*"}
+                };
+                pfod->SetFileTypes(2, cf);
+                pfod->Show(hDlg);
+                IShellItem* psi;
+                hr = pfod->GetResult(&psi);
+                if (!SUCCEEDED(hr))
+                {
+                    pfod->Release();
+                    return 0;
+                }
+                PWSTR pszPath;
+                hr = psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &pszPath);
+                psi->Release();
+                pfod->Release();
+                if (!SUCCEEDED(hr))
+                    return 0;
+                SetDlgItemTextW(hDlg, IDC_ED_SOUNDFONT, pszPath);
+                CoTaskMemFree(pszPath);
+            }
+            return TRUE;
             }
         }
         return TRUE;
@@ -439,7 +479,7 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
                     pfod->Release();
                     return 0;
                 }
-                LPWSTR pszPath;
+                PWSTR pszPath;
                 hr = psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &pszPath);
                 psi->Release();
                 pfod->Release();

@@ -14,6 +14,7 @@
 #include <dxgi1_2.h>
 
 #include "bass.h"
+#include "bassmidi.h"
 
 #include "MyProject.h"
 #include "Function.h"
@@ -21,10 +22,8 @@
 // 窗口句柄类
 extern HWND				g_hMainWnd;             // 主窗口
 extern HWND				g_hLV;                  // 列表ListView
-//extern HWND				g_hTBProgess;           // 进度条
 extern HWND				g_hLrcWnd;              // 桌面歌词
 extern HWND				g_hBKLeft;              // 左侧背景
-//extern HWND				g_hBKBtm;               // 下部按钮背景
 extern HWND				g_hBKRight;             // 列表工具背景
 extern HWND				g_hSEB;                 // 分隔条
 extern HWND				g_hBKList;              // 列表背景
@@ -80,6 +79,8 @@ extern float            g_fDefSpeed,            // 默认速度
 						g_fSpeedChanged,        // 速度，-1~5
 						g_fBlanceChanged,       // 平衡，-1~1
 						g_fVolChanged;          // 音量，0~1
+
+extern HSOUNDFONT		g_hSoundFont;			// MIDI音色库
 // 通信与标志类
 extern BOOL				g_bListSeped;           // 列表是否拆离
 extern BOOL				g_bListHidden;          // 列表是否隐藏

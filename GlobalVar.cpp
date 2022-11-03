@@ -8,6 +8,7 @@
 #include <dxgi1_2.h>
 
 #include "bass.h"
+#include "bassmidi.h"
 
 #include "MyProject.h"
 #include "resource.h"
@@ -16,10 +17,8 @@
 
 HWND			g_hMainWnd;
 HWND			g_hLV;
-HWND			g_hTBProgess;
 HWND			g_hLrcWnd				= NULL;
 HWND			g_hBKLeft;
-//HWND			g_hBKBtm;
 HWND			g_hBKRight;
 HWND			g_hSEB;
 HWND			g_hBKList;
@@ -75,6 +74,7 @@ float           g_fDefSpeed				= 0,
 				g_fSpeedChanged			= SBV_INVALIDVALUE,
 				g_fBlanceChanged		= SBV_INVALIDVALUE,
 				g_fVolChanged			= SBV_INVALIDVALUE;
+HSOUNDFONT		g_hSoundFont			= NULL;
 
 BOOL			g_bListSeped			= FALSE;
 BOOL			g_bListHidden			= FALSE;

@@ -49,6 +49,14 @@ struct FLAC_Header
     BYTE by;
     BYTE bySize[3];
 };
+
+typedef struct QKINIDESC
+{
+    int iType;
+    PWSTR pszContent;
+    HANDLE hFile;
+    DWORD dwSize;
+}*HQKINI;
 ////////////////////////////////////
 #define QKADF_NO             0
 #define QKADF_DELETE         1
@@ -74,6 +82,10 @@ struct FLAC_Header
 #define QKCOLOR_GRAY                      0xC0C0C0// 易语言浅灰
 
 #define PROP_INPUTBOXCONTEXT              L"QKProp.InputBox.Context"
+
+#define QKINI_ERR                           0
+#define QKINI_NEWFILE                       1
+#define QKINI_NORMAL                        2
 
 /*
 * 目标：创建GDI字体
@@ -295,3 +307,58 @@ void QKRcScreenToClient(HWND hWnd, RECT* prc);
 * 备注：
 */
 void QKGDIColorToD2DColor(COLORREF cr, D2D1_COLOR_F* D2DCr, int iAlpha = 0xFF);
+
+// （WinAPI提供的INI读写有点闹弹，自己写个吧）
+/// <summary>
+/// 读文本配置项
+/// </summary>
+/// /// <param name="hINI">INI句柄</param>
+/// <param name="pszSectionName">节名</param>
+/// <param name="pszKeyName">键名</param>
+/// <param name="pszDefStr">默认字符串</param>
+/// <param name="pszRetStr">结果缓冲区</param>
+/// <param name="iMaxBufSize">缓冲区大小，以WCHAR计，包括结尾NULL</param>
+/// <returns>返回复制到缓冲区的字节数，不包括结尾NULL；若缓冲区尺寸太小无法完全接收，则字符串将截断并添加结尾NULL，此时返回值为接收完整字符串所需的缓冲区大小的负值，不包括结尾NULL，失败返回0</returns>
+int QKINIReadString(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCWSTR pszDefStr, PWSTR pszRetStr, int iMaxBufSize);
+/// <summary>
+/// 解析INI文件
+/// </summary>
+/// <param name="pszFile">INI文件名</param>
+/// <returns>返回INI句柄，失败返回NULL</returns>
+HQKINI QKINIParse(PCWSTR pszFile);
+/// <summary>
+/// 释放INI句柄
+/// </summary>
+/// <param name="hINI">INI句柄</param>
+void QKINIClose(HQKINI hINI);
+/// <summary>
+/// 保存INI文件
+/// </summary>
+/// <param name="hINI">INI句柄</param>
+/// <returns>成功返回TRUE，失败返回FALSE</returns>
+BOOL QKINISave(HQKINI hINI);
+/// <summary>
+/// 写文本配置项
+/// </summary>
+/// <param name="hINI">INI句柄</param>
+/// <param name="pszSectionName">节名</param>
+/// <param name="pszKeyName">键名</param>
+/// <param name="pszString">写入字符串</param>
+void QKINIWriteString(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCWSTR pszString);
+/// <summary>
+/// 读整数配置项
+/// </summary>
+/// <param name="hINI">INI句柄</param>
+/// <param name="pszSectionName">节名</param>
+/// <param name="pszKeyName">键名</param>
+/// <param name="iDefValue">默认数值</param>
+/// <returns>返回读取结果</returns>
+int QKINIReadInt(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, int iDefValue);
+/// <summary>
+/// 写整数配置项
+/// </summary>
+/// <param name="hINI">INI句柄</param>
+/// <param name="pszSectionName">节名</param>
+/// <param name="pszKeyName">键名</param>
+/// <param name="iValue">写入值</param>
+void QKINIWriteInt(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, int iValue);

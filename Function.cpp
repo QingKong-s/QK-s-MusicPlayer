@@ -1511,3 +1511,255 @@ void QKGDIColorToD2DColor(COLORREF cr, D2D1_COLOR_F* D2DCr, int iAlpha)
     D2DCr->g = (float)GetGValue(cr) / 255.f;
     D2DCr->b = (float)GetBValue(cr) / 255.f;
 }
+HQKINI QKINIParse(PCWSTR pszFile)
+{
+    HANDLE hFile = CreateFileW(pszFile, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+        return NULL;
+
+    QKINIDESC* p = new QKINIDESC;
+    ZeroMemory(p, sizeof(QKINIDESC));
+
+    p->hFile = hFile;
+
+    DWORD dwFileSize = GetFileSize(hFile, NULL);
+    if (!dwFileSize)
+    {
+        p->iType = QKINI_NEWFILE;
+        return p;
+    }
+    p->iType = QKINI_NORMAL;
+    PWSTR pszBuf = (PWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwFileSize + sizeof(WCHAR));
+	p->pszContent = pszBuf;
+	DWORD dw;
+	ReadFile(hFile, pszBuf, dwFileSize, &dw, NULL);
+    p->dwSize = lstrlenW(pszBuf);
+	return p;
+}
+void QKINIClose(HQKINI hINI)
+{
+	CloseHandle(hINI->hFile);
+	HeapFree(GetProcessHeap(), 0, hINI->pszContent);
+	delete hINI;
+}
+int QKINIReadString(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCWSTR pszDefStr, PWSTR pszRetStr, int iMaxBufSize)
+{
+    if (!hINI)
+        goto CopyDefString;
+    if (hINI->iType != QKINI_NORMAL)
+        return 0;
+
+    int iPos;
+    PWSTR psz;
+    int iTempLen;
+    int iLen;
+    //////////////////找节名
+    psz = new WCHAR[lstrlenW(pszSectionName) + 3];
+    lstrcpyW(psz, L"[");
+    lstrcatW(psz, pszSectionName);
+    lstrcatW(psz, L"]");
+    iPos = QKStrInStr(hINI->pszContent, psz);
+    iTempLen = lstrlenW(psz);
+    delete[] psz;
+    if (iPos)
+    {
+        //////////////////找键名
+        psz = new WCHAR[lstrlenW(pszKeyName) + 4];
+        lstrcpyW(psz, L"\r\n");
+        lstrcatW(psz, pszKeyName);
+        lstrcatW(psz, L"=");
+        iPos = QKStrInStr(hINI->pszContent, psz, iPos + iTempLen);
+        iTempLen = lstrlenW(psz);
+        delete[] psz;
+		if (iPos)
+		{
+			//////////////////找换行
+			int iStart = iPos + iTempLen - 1;
+			iPos = QKStrInStr(hINI->pszContent, L"\r\n", iStart);
+			int iEnd;
+			if (iPos)
+				iEnd = iPos;
+			else
+				iEnd = hINI->dwSize;
+			iLen = iEnd - iStart;
+            if (iMaxBufSize == 0)
+                return iLen;
+			if (iLen > 1)
+			{
+				if (iLen > iMaxBufSize)
+				{
+					lstrcpynW(pszRetStr, hINI->pszContent + iStart, iMaxBufSize);
+					return -iLen;
+				}
+				else
+				{
+					lstrcpynW(pszRetStr, hINI->pszContent + iStart, iLen);
+					return iLen;
+				}
+			}
+		}
+	}
+CopyDefString:
+	iLen = lstrlenW(pszDefStr) + 1;
+	if (iLen > iMaxBufSize)
+	{
+		lstrcpynW(pszRetStr, pszDefStr, iMaxBufSize);
+        return -iLen;
+    }
+    else
+    {
+        lstrcpynW(pszRetStr, pszDefStr, iLen);
+        return iLen;
+    }
+}
+void QKINIWriteString(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCWSTR pszString)
+{
+    if (hINI->iType == QKINI_NEWFILE)
+    {
+        hINI->pszContent = (PWSTR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR));
+        hINI->dwSize = lstrlenW(hINI->pszContent);
+    }
+
+    int iPos, iSectionPos, iKeyPos;
+    PWSTR psz, pszSection, pszKey;
+    int iTempLen, iSectionLen, iKeyLen;
+    int iLen;
+    //////////////////找节名
+    pszSection = new WCHAR[lstrlenW(pszSectionName) + 3];
+    lstrcpyW(pszSection, L"[");
+    lstrcatW(pszSection, pszSectionName);
+    lstrcatW(pszSection, L"]");
+    iSectionPos = QKStrInStr(hINI->pszContent, pszSection);
+    iSectionLen = lstrlenW(pszSection);
+
+    if (iSectionPos)
+    {
+        //////////////////找键名
+        pszKey = new WCHAR[lstrlenW(pszKeyName) + 4];
+        lstrcpyW(pszKey, L"\r\n");
+        lstrcatW(pszKey, pszKeyName);
+        lstrcatW(pszKey, L"=");
+        iKeyPos = QKStrInStr(hINI->pszContent, pszKey, iSectionPos + iSectionLen);
+        iKeyLen = lstrlenW(pszKey);
+
+        if (iKeyPos)
+        {
+            //////////////////找换行
+            int iStart = iKeyPos + iKeyLen - 1;
+            iPos = QKStrInStr(hINI->pszContent, L"\r\n", iStart);
+			int iEnd;
+			if (iPos)
+				iEnd = iPos;
+			else
+				iEnd = hINI->dwSize;
+            iLen = iEnd - iStart;
+			int iValueLen = lstrlenW(pszString);
+			PWSTR pStart;
+			if (iLen > 0)// 有值
+			{
+				if (iLen > iValueLen)
+				{
+                    pStart = hINI->pszContent + iStart;
+					memmove(pStart + iValueLen, pStart + iLen, (lstrlenW(pStart + iLen) + 1) * sizeof(WCHAR));// 向前移动
+                    PWSTR p = pStart + iValueLen + lstrlenW(pStart + iValueLen) - 1;
+                    *(pStart + iValueLen + lstrlenW(pStart + iValueLen) - 1) = L'\0';
+                    memcpy(pStart, pszString, lstrlenW(pszString) * sizeof(WCHAR));// 写值
+				}
+				else if (iLen == iValueLen)
+				{
+                    pStart = hINI->pszContent + iStart;
+                    memcpy(pStart, pszString, lstrlenW(pszString) * sizeof(WCHAR));// 写值
+				}
+				else
+				{
+                    hINI->pszContent = (PWSTR)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hINI->pszContent,
+						(hINI->dwSize + (iValueLen - iLen) + 1 /*结尾NULL*/) * sizeof(WCHAR));
+                    pStart = hINI->pszContent + iStart;
+                    memmove(pStart + iValueLen, pStart, lstrlenW(pStart) * sizeof(WCHAR));// 向后移动
+                    *pStart = L'\0';
+					*(pStart + iValueLen + 1) = L'\0';// 截断，方便后续附加字符串
+
+                    memcpy(pStart, pszString, lstrlenW(pszString) * sizeof(WCHAR));// 写值
+				}
+            }
+            else// 没有值
+            {
+
+				hINI->pszContent = (PWSTR)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hINI->pszContent,
+					(hINI->dwSize + iValueLen + 1 /*结尾NULL*/) * sizeof(WCHAR));
+				pStart = hINI->pszContent + iStart;
+				memmove(pStart + iValueLen, pStart, lstrlenW(pStart) * sizeof(WCHAR));// 向后移动
+				*(pStart) = L'\0';// 截断，方便后续附加字符串
+
+				memcpy(pStart, pszString, lstrlenW(pszString) * sizeof(WCHAR));// 写值
+            }
+        }
+        else// 没有键，添加到节尾部
+        {
+            iPos = QKStrInStr(hINI->pszContent, L"\r\n[", iSectionPos + iSectionLen);// 找下一节
+            int iAddtionLen =
+                2 /*换行符*/ +
+                lstrlenW(pszKeyName) + 1 /*等号*/ + lstrlenW(pszString);
+            hINI->pszContent = (PWSTR)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hINI->pszContent,
+                (hINI->dwSize + iAddtionLen + 1 /*结尾NULL*/) * sizeof(WCHAR));
+            PWSTR pStart = hINI->pszContent + iPos - 1;
+            memmove(pStart + iAddtionLen, pStart, lstrlenW(pStart) * sizeof(WCHAR));// 向后移动
+            *(pStart) = L'\0';// 截断，方便后续附加字符串
+
+            lstrcatW(pStart, L"\r\n");
+            lstrcatW(pStart, pszKeyName);// 写键名
+            lstrcatW(pStart, L"=");
+            memcpy(pStart + lstrlenW(pStart), pszString, lstrlenW(pszString) * sizeof(WCHAR));// 写值
+            //lstrcatW(pStart, pszString);// 写值
+        }
+    }
+    else// 没有节，添加到文件尾部
+    {
+        hINI->pszContent = (PWSTR)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hINI->pszContent, (
+            hINI->dwSize +
+            2 /*换行符*/ +
+            iSectionLen +
+            2 /*换行符*/ +
+            lstrlenW(pszKeyName) + 1 /*等号*/ + lstrlenW(pszString) +
+            1 /*结尾NULL*/
+            ) * sizeof(WCHAR));
+
+        lstrcatW(hINI->pszContent, L"\r\n");
+        lstrcatW(hINI->pszContent, pszSection);// 写节名
+        lstrcatW(hINI->pszContent, L"\r\n");
+        lstrcatW(hINI->pszContent, pszKeyName);// 写键名
+        lstrcatW(hINI->pszContent, L"=");
+        lstrcatW(hINI->pszContent, pszString);// 写值
+    }
+
+    hINI->dwSize = lstrlenW(hINI->pszContent);
+}
+BOOL QKINISave(HQKINI hINI)
+{
+	DWORD dw;
+	SetFilePointer(hINI->hFile, 0, NULL, FILE_BEGIN);
+	BOOL b = WriteFile(hINI->hFile, hINI->pszContent, hINI->dwSize * sizeof(WCHAR), &dw, NULL);
+	if (b)
+		SetEndOfFile(hINI->hFile);
+	return b;
+}
+int QKINIReadInt(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, int iDefValue)
+{
+    WCHAR pszDef[20];
+    wsprintfW(pszDef, L"%d", iDefValue);
+
+    int iBufSize = QKINIReadString(hINI, pszSectionName, pszKeyName, pszDef, NULL, 0);
+    PWSTR pszBuf = new  WCHAR[iBufSize];
+    QKINIReadString(hINI, pszSectionName, pszKeyName, pszDef, pszBuf, iBufSize + 1);
+
+    int i;
+    i = StrToIntW(pszBuf);
+    delete[] pszBuf;
+    return i;
+}
+void QKINIWriteInt(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, int iValue)
+{
+    WCHAR pszBuf[20];
+    wsprintfW(pszBuf, L"%d", iValue); 
+    QKINIWriteString(hINI, pszSectionName, pszKeyName, pszBuf);
+}

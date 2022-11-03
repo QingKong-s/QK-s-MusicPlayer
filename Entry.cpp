@@ -55,6 +55,15 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
   */
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
+    //HQKINI h = QKINIParse(L"D:\\@重要文件\\@我的工程\\Player\\Debug\\Data\\QKPlayerConfig1.ini");
+    //WCHAR sz[100] = { 0 };
+    //QKINIReadString(h, L"Lyric", L"EnableDTLrcBorder", L"123", sz, 100);
+    //
+    //QKINIWriteString(h, L"Lyric1", L"EnableDTLrcBorder2", L"12345");
+
+    //QKINISave(h);
+    //QKINIClose(h);
+    //return 0;
 	BOOL bSuccessful = TRUE;
     g_hInst = hInstance;
     HMODULE hLib = LoadLibraryW(L"User32.dll");
@@ -196,7 +205,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     bSuccessful = RegisterClassExW(&wcex) && bSuccessful;
     /////////注册通用背景
 	wcex.hIcon = NULL;
-    wcex.style |= CS_OWNDC;
 	wcex.lpfnWndProc = (WNDPROC)GetProcAddress(hLib, "DefWindowProcW");
 	wcex.lpszClassName = BKWNDCLASS;
 	bSuccessful = RegisterClassExW(&wcex) && bSuccessful;

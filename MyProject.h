@@ -324,6 +324,7 @@ struct CURRMUSICINFO
 
 #define PPF_SECTIONLRC				L"Lyric"
 #define PPF_SECTIONVISUAL			L"Visual"
+#define PPF_SECTIONPLAYING			L"Playing"
 
 #define PPF_KEY_DEFTEXTCODE			L"DefTextCode"
 #define PPF_KEY_LRCDIR				L"LyricsDir"
@@ -351,6 +352,7 @@ struct CURRMUSICINFO
 #define PPF_KEY_ALBUMPICSIZE2		L"AlbumPicSize2"
 #define PPF_KEY_DTLRCBORDERCLR		L"DTLrcBorderClr"
 #define PPF_KEY_ENABLEDTLRCBORDER	L"EnableDTLrcBorder"
+#define PPF_KEY_SOUNDFONT			L"MIDISoundFont"
 ////////////////////音频文件类型
 #define MUSICTYPE_NORMAL			0
 #define MUSICTYPE_MOD				1
@@ -561,6 +563,8 @@ struct SETTINGS
 
 	UINT crDTLrcBorder;
 	BOOL bEnableDTLrcBorder;
+
+	PWSTR pszSoundFont;
 };
 
 const D2D_COLOR_F c_D2DClrCyanDeeper = { 0.f,0.3764f,0.7529f,1.f };// 易语言青蓝
