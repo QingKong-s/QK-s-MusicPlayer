@@ -48,7 +48,7 @@ void QKMakeDropSource(QKARRAY Files, QKDRAGGIVEFEEDBACK pGiveFeedBack, CDataObje
     for (int i = 0; i < Files->iCount; ++i)
     {
         lstrcpyW(p, (PWSTR)QKArray_Get(Files, i));
-        QKOutputDebugInt(PathFileExistsW((PWSTR)QKArray_Get(Files, i)));
+        PathFileExistsW((PWSTR)QKArray_Get(Files, i));
         p += (iLength[i] + 1);
     }
     GlobalUnlock(hGlobal);

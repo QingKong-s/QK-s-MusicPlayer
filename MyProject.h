@@ -8,7 +8,9 @@
 #include <d2d1_1.h>
 
 #include "bass.h"
-#define CURRVER L"0.3"
+
+#define CURRVER L"0.4"
+
 ////////////////////GDI+Flat∂®“Â
 enum GpStatus 
 {
@@ -535,33 +537,33 @@ struct SETTINGS
 	BOOL bNoBookMarkWhenSort;
 	BOOL bLrcAnimation;
 	BOOL bDTLrcShandow;
-	UINT uDefTextCode;
+	int iDefTextCode;
 	PWSTR pszLrcDir;
 	PWSTR pszDTLrcFontName;
-	UINT uDTLrcFontSize;
-	UINT uDTLrcFontWeight;
-	UINT uDTLrcTransparent;
-	UINT crDTLrc1;
-	UINT crDTLrc2;
+	int iDTLrcFontSize;
+	int iDTLrcFontWeight;
+	int iDTLrcTransparent;
+	COLORREF crDTLrc1;
+	COLORREF crDTLrc2;
 	PWSTR pszDTLrcSpaceLine;
 
 	PWSTR pszSCLrcFontName;
-	UINT uSCLrcFontSize;
-	UINT uSCLrcFontWeight;
-	UINT uSCLrcTransparent;
-	UINT crSCLrc1;
-	UINT crSCLrc2;
-	UINT uSCLrcAlign;
-	UINT uSCLrcLineGap;
-	UINT uSCLrcOffset;
+	int iSCLrcFontSize;
+	int iSCLrcFontWeight;
+	int iSCLrcTransparent;
+	COLORREF crSCLrc1;
+	COLORREF crSCLrc2;
+	int iSCLrcAlign;
+	int iSCLrcLineGap;
+	int iSCLrcOffset;
 
-	UINT uVisualMode;
+	int iVisualMode;
 	BOOL bHScrollText;
 
-	UINT uAlbumPicSize1;
-	UINT uAlbumPicSize2;
+	int iAlbumPicSize1;
+	int iAlbumPicSize2;
 
-	UINT crDTLrcBorder;
+	COLORREF crDTLrcBorder;
 	BOOL bEnableDTLrcBorder;
 
 	PWSTR pszSoundFont;
@@ -579,8 +581,8 @@ BOOL BASS_FreeMusic(ULONG_PTR h);
 void UI_UpdateDPISize();
 void Res_Free();
 void Res_Load(int iSize);
-
 void Global_ShowError(PCWSTR pszTitle, PCWSTR pszContent, int iErrCodeSrc = ECODESRC_NONE, HWND hParent = NULL, DWORD dwOtherErrCode = 0);
+void BASS_UpdateSoundFont(BOOL bReloadFont = TRUE);
 
 typedef UINT(__stdcall* pFuncGetDpiForSystem)(void);
 typedef UINT(__stdcall* pFuncGetDpiForWindow)(HWND);

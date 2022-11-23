@@ -534,34 +534,33 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
     lstrcpyW(g_pszFile, p->pszFile);
     //////取消上一个播放标记
     int iLastPlayingIndex = g_iCurrFileIndex;
-    g_iCurrFileIndex = -1;
-    if (iLastPlayingIndex != -1)
-        SendMessageW(g_hLV, LVM_REDRAWITEMS, iLastPlayingIndex, iLastPlayingIndex);
+	g_iCurrFileIndex = -1;
+	if (iLastPlayingIndex != -1)
+		SendMessageW(g_hLV, LVM_REDRAWITEMS, iLastPlayingIndex, iLastPlayingIndex);
 	//////开始播放
-	g_hStream = BASS_OpenMusic(g_pszFile, BASS_SAMPLE_FX | BASS_STREAM_DECODE, BASS_SAMPLE_FX | BASS_MUSIC_PRESCAN | BASS_STREAM_DECODE);// 解码
+	g_hStream = BASS_OpenMusic(g_pszFile,
+		BASS_SAMPLE_FX | BASS_STREAM_DECODE,
+		BASS_SAMPLE_FX | BASS_MUSIC_PRESCAN | BASS_STREAM_DECODE,
+		BASS_SAMPLE_FX | BASS_STREAM_DECODE);// 解码
+
+	if (g_iMusicType == MUSICTYPE_MIDI && g_hSoundFont)// 必须放到创建重采样流前面，否则报BASS_ERROR_HANDLE
+		BASS_UpdateSoundFont(FALSE);
+
 	g_hStream = BASS_FX_TempoCreate(g_hStream, BASS_SAMPLE_FX | BASS_FX_FREESOURCE);// 创建重采样流
-    BASS_ChannelSetSync(g_hStream, BASS_SYNC_END | BASS_SYNC_ONETIME, 0, SyncProc_End, NULL);// 设置同步过程用来跟踪歌曲播放完毕的事件
-    
-    if (!g_hStream)
-    {
+	BASS_ChannelSetSync(g_hStream, BASS_SYNC_END | BASS_SYNC_ONETIME, 0, SyncProc_End, NULL);// 设置同步过程用来跟踪歌曲播放完毕的事件
+
+	if (!g_hStream)
+	{
         g_iCurrFileIndex = -1;
 		Global_ShowError(L"文件播放失败", NULL, ECODESRC_BASS, g_hMainWnd);
         return;
-    }
-
-    if (g_iMusicType == MUSICTYPE_MIDI && g_hSoundFont)
-    {
-        BASS_MIDI_FONT FontInfo;
-        FontInfo.font = g_hSoundFont;
-        FontInfo.preset = -1;
-        FontInfo.bank = 0;
-        BASS_MIDI_StreamSetFonts(g_hStream, &FontInfo, 1);
     }
 
     BASS_ChannelPlay(g_hStream, TRUE);
     g_bPlaying = TRUE;
     g_llLength = (ULONGLONG)(BASS_ChannelBytes2Seconds(g_hStream, BASS_ChannelGetLength(g_hStream, BASS_POS_BYTE)) * 1000);
     m_uThreadFlagWaves = THREADFLAG_WORKING;
+
     m_htdWaves = CreateThread(NULL, 0, Thread_GetWavesData, NULL, 0, NULL);// 启动线程获取波形数据
     if (g_pITaskbarList)
         g_pITaskbarList->SetProgressState(g_hTBGhost, TBPF_NORMAL);
@@ -591,13 +590,13 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
     UI_RefreshBmpBrush();
     m_fRotationAngle = 0.f;
     //////解析Lrc歌词
-    Lrc_ParseLrcData(g_pszFile, 0, TRUE, NULL, &g_Lrc, GS.uDefTextCode);
+    Lrc_ParseLrcData(g_pszFile, 0, TRUE, NULL, &g_Lrc, GS.iDefTextCode);
     if (!g_Lrc->iCount && m_CurrSongInfo.mi.pszLrc)
     {
         Lrc_ParseLrcData(
             m_CurrSongInfo.mi.pszLrc,
             (lstrlenW(m_CurrSongInfo.mi.pszLrc) + 1) * sizeof(WCHAR),
-            FALSE, NULL, &g_Lrc, GS.uDefTextCode);
+            FALSE, NULL, &g_Lrc, GS.iDefTextCode);
     }
     SendMessageW(g_hBKLeft, LEFTBKM_SETMAX, g_Lrc->iCount - 1, 0);
     LrcWnd_DrawLrc();
@@ -1405,8 +1404,8 @@ void UI_VEDrawLrc(int yCenter, BOOL bImmdShow, BOOL bIndependlyDrawing)
 
 	int iTop;
 	int iHeight = Lrc_DrawItem(m_iLrcCenter, yCenter, TRUE, FALSE, FALSE, TRUE, &iTop);
-	int iBottom = iTop - GS.uSCLrcLineGap;
-	iTop += (GS.uSCLrcLineGap + iHeight);
+	int iBottom = iTop - GS.iSCLrcLineGap;
+	iTop += (GS.iSCLrcLineGap + iHeight);
 	int i = m_iLrcCenter;
 	////////////////////////////////////////////////向上画
 	while (iBottom > m_rcLrcShow.top)
@@ -1415,7 +1414,7 @@ void UI_VEDrawLrc(int yCenter, BOOL bImmdShow, BOOL bIndependlyDrawing)
 			break;
 		--i;
 		iHeight = Lrc_DrawItem(i, iBottom, FALSE, FALSE, FALSE);
-		iBottom -= (GS.uSCLrcLineGap + iHeight);
+		iBottom -= (GS.iSCLrcLineGap + iHeight);
 	}
 	i = m_iLrcCenter;
 	////////////////////////////////////////////////向下画
@@ -1425,7 +1424,7 @@ void UI_VEDrawLrc(int yCenter, BOOL bImmdShow, BOOL bIndependlyDrawing)
 			break;
 		++i;
 		iHeight = Lrc_DrawItem(i, iTop, TRUE, FALSE, FALSE);
-		iTop += (GS.uSCLrcLineGap + iHeight);
+		iTop += (GS.iSCLrcLineGap + iHeight);
 	}
 
 	m_pD2DDCLeftBK->PopAxisAlignedClip();
@@ -1579,7 +1578,7 @@ BOOL UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing, BOOL bOnlyDraw
                 if (m_iLrcCenter > m_iLastLrcIndex[0])// 下一句在上一句的下方
                 {
                     m_LrcVScrollInfo.bDirection = TRUE;
-                    m_LrcVScrollInfo.iSrcTop = m_LrcVScrollInfo.iDestTop + iHeight / 2 + iHeight2 / 2 + GS.uSCLrcLineGap;
+                    m_LrcVScrollInfo.iSrcTop = m_LrcVScrollInfo.iDestTop + iHeight / 2 + iHeight2 / 2 + GS.iSCLrcLineGap;
                     m_LrcVScrollInfo.iDistance = m_LrcVScrollInfo.iSrcTop - m_LrcVScrollInfo.iDestTop;
                     ff = p1->fTime - p2->fTime;
                     if (m_LrcVScrollInfo.fDelay > ff)
@@ -1588,7 +1587,7 @@ BOOL UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing, BOOL bOnlyDraw
                 else// 下一句在上一句的上方
                 {
                     m_LrcVScrollInfo.bDirection = FALSE;
-                    m_LrcVScrollInfo.iSrcTop = m_LrcVScrollInfo.iDestTop - (iHeight / 2 + iHeight2 / 2 + GS.uSCLrcLineGap);
+                    m_LrcVScrollInfo.iSrcTop = m_LrcVScrollInfo.iDestTop - (iHeight / 2 + iHeight2 / 2 + GS.iSCLrcLineGap);
                     m_LrcVScrollInfo.iDistance = m_LrcVScrollInfo.iDestTop - m_LrcVScrollInfo.iSrcTop;
                     ff = p2->fTime - p1->fTime;
                     if (m_LrcVScrollInfo.fDelay > ff)
@@ -1970,10 +1969,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		SetWindowPos(hWnd, NULL, p->left, p->top, p->right - p->left, p->bottom - p->top, SWP_NOZORDER);
 
         ///////////////////更新主窗口DPI尺寸相关
-        m_cyAlbum = DPI(GS.uAlbumPicSize2);
+        m_cyAlbum = DPI(GS.iAlbumPicSize2);
         SAFE_RELEASE(m_pDWTFLrc);
         g_pDWFactory->CreateTextFormat(GS.pszSCLrcFontName, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-            DPIF(GS.uSCLrcFontSize), L"zh-cn", &m_pDWTFLrc);
+            DPIF(GS.iSCLrcFontSize), L"zh-cn", &m_pDWTFLrc);
 	}
 	return 0;
     case WM_SETTEXT:// 设置标题，转发，否则预览时不会显示标题（鸣谢：nlmhc）
@@ -3312,26 +3311,26 @@ int HitTest_LrcShow(POINT pt)
 void SettingsUpd_WndMain()
 {
     /////////////////////歌词字体
-	if (GS.uVisualMode == 0 || GS.uVisualMode == 1)
+	if (GS.iVisualMode == 0 || GS.iVisualMode == 1)
 	{
 		g_bShowAlbum = FALSE;
-        m_cyAlbum = DPI(GS.uAlbumPicSize1);
+        m_cyAlbum = DPI(GS.iAlbumPicSize1);
 	}
-	else if (GS.uVisualMode == 2 || GS.uVisualMode == 3)
+	else if (GS.iVisualMode == 2 || GS.iVisualMode == 3)
 	{
 		g_bShowAlbum = TRUE;
-        m_cyAlbum = DPI(GS.uAlbumPicSize2);
+        m_cyAlbum = DPI(GS.iAlbumPicSize2);
 	}
 
     DWRITE_FONT_WEIGHT DWFontWeight;
-    if (GS.uSCLrcFontWeight >= 1 || GS.uSCLrcFontWeight <= 999)
-        DWFontWeight = (DWRITE_FONT_WEIGHT)GS.uSCLrcFontWeight;
+    if (GS.iSCLrcFontWeight >= 1 || GS.iSCLrcFontWeight <= 999)
+        DWFontWeight = (DWRITE_FONT_WEIGHT)GS.iSCLrcFontWeight;
     else
         DWFontWeight = DWRITE_FONT_WEIGHT_NORMAL;
 
     SAFE_RELEASE(m_pDWTFLrc);
     g_pDWFactory->CreateTextFormat(GS.pszSCLrcFontName, NULL, DWFontWeight, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
-        DPIF(GS.uSCLrcFontSize), L"zh-cn", &m_pDWTFLrc);
+        DPIF(GS.iSCLrcFontSize), L"zh-cn", &m_pDWTFLrc);
     /////////////////////歌词颜色
     SAFE_RELEASE(m_pD2DBrLrc1);
     SAFE_RELEASE(m_pD2DBrLrc2);

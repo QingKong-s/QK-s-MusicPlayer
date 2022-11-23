@@ -57,13 +57,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 {
     //HQKINI h = QKINIParse(L"D:\\@重要文件\\@我的工程\\Player\\Debug\\Data\\QKPlayerConfig1.ini");
     //WCHAR sz[100] = { 0 };
-    //QKINIReadString(h, L"Lyric", L"EnableDTLrcBorder", L"123", sz, 100);
+    //QKINIReadString(h, L"Visual", L"AlbumPicSize1", L"123", sz, 100);
     //
-    //QKINIWriteString(h, L"Lyric1", L"EnableDTLrcBorder2", L"12345");
+    //QKINIWriteString(h, L"Visual", L"AlbumPicSize2", L"250");
 
     //QKINISave(h);
     //QKINIClose(h);
     //return 0;
+
+    //HQKINI h = QKINIParse(L"D:\\1.ini");
+    //OutputDebugStringW(QKINIReadString2(h, L"Sec", L"Key", NULL));
+
+    //QKINIClose(h);
+    //return 0;
+
 	BOOL bSuccessful = TRUE;
     g_hInst = hInstance;
     HMODULE hLib = LoadLibraryW(L"User32.dll");
@@ -99,7 +106,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		Global_ShowError(L"GDI+启动失败", NULL, ECODESRC_OTHERS, NULL, GPRet);
         return 1;
     }
-
+    //////////////创建D2D工厂
 #ifndef NDEBUG
     D2D1_FACTORY_OPTIONS D2DFactoryOptions;
     D2DFactoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
@@ -107,7 +114,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 #else
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, IID_PPV_ARGS(&g_pD2DFactory));
 #endif // !NDBUG
+    //////////////创建DWrite工厂
     DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&g_pDWFactory);
+    //////////////创建DXGI工厂
     ID3D11Device* pD3DDevice;
     D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT
 #ifndef NDEBUG
@@ -122,11 +131,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     pDXGIAdapter->GetParent(IID_PPV_ARGS(&g_pDXGIFactory));
     pDXGIAdapter->Release();
-
+    //////////////创建DXGI设备
     g_pD2DFactory->CreateDevice(g_pDXGIDevice, &g_pD2DDevice);
+    //////////////创建WIC工厂
     CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&g_pWICFactory));
-
-    CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&g_pITaskbarList));// 创建ITaskbarList4对象
+    //////////////创建ITaskbarList4对象
+    CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&g_pITaskbarList));
     g_pITaskbarList->HrInit();// 初始化
 
     //////////////载入资源，填充全局上下文
@@ -215,6 +225,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 	}
     //////////////读入设置
     Settings_Read();
+    BASS_UpdateSoundFont();
     GlobalEffect_ResetToDefault(EFFECT_ALL);
 	//////////////创建窗口
 	if (!BASS_Init(-1, 44100, 0, g_hMainWnd, NULL))// 初始化Bass
@@ -470,4 +481,24 @@ void Res_Load(int iSize)
         (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_VOLSLIENT), IMAGE_ICON, iSize, iSize, 0),
         (HICON)LoadImageW(g_hInst, MAKEINTRESOURCEW(IDI_TEMPO), IMAGE_ICON, iSize, iSize, 0)
     };
+}
+void BASS_UpdateSoundFont(BOOL bReloadFont)
+{
+    if (bReloadFont)
+    {
+        if (g_hSoundFont)
+            BASS_MIDI_FontFree(g_hSoundFont);
+        if (!GS.pszSoundFont)
+            return;
+        g_hSoundFont = BASS_MIDI_FontInit(GS.pszSoundFont, 0);
+    }
+
+    if (g_hStream)
+    {
+        BASS_MIDI_FONT MIDIFont;
+        MIDIFont.font = g_hSoundFont;
+        MIDIFont.preset = -1;
+        MIDIFont.bank = 0;
+        BASS_MIDI_StreamSetFonts(g_hStream, &MIDIFont, 1);
+    }
 }

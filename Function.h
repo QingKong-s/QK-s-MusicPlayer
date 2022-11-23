@@ -362,3 +362,12 @@ int QKINIReadInt(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, int iDef
 /// <param name="pszKeyName">键名</param>
 /// <param name="iValue">写入值</param>
 void QKINIWriteInt(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, int iValue);
+/// <summary>
+/// 读文本配置项
+/// </summary>
+/// <param name="hINI">INI句柄</param>
+/// <param name="pszSectionName">节名</param>
+/// <param name="pszKeyName">键名</param>
+/// <param name="pszDefStr">默认字符串</param>
+/// <returns>返回获取结果文本指针，使用完毕后必须调用delete[]释放</returns>
+PWSTR QKINIReadString2(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCWSTR pszDefStr);

@@ -511,7 +511,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 			{
 				int iItem = ((NMITEMACTIVATE*)lParam)->iItem;
 				UINT uFlags = (iItem == -1) ? MF_GRAYED : 0,
-					uFlags2 = g_bSort || g_iSearchResult != -1 ? MF_GRAYED : uFlags;
+					uFlags2 = (g_bSort || g_iSearchResult != -1) ? MF_GRAYED : uFlags;
 				HMENU hMenu = CreatePopupMenu();
 				AppendMenuW(hMenu, uFlags, IDMI_TL_PLAY, L"播放");
 				AppendMenuW(hMenu, uFlags, IDMI_TL_PLAYLATER, L"稍后播放");

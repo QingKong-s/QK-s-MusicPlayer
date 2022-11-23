@@ -92,7 +92,7 @@ void LrcWnd_CreateRes()
         DWRITE_FONT_WEIGHT_REGULAR,
         DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL,
-        DPIF((float)GS.uDTLrcFontSize),
+        DPIF((float)GS.iDTLrcFontSize),
         L"zh-cn",
         &m_pDWTextFormat
     );
@@ -764,10 +764,10 @@ void SettingsUpd_WndLrc()
 	SAFE_RELEASE(m_pDWTextFormat);
     SAFE_RELEASE(m_pD2DSolidBrush1);
 	LrcWnd_CreateRes();
-	QKGDIColorToD2DColor(GS.crDTLrc1, &m_D2DCrDTLrc1, GS.uDTLrcTransparent);
-	QKGDIColorToD2DColor(GS.crDTLrc2, &m_D2DCrDTLrc2, GS.uDTLrcTransparent);
+	QKGDIColorToD2DColor(GS.crDTLrc1, &m_D2DCrDTLrc1, GS.iDTLrcTransparent);
+	QKGDIColorToD2DColor(GS.crDTLrc2, &m_D2DCrDTLrc2, GS.iDTLrcTransparent);
 
-	QKGDIColorToD2DColor(GS.crDTLrcBorder, &m_D2DCrDTLrcBorder, GS.uDTLrcTransparent);
+	QKGDIColorToD2DColor(GS.crDTLrcBorder, &m_D2DCrDTLrcBorder, GS.iDTLrcTransparent);
 	if (m_pD2DRenderTarget)
 		m_pD2DRenderTarget->CreateSolidColorBrush(m_D2DCrDTLrcBorder, &m_pD2DSolidBrush1);
 

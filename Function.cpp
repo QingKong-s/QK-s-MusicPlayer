@@ -495,18 +495,13 @@ UINT32 QKSynchsafeUINT32ToUINT32(BYTE* p)
 {
     return (UINT32)(((UINT32)p[0] & 0x7F) << 21) | (((UINT32)p[1] & 0x7F) << 14) | (((UINT32)p[2] & 0x7F) << 7) | ((UINT32)p[3] & 0x7F);
 }
-/*
- * 目标：读ID3v2辅助函数：按指定编码处理文本
- *
- * 参数：
- * pStream 字节流指针；未指定iTextEncoding时指向整个文本帧，指定iTextEncoding时指向字符串
- * iLength 长度；未指定iTextEncoding时表示整个文本帧长度（包括1B的编码标记，不含结尾NULL），指定iTextEncoding时表示字符串长度（不含结尾NULL）
- * iTextEncoding 自定义文本编码；-1（缺省）指示处理的是文本帧
- *
- * 返回值：返回UTF-16LE文本指针，使用完毕后必须使用delete[]删除
- * 操作简述：
- * 备注：
- */
+/// <summary>
+/// [解析ID3v2辅助函数]按指定编码处理文本
+/// </summary>
+/// <param name="pStream">字节流指针；未指定iTextEncoding时指向整个文本帧，指定iTextEncoding时指向字符串</param>
+/// <param name="iLength">长度；未指定iTextEncoding时表示整个文本帧长度（包括1B的编码标记，不含结尾NULL），指定iTextEncoding时表示字符串长度（不含结尾NULL）</param>
+/// <param name="iTextEncoding">自定义文本编码；-1（缺省）指示处理的是文本帧</param>
+/// <returns>返回UTF-16LE文本指针，使用完毕后必须使用delete[]删除</returns>
 PWSTR GetMP3ID3v2_ProcString(BYTE* pStream, int iLength, int iTextEncoding = -1)
 {
     int iType = 0, iBufferSize;
@@ -821,17 +816,12 @@ void MusicInfo_Release(MUSICINFO* mi)
         mi->pWICBitmap->Release();
     ZeroMemory(mi, sizeof(MUSICINFO));
 }
-/*
- * 目标：处理歌词时间标签，将文本标签转换成浮点数，并将其按次序装载到歌词数组中
- *
- * 参数：
- * Result 结果数组
- * TimeLabel 时间标签数组
- * pszLrc 与时间标签数组里所有成员都对应的歌词
- *
- * 返回值：
- * 备注：读取歌词数据辅助函数，处理完成后不销毁原数组
- */
+/// <summary>
+/// [读取歌词数据辅助函数]处理歌词时间标签，将文本标签转换成浮点数，并将其按次序装载到歌词数组中，处理完成后不销毁原数组
+/// </summary>
+/// <param name="Result">结果数组</param>
+/// <param name="TimeLabel">时间标签数组</param>
+/// <param name="pszLrc">与时间标签数组里所有成员都对应的歌词</param>
 void GetLrcData_ProcLabel(QKARRAY* Result, QKARRAY TimeLabel, PWSTR pszLrc)
 {
     if (!TimeLabel)
@@ -1600,17 +1590,22 @@ int QKINIReadString(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCWST
 		}
 	}
 CopyDefString:
-	iLen = lstrlenW(pszDefStr) + 1;
-	if (iLen > iMaxBufSize)
-	{
-		lstrcpynW(pszRetStr, pszDefStr, iMaxBufSize);
-        return -iLen;
-    }
-    else
+    if (pszDefStr)
     {
-        lstrcpynW(pszRetStr, pszDefStr, iLen);
-        return iLen;
-    }
+        iLen = lstrlenW(pszDefStr) + 1;
+        if (iLen > iMaxBufSize)
+        {
+            lstrcpynW(pszRetStr, pszDefStr, iMaxBufSize);
+            return -iLen;
+        }
+        else
+        {
+			lstrcpynW(pszRetStr, pszDefStr, iLen);
+			return iLen;
+		}
+	}
+	else
+		return 0;
 }
 void QKINIWriteString(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCWSTR pszString)
 {
@@ -1652,7 +1647,7 @@ void QKINIWriteString(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCW
 				iEnd = iPos;
 			else
 				iEnd = hINI->dwSize;
-            iLen = iEnd - iStart;
+            iLen = iEnd - iStart-1;
 			int iValueLen = lstrlenW(pszString);
 			PWSTR pStart;
 			if (iLen > 0)// 有值
@@ -1661,8 +1656,7 @@ void QKINIWriteString(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCW
 				{
                     pStart = hINI->pszContent + iStart;
 					memmove(pStart + iValueLen, pStart + iLen, (lstrlenW(pStart + iLen) + 1) * sizeof(WCHAR));// 向前移动
-                    PWSTR p = pStart + iValueLen + lstrlenW(pStart + iValueLen) - 1;
-                    *(pStart + iValueLen + lstrlenW(pStart + iValueLen) - 1) = L'\0';
+
                     memcpy(pStart, pszString, lstrlenW(pszString) * sizeof(WCHAR));// 写值
 				}
 				else if (iLen == iValueLen)
@@ -1675,21 +1669,17 @@ void QKINIWriteString(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCW
                     hINI->pszContent = (PWSTR)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hINI->pszContent,
 						(hINI->dwSize + (iValueLen - iLen) + 1 /*结尾NULL*/) * sizeof(WCHAR));
                     pStart = hINI->pszContent + iStart;
-                    memmove(pStart + iValueLen, pStart, lstrlenW(pStart) * sizeof(WCHAR));// 向后移动
-                    *pStart = L'\0';
-					*(pStart + iValueLen + 1) = L'\0';// 截断，方便后续附加字符串
+					memmove(pStart + iValueLen, pStart + iLen, lstrlenW(pStart + iLen) * sizeof(WCHAR));// 向后移动
 
                     memcpy(pStart, pszString, lstrlenW(pszString) * sizeof(WCHAR));// 写值
 				}
             }
             else// 没有值
             {
-
 				hINI->pszContent = (PWSTR)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hINI->pszContent,
 					(hINI->dwSize + iValueLen + 1 /*结尾NULL*/) * sizeof(WCHAR));
 				pStart = hINI->pszContent + iStart;
 				memmove(pStart + iValueLen, pStart, lstrlenW(pStart) * sizeof(WCHAR));// 向后移动
-				*(pStart) = L'\0';// 截断，方便后续附加字符串
 
 				memcpy(pStart, pszString, lstrlenW(pszString) * sizeof(WCHAR));// 写值
             }
@@ -1747,10 +1737,7 @@ int QKINIReadInt(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, int iDef
 {
     WCHAR pszDef[20];
     wsprintfW(pszDef, L"%d", iDefValue);
-
-    int iBufSize = QKINIReadString(hINI, pszSectionName, pszKeyName, pszDef, NULL, 0);
-    PWSTR pszBuf = new  WCHAR[iBufSize];
-    QKINIReadString(hINI, pszSectionName, pszKeyName, pszDef, pszBuf, iBufSize + 1);
+    PWSTR pszBuf = QKINIReadString2(hINI, pszSectionName, pszKeyName, pszDef);
 
     int i;
     i = StrToIntW(pszBuf);
@@ -1762,4 +1749,64 @@ void QKINIWriteInt(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, int iV
     WCHAR pszBuf[20];
     wsprintfW(pszBuf, L"%d", iValue); 
     QKINIWriteString(hINI, pszSectionName, pszKeyName, pszBuf);
+}
+PWSTR QKINIReadString2(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCWSTR pszDefStr)
+{
+    if (!hINI)
+        goto CopyDefString;
+    if (hINI->iType != QKINI_NORMAL)
+        return 0;
+
+    int iPos;
+    PWSTR psz, pszRet;
+    int iTempLen;
+    int iLen;
+    //////////////////找节名
+    psz = new WCHAR[lstrlenW(pszSectionName) + 3];
+    lstrcpyW(psz, L"[");
+    lstrcatW(psz, pszSectionName);
+    lstrcatW(psz, L"]");
+    iPos = QKStrInStr(hINI->pszContent, psz);
+    iTempLen = lstrlenW(psz);
+    delete[] psz;
+    if (iPos)
+    {
+        //////////////////找键名
+        psz = new WCHAR[lstrlenW(pszKeyName) + 4];
+        lstrcpyW(psz, L"\r\n");
+        lstrcatW(psz, pszKeyName);
+        lstrcatW(psz, L"=");
+        iPos = QKStrInStr(hINI->pszContent, psz, iPos + iTempLen);
+        iTempLen = lstrlenW(psz);
+        delete[] psz;
+        if (iPos)
+        {
+            //////////////////找换行
+            int iStart = iPos + iTempLen - 1;
+            iPos = QKStrInStr(hINI->pszContent, L"\r\n", iStart);
+            int iEnd;
+            if (iPos)
+                iEnd = iPos;
+            else
+                iEnd = hINI->dwSize;
+            iLen = iEnd - iStart;
+
+            if (iLen > 1)
+            {
+                pszRet = new WCHAR[iLen];
+                lstrcpynW(pszRet, hINI->pszContent + iStart, iLen);
+                return pszRet;
+            }
+        }
+    }
+CopyDefString:
+    if (pszDefStr)
+    {
+        iLen = lstrlenW(pszDefStr) + 1;
+        pszRet = new WCHAR[iLen];
+        lstrcpyW(pszRet, pszDefStr);
+        return pszRet;
+    }
+    else
+        return NULL;
 }

@@ -83,4 +83,4 @@ int             g_iSearchResult			= -1;
 int             g_bSort					= FALSE;
 
 BOOL			g_bPlayIcon				= TRUE;
-BOOL			g_bShowAlbum			= 1;
+BOOL			g_bShowAlbum			= TRUE;

@@ -7,182 +7,168 @@
 #include <Windows.h>
 #include <strsafe.h>
 
+#include "bassmidi.h"
+
 #include "MyProject.h"
 #include "GlobalVar.h"
 #include "resource.h"
 #include "WndMain.h"
 #include "WndLrc.h"
 
+BOOL m_bSoundFontChanged = FALSE;
+
 void Settings_Read()
 {
     HQKINI hINI = QKINIParse(g_pszProfie);
     WCHAR szBuffer[MAXPROFILEBUFFER];
     // 缺省编码
-    GS.uDefTextCode = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, 0);
-    //GS.uDefTextCode = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, 0, g_pszProfie);
+    GS.iDefTextCode = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, 0);
     // 歌词目录
-    DWORD dwBufSize = GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_LRCDIR, NULL, szBuffer, 2, g_pszProfie);
     delete[] GS.pszLrcDir;
-    GS.pszLrcDir = new WCHAR[dwBufSize + 1];
-    GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_LRCDIR, NULL, GS.pszLrcDir, dwBufSize + 1, g_pszProfie);
-    //lstrcpyW(GS.pszLrcDir, szBuffer);
-    // 禁用过渡动画
-    GS.bLrcAnimation = !GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DISABLEVANIMATION, FALSE, g_pszProfie);
-    // 禁止换行
-    GS.bForceTwoLines = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DISABLEWORDBREAK, TRUE, g_pszProfie);
-    // 禁用阴影
-    GS.bDTLrcShandow = !GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DISABLEDTLRCSHANDOW, FALSE, g_pszProfie);
-    // DT字体
-    GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTFONTNAME, L"微软雅黑", szBuffer, MAXPROFILEBUFFER, g_pszProfie);
-    delete[] GS.pszDTLrcFontName;
-    GS.pszDTLrcFontName = new WCHAR[lstrlenW(szBuffer) + 1];
-    lstrcpyW(GS.pszDTLrcFontName, szBuffer);
+	GS.pszLrcDir = QKINIReadString2(hINI, PPF_SECTIONLRC, PPF_KEY_LRCDIR, NULL);
+	// 禁用过渡动画
+	GS.bLrcAnimation = !QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DISABLEVANIMATION, FALSE);
+	// 禁止换行
+	GS.bForceTwoLines = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DISABLEWORDBREAK, TRUE);
+	// 禁用阴影
+	GS.bDTLrcShandow = !QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DISABLEDTLRCSHANDOW, FALSE);
+	// DT字体
+	delete[] GS.pszDTLrcFontName;
+	GS.pszDTLrcFontName = QKINIReadString2(hINI, PPF_SECTIONLRC, PPF_KEY_DTFONTNAME, L"微软雅黑");
 
-    GS.uDTLrcFontSize = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTFONTSIZE, 40, g_pszProfie);
-    GS.uDTLrcFontWeight = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTFONTWEIGHT, 400, g_pszProfie);
-    // DT颜色
-	GS.crDTLrc1 = QKCommonClrToGDIClr(GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTLRCCLR1, QKGDIClrToCommonClr(QKCOLOR_GREEN), g_pszProfie));
-    GS.crDTLrc2 = QKCommonClrToGDIClr(GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTLRCCLR2, QKGDIClrToCommonClr(QKCOLOR_BLUE), g_pszProfie));
-    // DT透明度
-    GS.uDTLrcTransparent = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTLRCTRANSPARENT, 0xFF, g_pszProfie);
-    // 空行替代
-    GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCSPACELINE, L"...", szBuffer, MAXPROFILEBUFFER, g_pszProfie);
-    delete[] GS.pszDTLrcSpaceLine;
-    GS.pszDTLrcSpaceLine = new WCHAR[lstrlenW(szBuffer) + 1];
-    lstrcpyW(GS.pszDTLrcSpaceLine, szBuffer);
-    // SC字体
-    GetPrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_SCFONTNAME, L"微软雅黑", szBuffer, MAXPROFILEBUFFER, g_pszProfie);
+	GS.iDTLrcFontSize = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTFONTSIZE, 40);
+	GS.iDTLrcFontWeight = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTFONTWEIGHT, 400);
+	// DT颜色
+	GS.crDTLrc1 = QKCommonClrToGDIClr(QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTLRCCLR1, QKGDIClrToCommonClr(QKCOLOR_GREEN)));
+	GS.crDTLrc2 = QKCommonClrToGDIClr(QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTLRCCLR2, QKGDIClrToCommonClr(QKCOLOR_BLUE)));
+	// DT透明度
+	GS.iDTLrcTransparent = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTLRCTRANSPARENT, 0xFF);
+	// 空行替代
+	delete[] GS.pszDTLrcSpaceLine;
+	GS.pszDTLrcSpaceLine = QKINIReadString2(hINI, PPF_SECTIONLRC, PPF_KEY_DTLRCSPACELINE, L"...");
+	// SC字体
 	delete[] GS.pszSCLrcFontName;
-	GS.pszSCLrcFontName = new WCHAR[lstrlenW(szBuffer) + 1];
-	lstrcpyW(GS.pszSCLrcFontName, szBuffer);
+	GS.pszSCLrcFontName = QKINIReadString2(hINI, PPF_SECTIONLRC, PPF_KEY_SCFONTNAME, L"微软雅黑");
 
-	GS.uSCLrcFontSize = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_SCFONTSIZE, 18, g_pszProfie);
-	GS.uSCLrcFontWeight = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_SCFONTWEIGHT, 400, g_pszProfie);
+	GS.iSCLrcFontSize = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCFONTSIZE, 18);
+	GS.iSCLrcFontWeight = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCFONTWEIGHT, 400);
 	// SC颜色
-	GS.crSCLrc1 = QKCommonClrToGDIClr(GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_SCLRCCLR1, QKGDIClrToCommonClr(QKCOLOR_CYANDEEPER), g_pszProfie));
-	GS.crSCLrc2 = QKCommonClrToGDIClr(GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_SCLRCCLR2, QKGDIClrToCommonClr(QKCOLOR_RED), g_pszProfie));
+	GS.crSCLrc1 = QKCommonClrToGDIClr(QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCLRCCLR1, QKGDIClrToCommonClr(QKCOLOR_CYANDEEPER)));
+	GS.crSCLrc2 = QKCommonClrToGDIClr(QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCLRCCLR2, QKGDIClrToCommonClr(QKCOLOR_RED)));
 	// SC对齐
-	GS.uSCLrcAlign = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_SCALIGN, 0, g_pszProfie);
+	GS.iSCLrcAlign = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCALIGN, 0);
 	// SC行距
-	GS.uSCLrcLineGap = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_SCLINEGAP, 10, g_pszProfie);
+	GS.iSCLrcLineGap = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCLINEGAP, 10);
 	// SC对齐偏移
-	GS.uSCLrcOffset = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_SCOFFSET, 0, g_pszProfie);
-    // 呈现方式
-    GS.uVisualMode = GetPrivateProfileIntW(PPF_SECTIONVISUAL, PPF_KEY_VISUALMODE, 0, g_pszProfie);
-    // 水平滚动文本
-    GS.bHScrollText = GetPrivateProfileIntW(PPF_SECTIONVISUAL, PPF_KEY_HSCROLLTEXT, 0, g_pszProfie);
-    // 封面尺寸1
-    GS.uAlbumPicSize1= GetPrivateProfileIntW(PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE1, 210, g_pszProfie);
-    // 封面尺寸2
-    GS.uAlbumPicSize2 = GetPrivateProfileIntW(PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE2, 310, g_pszProfie);
-    // DT边框
-    GS.crDTLrcBorder = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_DTLRCBORDERCLR, QKCOLOR_BLACK, g_pszProfie);
-    GS.bEnableDTLrcBorder = GetPrivateProfileIntW(PPF_SECTIONLRC, PPF_KEY_ENABLEDTLRCBORDER, TRUE, g_pszProfie);
-    // 音色库
-    //delete[] GS.pszSoundFont;
+	GS.iSCLrcOffset = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCOFFSET, 0);
+	// 呈现方式
+	GS.iVisualMode = QKINIReadInt(hINI, PPF_SECTIONVISUAL, PPF_KEY_VISUALMODE, 0);
+	// 水平滚动文本
+	GS.bHScrollText = QKINIReadInt(hINI, PPF_SECTIONVISUAL, PPF_KEY_HSCROLLTEXT, 0);
+	// 封面尺寸1
+	GS.iAlbumPicSize1 = QKINIReadInt(hINI, PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE1, 210);
+	// 封面尺寸2
+	GS.iAlbumPicSize2 = QKINIReadInt(hINI, PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE2, 310);
+	// DT边框
+	GS.crDTLrcBorder = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTLRCBORDERCLR, QKCOLOR_BLACK);
+	GS.bEnableDTLrcBorder = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_ENABLEDTLRCBORDER, TRUE);
+	// 音色库
+	delete[] GS.pszSoundFont;
+	GS.pszSoundFont = QKINIReadString2(hINI, PPF_SECTIONPLAYING, PPF_KEY_SOUNDFONT, NULL);
+	if (m_bSoundFontChanged)
+		BASS_UpdateSoundFont();
 
+    QKINIClose(hINI);
 }
 void Settings_Save()
 {
-    WCHAR sz[MAXPROFILEBUFFER];
-    wsprintfW(sz, L"%u", GS.uDefTextCode);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, sz, g_pszProfie);
+	HQKINI hINI = QKINIParse(g_pszProfie);
+	WCHAR sz[MAXPROFILEBUFFER];
+	wsprintfW(sz, L"%u", GS.iDefTextCode);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, GS.iDefTextCode);
 
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_LRCDIR, GS.pszLrcDir, g_pszProfie);
+	QKINIWriteString(hINI, PPF_SECTIONLRC, PPF_KEY_LRCDIR, GS.pszLrcDir);
 
-    wsprintfW(sz, L"%u", !GS.bLrcAnimation);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DISABLEVANIMATION, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_DISABLEVANIMATION, !GS.bLrcAnimation);
 
-    wsprintfW(sz, L"%u", GS.bForceTwoLines);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DISABLEWORDBREAK, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_DISABLEWORDBREAK, GS.bForceTwoLines);
 
-    wsprintfW(sz, L"%u", !GS.bDTLrcShandow);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DISABLEDTLRCSHANDOW, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_DISABLEDTLRCSHANDOW, !GS.bDTLrcShandow);
 
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTFONTNAME, GS.pszDTLrcFontName, g_pszProfie);
+	QKINIWriteString(hINI, PPF_SECTIONLRC, PPF_KEY_DTFONTNAME, GS.pszDTLrcFontName);
 
-    wsprintfW(sz, L"%u", GS.uDTLrcFontSize);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTFONTSIZE, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTFONTSIZE, GS.iDTLrcFontSize);
 
-    wsprintfW(sz, L"%u", GS.uDTLrcFontWeight);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTFONTWEIGHT, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTFONTWEIGHT, GS.iDTLrcFontWeight);
 
-	wsprintfW(sz, L"%u", QKGDIClrToCommonClr(GS.crDTLrc1));
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCCLR1, sz, g_pszProfie);
-    wsprintfW(sz, L"%u", QKGDIClrToCommonClr(GS.crDTLrc2));
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCCLR2, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTLRCCLR1, QKGDIClrToCommonClr(GS.crDTLrc1));
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTLRCCLR2, QKGDIClrToCommonClr(GS.crDTLrc2));
 
-    wsprintfW(sz, L"%u", GS.uDTLrcTransparent);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCTRANSPARENT, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTLRCTRANSPARENT, GS.iDTLrcTransparent);
 
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCSPACELINE, GS.pszDTLrcSpaceLine, g_pszProfie);
+	QKINIWriteString(hINI, PPF_SECTIONLRC, PPF_KEY_DTLRCSPACELINE, GS.pszDTLrcSpaceLine);
 
+	QKINIWriteString(hINI, PPF_SECTIONLRC, PPF_KEY_SCFONTNAME, GS.pszSCLrcFontName);
 
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_SCFONTNAME, GS.pszSCLrcFontName, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCFONTSIZE, GS.iSCLrcFontSize);
 
-    wsprintfW(sz, L"%u", GS.uSCLrcFontSize);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_SCFONTSIZE, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCFONTWEIGHT, GS.iSCLrcFontWeight);
 
-    wsprintfW(sz, L"%u", GS.uSCLrcFontWeight);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_SCFONTWEIGHT, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCLRCCLR1, QKGDIClrToCommonClr(GS.crSCLrc1));
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCLRCCLR2, QKGDIClrToCommonClr(GS.crSCLrc2));
 
-    wsprintfW(sz, L"%u", QKGDIClrToCommonClr(GS.crSCLrc1));
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_SCLRCCLR1, sz, g_pszProfie);
-    wsprintfW(sz, L"%u", QKGDIClrToCommonClr(GS.crSCLrc2));
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_SCLRCCLR2, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCLINEGAP, GS.iSCLrcLineGap);
 
-    wsprintfW(sz, L"%u", GS.uSCLrcLineGap);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_SCLINEGAP, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCALIGN, GS.iSCLrcAlign);
 
-    wsprintfW(sz, L"%u", GS.uSCLrcAlign);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_SCALIGN, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_SCOFFSET, GS.iSCLrcOffset);
 
-    wsprintfW(sz, L"%u", GS.uSCLrcOffset);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_SCOFFSET, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONVISUAL, PPF_KEY_VISUALMODE, GS.iVisualMode);
 
-    wsprintfW(sz, L"%u", GS.uVisualMode);
-    WritePrivateProfileStringW(PPF_SECTIONVISUAL, PPF_KEY_VISUALMODE, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONVISUAL, PPF_KEY_HSCROLLTEXT, GS.bHScrollText);
 
-    wsprintfW(sz, L"%u", GS.bHScrollText);
-    WritePrivateProfileStringW(PPF_SECTIONVISUAL, PPF_KEY_HSCROLLTEXT, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE1, GS.iAlbumPicSize1);
 
-    wsprintfW(sz, L"%u", GS.uAlbumPicSize1);
-    WritePrivateProfileStringW(PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE1, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE2, GS.iAlbumPicSize2);
 
-    wsprintfW(sz, L"%u", GS.uAlbumPicSize2);
-    WritePrivateProfileStringW(PPF_SECTIONVISUAL, PPF_KEY_ALBUMPICSIZE2, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_DTLRCBORDERCLR, GS.crDTLrcBorder);
 
-    wsprintfW(sz, L"%u", GS.crDTLrcBorder);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_DTLRCBORDERCLR, sz, g_pszProfie);
+	QKINIWriteInt(hINI, PPF_SECTIONLRC, PPF_KEY_ENABLEDTLRCBORDER, GS.bEnableDTLrcBorder);
 
-    wsprintfW(sz, L"%u", GS.bEnableDTLrcBorder);
-    WritePrivateProfileStringW(PPF_SECTIONLRC, PPF_KEY_ENABLEDTLRCBORDER, sz, g_pszProfie);
+    QKINIWriteString(hINI, PPF_SECTIONPLAYING, PPF_KEY_SOUNDFONT, GS.pszSoundFont);
+
+	QKINISave(hINI);
+	QKINIClose(hINI);
 }
 void Settings_GetFromCtrl(HWND* hChild)
 {
     WCHAR sz[MAXPROFILEBUFFER];
     int iPos;
     HWND hWnd;
-
+    int iLength;
+    ///////////////////显示
     hWnd = hChild[0];
-    GS.uVisualMode = SendDlgItemMessageW(hWnd, IDC_CB_VISUAL, CB_GETCURSEL, 0, 0);
+    GS.iVisualMode = SendDlgItemMessageW(hWnd, IDC_CB_VISUAL, CB_GETCURSEL, 0, 0);
 
     GS.bHScrollText = (SendDlgItemMessageW(hWnd, IDC_CB_HSCROLLTEXT, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
     GetDlgItemTextW(hWnd, IDC_ED_ALBUMPICSIZE1, sz, MAXPROFILEBUFFER);
-    GS.uAlbumPicSize1 = StrToIntW(sz);
+    GS.iAlbumPicSize1 = StrToIntW(sz);
 
     GetDlgItemTextW(hWnd, IDC_ED_ALBUMPICSIZE2, sz, MAXPROFILEBUFFER);
-    GS.uAlbumPicSize2 = StrToIntW(sz);
-
-
-
-
+    GS.iAlbumPicSize2 = StrToIntW(sz);
+    ///////////////////播放
+    hWnd = hChild[1];
+    delete[] GS.pszSoundFont;
+    iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_SOUNDFONT));
+    GS.pszSoundFont = new WCHAR[iLength + 1];
+    GetDlgItemTextW(hWnd, IDC_ED_SOUNDFONT, GS.pszSoundFont, iLength + 1);
+    ///////////////////歌词
     hWnd = hChild[2];
-    GS.uDefTextCode = SendDlgItemMessageW(hWnd, IDC_CB_DEFTEXTCODE, CB_GETCURSEL, 0, 0);
+    GS.iDefTextCode = SendDlgItemMessageW(hWnd, IDC_CB_DEFTEXTCODE, CB_GETCURSEL, 0, 0);
 
     delete[] GS.pszLrcDir;
-    int iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_LRCDIR));
+    iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_LRCDIR));
     GS.pszLrcDir = new WCHAR[iLength + 1];
     GetDlgItemTextW(hWnd, IDC_ED_LRCDIR, GS.pszLrcDir, iLength + 1);
 
@@ -197,13 +183,13 @@ void Settings_GetFromCtrl(HWND* hChild)
 
     iPos = QKStrInStr(GS.pszDTLrcFontName, L",");
     *(GS.pszDTLrcFontName + iPos - 1) = L'\0';
-    GS.uDTLrcFontSize = (UINT)GetPropW(GetDlgItem(hWnd, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTSIZE);
-    GS.uDTLrcFontWeight = (UINT)GetPropW(GetDlgItem(hWnd, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTWEIGHT);
+    GS.iDTLrcFontSize = (UINT)GetPropW(GetDlgItem(hWnd, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTSIZE);
+    GS.iDTLrcFontWeight = (UINT)GetPropW(GetDlgItem(hWnd, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTWEIGHT);
 
     GS.crDTLrc1 = (COLORREF)GetPropW(GetDlgItem(hWnd, IDC_ST_DTLRCCLR1), PROP_DTLRCCLR1);
     GS.crDTLrc2 = (COLORREF)GetPropW(GetDlgItem(hWnd, IDC_ST_DTLRCCLR2), PROP_DTLRCCLR2);
 
-    GS.uDTLrcTransparent = SendDlgItemMessageW(hWnd, IDC_TB_DTLRCTRANSPARENT, TBM_GETPOS, 0, 0);
+    GS.iDTLrcTransparent = SendDlgItemMessageW(hWnd, IDC_TB_DTLRCTRANSPARENT, TBM_GETPOS, 0, 0);
     delete[] GS.pszDTLrcSpaceLine;
     iLength = GetWindowTextLengthW(GetDlgItem(hWnd, IDC_ED_DTLRCSPACELINE));
     GS.pszDTLrcSpaceLine = new WCHAR[iLength + 1];
@@ -216,22 +202,24 @@ void Settings_GetFromCtrl(HWND* hChild)
 
     iPos = QKStrInStr(GS.pszSCLrcFontName, L",");
     *(GS.pszSCLrcFontName + iPos - 1) = L'\0';
-    GS.uSCLrcFontSize = (UINT)GetPropW(GetDlgItem(hWnd, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTSIZE);
-    GS.uSCLrcFontWeight = (UINT)GetPropW(GetDlgItem(hWnd, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTWEIGHT);
+    GS.iSCLrcFontSize = (UINT)GetPropW(GetDlgItem(hWnd, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTSIZE);
+    GS.iSCLrcFontWeight = (UINT)GetPropW(GetDlgItem(hWnd, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTWEIGHT);
 
     GS.crSCLrc1 = (COLORREF)GetPropW(GetDlgItem(hWnd, IDC_ST_SCLRCCLR1), PROP_SCLRCCLR1);
     GS.crSCLrc2 = (COLORREF)GetPropW(GetDlgItem(hWnd, IDC_ST_SCLRCCLR2), PROP_SCLRCCLR2);
 
     GetDlgItemTextW(hWnd, IDC_ED_SCLRCLINEGAP, sz, MAXPROFILEBUFFER);
-    GS.uSCLrcLineGap = StrToIntW(sz);
+    GS.iSCLrcLineGap = StrToIntW(sz);
 
-    GS.uSCLrcAlign = SendDlgItemMessageW(hWnd, IDC_CB_SCLRCALIGN, CB_GETCURSEL, 0, 0);
+    GS.iSCLrcAlign = SendDlgItemMessageW(hWnd, IDC_CB_SCLRCALIGN, CB_GETCURSEL, 0, 0);
 
     GetDlgItemTextW(hWnd, IDC_ED_SCLRCALIGNOFFSET, sz, MAXPROFILEBUFFER);
-    GS.uSCLrcOffset = StrToIntW(sz);
+    GS.iSCLrcOffset = StrToIntW(sz);
 
     GS.crDTLrcBorder = (COLORREF)GetPropW(GetDlgItem(hWnd, IDC_ST_DTLRCBORDERCLR), PROP_DTLRCBORDERCLR);
     GS.bEnableDTLrcBorder = (SendDlgItemMessageW(hWnd, IDC_CB_ENABLEDTLRCBORDER, BM_GETCHECK, 0, 0) == BST_CHECKED);
+    ///////////////////快捷键
+    hWnd = hChild[3];
 }
 INT_PTR CALLBACK DlgProc_OptVisual(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -247,13 +235,13 @@ INT_PTR CALLBACK DlgProc_OptVisual(HWND hDlg, UINT message, WPARAM wParam, LPARA
         SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"封面、波形、频谱、歌词（尺寸自适应）");
         SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"旋转封面、频谱、歌词");
         SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"旋转封面、频谱、歌词（尺寸自适应）");
-        SendMessageW(hCtrl, CB_SETCURSEL, GS.uVisualMode, 0);
+        SendMessageW(hCtrl, CB_SETCURSEL, GS.iVisualMode, 0);
         ////////////////横向滚动溢出文本
         SendDlgItemMessageW(hDlg, IDC_CB_HSCROLLTEXT, BM_SETCHECK, GS.bHScrollText ? BST_CHECKED : BST_UNCHECKED, 0);
         ////////////////封面图尺寸
-        wsprintfW(sz, L"%u", GS.uAlbumPicSize1);
+        wsprintfW(sz, L"%u", GS.iAlbumPicSize1);
         SetDlgItemTextW(hDlg, IDC_ED_ALBUMPICSIZE1, sz);
-        wsprintfW(sz, L"%u", GS.uAlbumPicSize2);
+        wsprintfW(sz, L"%u", GS.iAlbumPicSize2);
         SetDlgItemTextW(hDlg, IDC_ED_ALBUMPICSIZE2, sz);
     }
     return FALSE;
@@ -269,6 +257,8 @@ INT_PTR CALLBACK DlgProc_OptPlaying(HWND hDlg, UINT message, WPARAM wParam, LPAR
 	case WM_INITDIALOG:
 	{
 		DlgProc_OptPlaying(hDlg, WM_COMMAND, MAKEWPARAM(IDC_BT_REFRESHDEV, BN_CLICKED), 0);
+
+        SetDlgItemTextW(hDlg, IDC_ED_SOUNDFONT, GS.pszSoundFont);
 	}
 	return FALSE;
 	case WM_COMMAND:
@@ -337,6 +327,8 @@ INT_PTR CALLBACK DlgProc_OptPlaying(HWND hDlg, UINT message, WPARAM wParam, LPAR
                     return 0;
                 SetDlgItemTextW(hDlg, IDC_ED_SOUNDFONT, pszPath);
                 CoTaskMemFree(pszPath);
+
+                m_bSoundFontChanged = TRUE;
             }
             return TRUE;
             }
@@ -373,7 +365,7 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 		SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"UTF-8");
 		SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"UTF-16LE");
 		SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"UTF-16BE");
-        SendMessageW(hCtrl, CB_SETCURSEL, GS.uDefTextCode, 0);
+        SendMessageW(hCtrl, CB_SETCURSEL, GS.iDefTextCode, 0);
         ////////////////禁止自动换行
         SendDlgItemMessageW(hDlg, IDC_CB_DISABLEWORDBREAK, BM_SETCHECK, GS.bForceTwoLines ? BST_CHECKED : BST_UNCHECKED, 0);
         ////////////////歌词搜索目录
@@ -389,13 +381,13 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_SETSEL, -2, -1);
         SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)L",");// 加入文本
 
-        wsprintfW(sz, L"%u,", GS.uSCLrcFontSize);
-        SetPropW(GetDlgItem(hDlg, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTSIZE, (HANDLE)GS.uSCLrcFontSize);
+        wsprintfW(sz, L"%u,", GS.iSCLrcFontSize);
+        SetPropW(GetDlgItem(hDlg, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTSIZE, (HANDLE)GS.iSCLrcFontSize);
         SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_SETSEL, -2, -1);
         SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)sz);
 
-        wsprintfW(sz, L"%u", GS.uSCLrcFontWeight);
-        SetPropW(GetDlgItem(hDlg, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTWEIGHT, (HANDLE)GS.uSCLrcFontWeight);
+        wsprintfW(sz, L"%u", GS.iSCLrcFontWeight);
+        SetPropW(GetDlgItem(hDlg, IDC_ED_SCLRCFONTINFO), PROP_SCLRCFONTWEIGHT, (HANDLE)GS.iSCLrcFontWeight);
         SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_SETSEL, -2, -1);
         SendDlgItemMessageW(hDlg, IDC_ED_SCLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)sz);// 加入文本
         ////////////////滚动歌词颜色
@@ -404,16 +396,16 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         SetPropW(hST3, PROP_SCLRCCLR1, (HANDLE)GS.crSCLrc1);
         SetPropW(hST4, PROP_SCLRCCLR2, (HANDLE)GS.crSCLrc2);
         ////////////////行间距
-        wsprintfW(sz, L"%u", GS.uSCLrcLineGap);
+        wsprintfW(sz, L"%u", GS.iSCLrcLineGap);
         SetDlgItemTextW(hDlg, IDC_ED_SCLRCLINEGAP, sz);
         ////////////////对齐方式
         hCtrl = GetDlgItem(hDlg, IDC_CB_SCLRCALIGN);
         SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"居中对齐");
         SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"左对齐");
         SendMessageW(hCtrl, CB_INSERTSTRING, -1, (LPARAM)L"右对齐");
-        SendMessageW(hCtrl, CB_SETCURSEL, GS.uSCLrcAlign, 0);
+        SendMessageW(hCtrl, CB_SETCURSEL, GS.iSCLrcAlign, 0);
         ////////////////对齐偏移
-        wsprintfW(sz, L"%u", GS.uSCLrcOffset);
+        wsprintfW(sz, L"%u", GS.iSCLrcOffset);
         SetDlgItemTextW(hDlg, IDC_ED_SCLRCALIGNOFFSET, sz);
 
 
@@ -426,13 +418,13 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_SETSEL, -2, -1);
         SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)L",");// 加入文本
 
-        wsprintfW(sz, L"%u,", GS.uDTLrcFontSize);
-        SetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTSIZE, (HANDLE)GS.uDTLrcFontSize);
+        wsprintfW(sz, L"%u,", GS.iDTLrcFontSize);
+        SetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTSIZE, (HANDLE)GS.iDTLrcFontSize);
         SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_SETSEL, -2, -1);
         SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)sz);
 
-        wsprintfW(sz, L"%u", GS.uDTLrcFontWeight);
-        SetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTWEIGHT, (HANDLE)GS.uDTLrcFontWeight);
+        wsprintfW(sz, L"%u", GS.iDTLrcFontWeight);
+        SetPropW(GetDlgItem(hDlg, IDC_ED_DTLRCFONTINFO), PROP_DTLRCFONTWEIGHT, (HANDLE)GS.iDTLrcFontWeight);
         SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_SETSEL, -2, -1);
         SendDlgItemMessageW(hDlg, IDC_ED_DTLRCFONTINFO, EM_REPLACESEL, FALSE, (LPARAM)sz);// 加入文本
         ////////////////桌面歌词颜色
@@ -442,7 +434,7 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
         SetPropW(hST2, PROP_DTLRCCLR2, (HANDLE)GS.crDTLrc2);
         ////////////////桌面歌词透明度
         SendDlgItemMessageW(hDlg, IDC_TB_DTLRCTRANSPARENT, TBM_SETRANGE, FALSE, MAKELPARAM(0, 0xFF));
-        SendDlgItemMessageW(hDlg, IDC_TB_DTLRCTRANSPARENT, TBM_SETPOS, TRUE, GS.uDTLrcTransparent);
+        SendDlgItemMessageW(hDlg, IDC_TB_DTLRCTRANSPARENT, TBM_SETPOS, TRUE, GS.iDTLrcTransparent);
         ////////////////空行替代
         SetDlgItemTextW(hDlg, IDC_ED_DTLRCSPACELINE, GS.pszDTLrcSpaceLine);
         ////////////////边框
@@ -692,6 +684,8 @@ INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
     {
     case WM_INITDIALOG:
     {
+        m_bSoundFontChanged = FALSE;
+
         iSBSize = GetSystemMetrics(SM_CXVSCROLL);
         PCWSTR pszOptionsTip[] =
         {
@@ -809,6 +803,9 @@ INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 			if (IsWindow(g_hLrcWnd))
 				SettingsUpd_WndLrc();
 
+            if (m_bSoundFontChanged)
+                BASS_UpdateSoundFont();
+            m_bSoundFontChanged = FALSE;
 			if (LOWORD(wParam) == IDOK)
 				EndDialog(hDlg, 0);
 		}
