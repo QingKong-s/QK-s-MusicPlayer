@@ -1616,8 +1616,8 @@ void QKINIWriteString(HQKINI hINI, PCWSTR pszSectionName, PCWSTR pszKeyName, PCW
     }
 
     int iPos, iSectionPos, iKeyPos;
-    PWSTR psz, pszSection, pszKey;
-    int iTempLen, iSectionLen, iKeyLen;
+    PWSTR pszSection, pszKey;
+    int iSectionLen, iKeyLen;
     int iLen;
     //////////////////ÕÒ½ÚÃû
     pszSection = new WCHAR[lstrlenW(pszSectionName) + 3];

@@ -78,6 +78,7 @@ CDataObject::~CDataObject()
 {
     delete[] m_pFormatEtc;
     delete[] m_pStgMedium;
+    delete[] m_pbRelease;
 }
 int CDataObject::LookupFormatEtc(FORMATETC* pFormatEtc)
 {

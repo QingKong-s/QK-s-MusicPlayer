@@ -20,7 +20,6 @@ BOOL m_bSoundFontChanged = FALSE;
 void Settings_Read()
 {
     HQKINI hINI = QKINIParse(g_pszProfie);
-    WCHAR szBuffer[MAXPROFILEBUFFER];
     // 缺省编码
     GS.iDefTextCode = QKINIReadInt(hINI, PPF_SECTIONLRC, PPF_KEY_DEFTEXTCODE, 0);
     // 歌词目录
