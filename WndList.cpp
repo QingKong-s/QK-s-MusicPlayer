@@ -17,6 +17,7 @@
 #include "resource.h"
 #include "OLEDragDrop.h"
 #include "WndMain.h"
+#include "PlayingStatistics.h"
 
 HANDLE          m_htdMusicTime          = NULL;
 UINT            m_uThreadFlagMusicTime  = THREADFLAG_STOP;
@@ -74,7 +75,7 @@ DWORD WINAPI Thread_FillTimeColumn(void* p)
         if (m_uThreadFlagMusicTime == THREADFLAG_STOP)
             break;
 
-        pI = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
+        pI = (PLAYERLISTUNIT*)QKAGet(g_ItemData, i);
         if (!pI->pszTime || !pp->bJudgeItem)
         {
             HSTREAM hStream = BASS_OpenMusic(pI->pszFile, BASS_STREAM_DECODE, BASS_MUSIC_DECODE | BASS_MUSIC_PRESCAN);
@@ -120,23 +121,23 @@ PLAYERLISTUNIT* List_GetArrayItem(int iLVIndex)
 
 	int i = iLVIndex;
 	if (g_iSearchResult != -1)// 应执行搜索时索引映射
-		i = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSearch;
+		i = ((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->iMappingIndexSearch;
 
 	if (g_bSort)// 应执行排序索引映射
-		i = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort;
+		i = ((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->iMappingIndexSort;
 
 	if (i == -1)
-		return (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iLVIndex);
+		return (PLAYERLISTUNIT*)QKAGet(g_ItemData, iLVIndex);
 	else
-		return (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
+		return (PLAYERLISTUNIT*)QKAGet(g_ItemData, i);
 }
 int List_GetArrayItemIndex(int iLVIndex)
 {
 	if (g_iSearchResult != -1)// 应执行搜索时索引映射
-		iLVIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iLVIndex))->iMappingIndexSearch;
+		iLVIndex = ((PLAYERLISTUNIT*)QKAGet(g_ItemData, iLVIndex))->iMappingIndexSearch;
 
 	if (g_bSort)// 应执行排序索引映射
-		iLVIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iLVIndex))->iMappingIndexSort;
+		iLVIndex = ((PLAYERLISTUNIT*)QKAGet(g_ItemData, iLVIndex))->iMappingIndexSort;
 
 	return iLVIndex;
 }
@@ -198,9 +199,9 @@ int List_Add(PWSTR pszFile, PWSTR pszName, int iPos, BOOL bRedraw, DWORD dwFlags
 
 	int iIndex;
 	if (iPos == -1)
-		iIndex = QKArray_Add(&g_ItemData, pListUnit);
+		iIndex = QKAAdd(g_ItemData, pListUnit);
 	else
-		iIndex = QKArray_Insert(&g_ItemData, pListUnit, iPos);
+		iIndex = QKAInsert(g_ItemData, pListUnit, iPos);
 
 	if (bRedraw)
 		List_ResetLV();
@@ -220,7 +221,7 @@ void List_Delete(int iItem, BOOL bRedraw)
     {
         for (int i = 0; i < g_ItemData->iCount; ++i)
         {
-            p = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
+            p = (PLAYERLISTUNIT*)QKAGet(g_ItemData, i);
             // 对空指针delete是安全的
             delete[] p->pszFile;
             delete[] p->pszName;
@@ -228,18 +229,18 @@ void List_Delete(int iItem, BOOL bRedraw)
             delete[] p->pszBookMark;
             delete[] p->pszBookMarkComment;
         }
-        QKArray_Delete(g_ItemData, QKADF_DELETE);
-        g_ItemData = QKArray_Create(0);
+        QKADelete(g_ItemData, QKADF_DELETE);
+        g_ItemData = QKACreate(0);
     }
     else
     {
-        p = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iItem);
+        p = (PLAYERLISTUNIT*)QKAGet(g_ItemData, iItem);
         delete[] p->pszFile;
         delete[] p->pszName;
         delete[] p->pszTime;
         delete[] p->pszBookMark;
         delete[] p->pszBookMarkComment;
-        QKArray_DeleteMember(&g_ItemData, iItem, QKADF_DELETE);
+        QKADeleteMember(g_ItemData, iItem, QKADF_DELETE);
     }
     if (bRedraw)
         List_ResetLV();
@@ -272,7 +273,7 @@ void Sort_End()
         BOOL b[2] = { 0 };
         for (int i = 0; i < g_ItemData->iCount; ++i)
         {
-            j = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort;
+            j = ((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->iMappingIndexSort;
             if (j == g_iCurrFileIndex)
             {
                 g_iCurrFileIndex = i;// 转换现行播放索引
@@ -378,8 +379,6 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		g_hLV = hCtrl;
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SendMessageW(hCtrl, LVM_SETVIEW, LV_VIEW_DETAILS, 0);
-		UINT uExStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
-		SendMessageW(hCtrl, LVM_SETEXTENDEDLISTVIEWSTYLE, uExStyle, uExStyle);
 		LVCOLUMNW lc;
 		lc.mask = LVCF_TEXT | LVCF_WIDTH;
 		lc.pszText = (PWSTR)L"名称";
@@ -388,7 +387,6 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		lc.pszText = (PWSTR)L"时长";
 		lc.cx = DPI(50);
 		SendMessageW(hCtrl, LVM_INSERTCOLUMNW, 1, (LPARAM)&lc);
-		SetWindowTheme(hCtrl, L"Explorer", NULL);
 		hLVTheme = OpenThemeData(hCtrl, L"ListView");
 		SetPropW(hCtrl, PROP_WNDPROC,
 			(HANDLE)SetWindowLongPtrW(hCtrl, GWLP_WNDPROC, (LONG_PTR)WndProc_ListView));
@@ -486,8 +484,8 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 						SetTextColor(p->nmcd.hdc, QKCOLOR_BLACK);
 
 					RECT rc = p->nmcd.rc;
-					rc.left = DPIS_LVTEXTSPACE;
-					rc.right = SendMessageW(g_hLV, LVM_GETCOLUMNWIDTH, 0, 0);
+					rc.left += DPIS_LVTEXTSPACE;
+					rc.right = rc.left+ SendMessageW(g_hLV, LVM_GETCOLUMNWIDTH, 0, 0)- DPIS_LVTEXTSPACE;
 					DrawTextW(p->nmcd.hdc, pI->pszName, -1, &rc, DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
 					rc.left = rc.right;
 					rc.right = p->nmcd.rc.right;
@@ -545,18 +543,18 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 				break;
 				case IDMI_TL_OPEN_IN_EXPLORER:
 				{
-					int iCount = QKArray_GetCount(g_ItemData);
-					QKARRAY pArray = QKArray_Create(0);
+					int iCount = QKAGetCount(g_ItemData);
+					QKARRAY pArray = QKACreate(0);
 					for (int i = 0; i < iCount; ++i)
 					{
 						if (SendMessageW(g_hLV, LVM_GETITEMSTATE, i, LVIS_SELECTED) == LVIS_SELECTED)
-							QKArray_Add(&pArray, List_GetArrayItem(i)->pszFile);
+							QKAAdd(pArray, List_GetArrayItem(i)->pszFile);
 					}
-					iCount = QKArray_GetCount(pArray);
+					iCount = QKAGetCount(pArray);
 					if (!iCount)
 						return 0;
 					WCHAR pszPath[MAX_PATH];
-					lstrcpyW(pszPath, (PCWSTR)QKArray_Get(pArray, 0));
+					lstrcpyW(pszPath, (PCWSTR)QKAGet(pArray, 0));
 					PathRemoveFileSpecW(pszPath);
 					LPITEMIDLIST pPathIDL;
 					SHParseDisplayName(pszPath, NULL, &pPathIDL, 0, 0);
@@ -565,7 +563,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 					for (int i = 0; i < iCount; i++)
 					{
-						SHParseDisplayName((PCWSTR)QKArray_Get(pArray, i), NULL, pFileIDL + i, 0, 0);
+						SHParseDisplayName((PCWSTR)QKAGet(pArray, i), NULL, pFileIDL + i, 0, 0);
 					}
 
 					HRESULT hr = SHOpenFolderAndSelectItems(pPathIDL, iCount, (LPCITEMIDLIST*)pFileIDL, 0);
@@ -576,7 +574,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 					}
 					CoTaskMemFree(pPathIDL);
 					delete[] pFileIDL;
-					QKArray_Delete(pArray);
+					QKADelete(pArray);
 				}
 				break;
 				case IDMI_TL_ADDBOOKMARK:
@@ -609,7 +607,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 					{
 						if (SendMessageW(g_hLV, LVM_GETITEMSTATE, i, LVIS_SELECTED) == LVIS_SELECTED)
 						{
-							((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->dwFlags &= ~QKLIF_BOOKMARK;
+							((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->dwFlags &= ~QKLIF_BOOKMARK;
 							if (SendMessageW(g_hLV, LVM_GETITEMSTATE, i, LVIS_SELECTED) == LVIS_SELECTED)
 								SendMessageW(g_hLV, LVM_REDRAWITEMS, i, i);
 						}
@@ -664,7 +662,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 					{
 						if (SendMessageW(g_hLV, LVM_GETITEMSTATE, i, LVIS_SELECTED) == LVIS_SELECTED)
 						{
-							DeleteFileW(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->pszFile);
+							DeleteFileW(((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->pszFile);
 							List_Delete(i, FALSE);
 						}
 					}
@@ -742,26 +740,26 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
                         return 0;
                     }
 					if (g_iCurrFileIndex != -1)
-						((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iCurrFileIndex))->dwFlags |= QKLIF_DRAGMARK_CURRFILE;
+						((PLAYERLISTUNIT*)QKAGet(g_ItemData, g_iCurrFileIndex))->dwFlags |= QKLIF_DRAGMARK_CURRFILE;
                     if (g_iLaterPlay != -1)
-                        ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iLaterPlay))->dwFlags |= QKLIF_DRAGMARK_PLLATER;
+                        ((PLAYERLISTUNIT*)QKAGet(g_ItemData, g_iLaterPlay))->dwFlags |= QKLIF_DRAGMARK_PLLATER;
 					//////////////////取选中项目
-					QKARRAY Files = QKArray_Create(0);// 文件名数组
-					QKARRAY Items = QKArray_Create(0);// 索引数组
+					QKARRAY Files = QKACreate(0);// 文件名数组
+					QKARRAY Items = QKACreate(0);// 索引数组
 
 					for (int i = 0; i < g_ItemData->iCount; ++i)
 					{
 						if (SendMessageW(g_hLV, LVM_GETITEMSTATE, i, LVIS_SELECTED) == LVIS_SELECTED)
 						{
-							QKArray_Add(&Files, List_GetArrayItem(i)->pszFile);
-							QKArray_AddValue(&Items, &i);
+							QKAAdd(Files, List_GetArrayItem(i)->pszFile);
+							QKAAddValue(Items, i);
 						}
 					}
                     //////////////////制拖放源
 					CDataObject* pDataObject;
 					CDropSource* pDropSource;
 					QKMakeDropSource(Files, OLEDrag_GiveFeedBack, &pDataObject, &pDropSource, TRUE);
-					QKArray_Delete(Files);// 清理
+					QKADelete(Files);// 清理
                     //////////////////制自定义拖放信息，用来保存索引以便自身程序拖放
 					FORMATETC fe =
 					{
@@ -794,7 +792,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 					for (int i = 0; i < Items->iCount; ++i)
 					{
-						memcpy(p, QKArray_GetValue(Items, i), sizeof(int));
+                        *p = QKAGetValue(Items, i);
 						++p;
 					}
 					GlobalUnlock(sm.hGlobal);
@@ -1167,7 +1165,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
             return 0;
             case IDC_BT_SAVE:
             {
-                if (!QKArray_GetCount(g_ItemData))
+                if (!QKAGetCount(g_ItemData))
                     return 0;
 
                 INT_PTR pResult = DialogBoxParamW(g_hInst, MAKEINTRESOURCEW(IDD_LIST), g_hBKList, DlgProc_List, DLGTYPE_SAVELIST);
@@ -1205,7 +1203,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 WCHAR cNULL = 0;
                 for (int i = 0; i < ListHeader.iCount; ++i)
                 {
-                    p = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
+                    p = (PLAYERLISTUNIT*)QKAGet(g_ItemData, i);
                     ListItem.uFlags = p->dwFlags | (p->pszTime ? QKLIF_TIME : 0);
                     WriteFile(hFile, &ListItem, sizeof(LISTFILEITEM), &cbWritten, NULL);// 项目头
                     WriteFile(hFile, p->pszName, (lstrlenW(p->pszName) + 1) * sizeof(WCHAR), &cbWritten, NULL);// 名称
@@ -1286,13 +1284,13 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     BOOL bTransed1 = FALSE, bTransed2 = FALSE;
                     for (int i = 0; i < g_ItemData->iCount; ++i)
                     {
-                        iIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort;
+                        iIndex = ((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->iMappingIndexSort;
                         if (iIndex == -1)
                             iIndex = i;
                         // 上面是处理索引映射
-                        if (QKStrInStr(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, iIndex))->pszName, pszEdit))// 比对文本
+                        if (QKStrInStr(((PLAYERLISTUNIT*)QKAGet(g_ItemData, iIndex))->pszName, pszEdit))// 比对文本
                         {
-                            ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iSearchResult))->iMappingIndexSearch = iIndex;// 映射，这个要从列表的开头开始映射，顺次往下，使用g_iSearchResult做到这一点
+                            ((PLAYERLISTUNIT*)QKAGet(g_ItemData, g_iSearchResult))->iMappingIndexSearch = iIndex;// 映射，这个要从列表的开头开始映射，顺次往下，使用g_iSearchResult做到这一点
                             if (b1)
                             {
                                 if (i == g_iCurrFileIndex)
@@ -1358,22 +1356,30 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 AppendMenuW(hMenu, 0, IDMI_LM_DETAIL, L"详细信息...");
                 AppendMenuW(hMenu, 0, IDMI_LM_SETLVDEFWIDTH, L"将列表调至默认宽度");
                 AppendMenuW(hMenu, 0, IDMI_LM_UPDATETIME, L"强制更新列表时间信息");
+
+                AppendMenuW(hMenu, 0, 1145, L"统计");
                 RECT rc;
                 GetWindowRect((HWND)lParam, &rc);
                 int iRet = TrackPopupMenu(hMenu, TPM_RETURNCMD, rc.left, rc.bottom, 0, hWnd, NULL);
                 DestroyMenu(hMenu);
+
+                if (iRet == 1145)
+                {
+                    CreateDialogParamW(g_hInst, MAKEINTRESOURCEW(IDD_PLAYINGSTAT), NULL, DlgProc_PlayingStat, 0);
+                }
+
                 switch (iRet)
                 {
                 case IDMI_LM_SORT_DEF:// 返回默认排序
                 {
                     if (g_iCurrFileIndex != -1)
-                        g_iCurrFileIndex = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iCurrFileIndex))->iMappingIndexSort;
+                        g_iCurrFileIndex = ((PLAYERLISTUNIT*)QKAGet(g_ItemData, g_iCurrFileIndex))->iMappingIndexSort;
 
                     if (g_iLaterPlay != -1)
-                        g_iLaterPlay = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iLaterPlay))->iMappingIndexSort;
+                        g_iLaterPlay = ((PLAYERLISTUNIT*)QKAGet(g_ItemData, g_iLaterPlay))->iMappingIndexSort;
 
                     for (int i = 0; i < g_ItemData->iCount; ++i)
-                        ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort = -1;
+                        ((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->iMappingIndexSort = -1;
 
                     g_bSort = FALSE;
                     List_Redraw();
@@ -1393,13 +1399,13 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     {
                         for (int j = 0; j < iCount - i - 1; ++j)
                         {
-                            p1 = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, j);
-                            p2 = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, j + 1);
+                            p1 = (PLAYERLISTUNIT*)QKAGet(g_ItemData, j);
+                            p2 = (PLAYERLISTUNIT*)QKAGet(g_ItemData, j + 1);
                             m = p1->iMappingIndexSort == -1 ? j : p1->iMappingIndexSort;
                             n = p2->iMappingIndexSort == -1 ? j + 1 : p2->iMappingIndexSort;
                             if (StrCmpLogicalW(
-                                ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, m))->pszFile,
-                                ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, n))->pszFile) == iResult)
+                                ((PLAYERLISTUNIT*)QKAGet(g_ItemData, m))->pszFile,
+                                ((PLAYERLISTUNIT*)QKAGet(g_ItemData, n))->pszFile) == iResult)
                             {
                                 p1->iMappingIndexSort = n;
                                 p2->iMappingIndexSort = m;
@@ -1421,13 +1427,13 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     {
                         for (int j = 0; j < iCount - i - 1; ++j)
                         {
-                            p1 = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, j);
-                            p2 = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, j + 1);
+                            p1 = (PLAYERLISTUNIT*)QKAGet(g_ItemData, j);
+                            p2 = (PLAYERLISTUNIT*)QKAGet(g_ItemData, j + 1);
                             m = p1->iMappingIndexSort == -1 ? j : p1->iMappingIndexSort;
                             n = p2->iMappingIndexSort == -1 ? j + 1 : p2->iMappingIndexSort;
                             if (StrCmpLogicalW(
-                                ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, m))->pszName,
-                                ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, n))->pszName) == iResult)
+                                ((PLAYERLISTUNIT*)QKAGet(g_ItemData, m))->pszName,
+                                ((PLAYERLISTUNIT*)QKAGet(g_ItemData, n))->pszName) == iResult)
                             {
                                 p1->iMappingIndexSort = n;
                                 p2->iMappingIndexSort = m;
@@ -1453,7 +1459,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     {
                         for (int i = 0; i < iCount; ++i)
                         {
-                            hFind = FindFirstFileW(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->pszFile, &wfd);// 这样比先CreateFile再GetFileTime快
+                            hFind = FindFirstFileW(((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->pszFile, &wfd);// 这样比先CreateFile再GetFileTime快
                             memcpy(ft + i, &wfd.ftCreationTime, sizeof(FILETIME));
                             FindClose(hFind);
                         }
@@ -1462,7 +1468,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     {
                         for (int i = 0; i < iCount; ++i)
                         {
-                            hFind = FindFirstFileW(((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->pszFile, &wfd);// 这样比先CreateFile再GetFileTime快
+                            hFind = FindFirstFileW(((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->pszFile, &wfd);// 这样比先CreateFile再GetFileTime快
                             memcpy(ft + i, &wfd.ftLastWriteTime, sizeof(FILETIME));
                             FindClose(hFind);
                         }
@@ -1472,8 +1478,8 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     {
                         for (int j = 0; j < iCount - i - 1; ++j)
                         {
-                            p1 = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, j);
-                            p2 = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, j + 1);
+                            p1 = (PLAYERLISTUNIT*)QKAGet(g_ItemData, j);
+                            p2 = (PLAYERLISTUNIT*)QKAGet(g_ItemData, j + 1);
                             m = p1->iMappingIndexSort == -1 ? j : p1->iMappingIndexSort;
                             n = p2->iMappingIndexSort == -1 ? j + 1 : p2->iMappingIndexSort;
                             if (CompareFileTime(ft + m, ft + n) == iResult)
@@ -1500,13 +1506,13 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     p = new PLAYERLISTUNIT * [iCount];
                     for (int i = 0; i < iCount; ++i)
                     {
-                        p[i] = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort);
+                        p[i] = (PLAYERLISTUNIT*)QKAGet(g_ItemData, ((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->iMappingIndexSort);
                     }
 
                     for (int i = 0; i < iCount; ++i)
                     {
-                        ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort = -1;
-                        QKArray_Set(g_ItemData, i, p[i]);
+                        ((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->iMappingIndexSort = -1;
+                        QKASet(g_ItemData, i, p[i]);
                     }
                     delete[] p;
                     List_Redraw();
@@ -1529,14 +1535,14 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     int i;
                     for (i = 0; i < iCount; ++i)
                     {
-                        p1 = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
-                        p2 = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_ItemData->iCount - 1 - i);
+                        p1 = (PLAYERLISTUNIT*)QKAGet(g_ItemData, i);
+                        p2 = (PLAYERLISTUNIT*)QKAGet(g_ItemData, g_ItemData->iCount - 1 - i);
 
                         m = p1->iMappingIndexSort == -1 ? i : p1->iMappingIndexSort;
                         p1->iMappingIndexSort = p2->iMappingIndexSort == -1 ? g_ItemData->iCount - 1 - i : p2->iMappingIndexSort;
                         p2->iMappingIndexSort = m;
                     }
-                    p1 = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
+                    p1 = (PLAYERLISTUNIT*)QKAGet(g_ItemData, i);
                     if (p1->iMappingIndexSort == -1)
                         p1->iMappingIndexSort = i;
 
@@ -1544,7 +1550,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                     {
                         for (int i = 0; i < iCount; ++i)
                         {
-                            if (((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i))->iMappingIndexSort == g_iCurrFileIndex)
+                            if (((PLAYERLISTUNIT*)QKAGet(g_ItemData, i))->iMappingIndexSort == g_iCurrFileIndex)
                             {
                                 g_iCurrFileIndex = i;
                                 break;
@@ -1636,7 +1642,7 @@ LRESULT CALLBACK WndProc_ListView(HWND hWnd, UINT message, WPARAM wParam, LPARAM
     {
         if (wParam == VK_RETURN)// 按回车键播放曲目
         {
-            int iCount = QKArray_GetCount(g_ItemData);
+            int iCount = QKAGetCount(g_ItemData);
             int i;
             for (i = 0; i < iCount; ++i)
             {
@@ -1700,9 +1706,6 @@ INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
         SendMessageW(hLV, LVM_INSERTCOLUMNW, 1, (LPARAM)&lc);
         // 设置风格
         SetWindowLongPtrW(hLV, GWL_STYLE, GetWindowLongW(hLV, GWL_STYLE) | LVS_SINGLESEL);// 单一选择
-        DWORD dwStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
-        SendMessageW(hLV, LVM_SETEXTENDEDLISTVIEWSTYLE, dwStyle, dwStyle);// 整行选择，双缓冲
-        SetWindowTheme(hLV, L"Explorer", NULL);// 可视风格
         // 枚举文件
         WIN32_FIND_DATAW wfd;
         WCHAR szListFile[MAX_PATH];
@@ -1810,10 +1813,6 @@ INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM
     {
         hLV = GetDlgItem(hDlg, IDC_LV_BOOKMARK);
         hStatic = GetDlgItem(hDlg, IDC_ST_BMCLR);
-        ///////////////设置风格
-        DWORD dwStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
-        SendMessageW(hLV, LVM_SETEXTENDEDLISTVIEWSTYLE, dwStyle, dwStyle);
-        SetWindowTheme(hLV, L"Explorer", NULL);
         ///////////////插入列
         LVCOLUMNW lc;
         lc.mask = LVCF_TEXT | LVCF_WIDTH;
@@ -2272,15 +2271,15 @@ HRESULT CALLBACK OLEDrop_OnDrop(IDataObject* pDataObj, DWORD grfKeyState, POINTL
                 iIndex = *p;
                 if (iIndex >= iTargetIndex)
                 {
-                    QKArray_Insert(&g_ItemData, QKArray_Get(g_ItemData, iIndex), iTargetIndex + m);
-                    QKArray_DeleteMember(&g_ItemData, iIndex + 1);
+                    QKAInsert(g_ItemData, QKAGet(g_ItemData, iIndex), iTargetIndex + m);
+                    QKADeleteMember(g_ItemData, iIndex + 1);
                     ++m;
                 }
                 else
                 {
                     iIndex -= n;
-                    QKArray_Insert(&g_ItemData, QKArray_Get(g_ItemData, iIndex), iTargetIndex);
-                    QKArray_DeleteMember(&g_ItemData, iIndex);
+                    QKAInsert(g_ItemData, QKAGet(g_ItemData, iIndex), iTargetIndex);
+                    QKADeleteMember(g_ItemData, iIndex);
                     ++n;
                 }
                 ++p;
@@ -2301,7 +2300,7 @@ HRESULT CALLBACK OLEDrop_OnDrop(IDataObject* pDataObj, DWORD grfKeyState, POINTL
             BOOL b[2] = { 0 };
             for (int i = 0; i < g_ItemData->iCount; ++i)// 捏麻麻地算这算那的劳资脑子不够用了，直接用个简单粗暴的方法还原索引
             {
-                pi = (PLAYERLISTUNIT*)QKArray_Get(g_ItemData, i);
+                pi = (PLAYERLISTUNIT*)QKAGet(g_ItemData, i);
                 if (pi->dwFlags & QKLIF_DRAGMARK_CURRFILE)
                 {
                     g_iCurrFileIndex = i;

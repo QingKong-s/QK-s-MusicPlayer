@@ -77,6 +77,7 @@ void Settings_Read()
 	if (m_bSoundFontChanged)
 		BASS_UpdateSoundFont();
 
+    GS.uPlayedTimeTimerResolution = 100;
     QKINIClose(hINI);
 }
 void Settings_Save()

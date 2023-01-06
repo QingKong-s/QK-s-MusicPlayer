@@ -158,8 +158,8 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     }
     return 0;
     case WM_MOUSEACTIVATE:
-        return MA_NOACTIVATE;//不激活窗口，也不丢弃鼠标消息
-    case WM_NCLBUTTONDOWN://非客户区鼠标按键事件
+        return MA_NOACTIVATE;// 不激活窗口，也不丢弃鼠标消息
+    case WM_NCLBUTTONDOWN:// 非客户区鼠标按键事件
     {
         bLBTDown = TRUE;
         LRESULT lResult = DefWindowProcW(hWnd, message, wParam, lParam);
@@ -296,7 +296,7 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         {
             if (g_iCurrLrcIndex < 0)
                 return 0;
-            LRCDATA* p = (LRCDATA*)QKArray_Get(g_Lrc, g_iCurrLrcIndex);
+            LRCDATA* p = (LRCDATA*)QKAGet(g_Lrc, g_iCurrLrcIndex);
             float fLastTime = g_fTime - p->fTime;// 已经持续的时间
             static int iLastx1 = 0, iLastx2 = 0;// 上次左边，如果跟上次一样就不要再画了
             int ii;
@@ -460,14 +460,14 @@ void LrcWnd_DrawLrc()
 	NoLrc:// 没播到第一句时跳过来
         if (g_hStream)
         {
-            pszLrc = ((PLAYERLISTUNIT*)QKArray_Get(g_ItemData, g_iCurrFileIndex))->pszName;
+            pszLrc = ((PLAYERLISTUNIT*)QKAGet(g_ItemData, g_iCurrFileIndex))->pszName;
             uStr1Length = lstrlenW(pszLrc);
         }
 		break;
 	case LRCSTATE_NORMAL:
         if (g_iCurrLrcIndex >= 0)
         {
-            p = (LRCDATA*)QKArray_Get(g_Lrc, g_iCurrLrcIndex);
+            p = (LRCDATA*)QKAGet(g_Lrc, g_iCurrLrcIndex);
             pszLrc = p->pszLrc;
             if (p->iOrgLength == -1)
             {
@@ -667,7 +667,7 @@ void LrcWnd_DrawLrc()
     }
 
     m_pD2DRenderTarget->EndDraw();
-    static POINT pt = { 0 };
+    POINT pt = { 0 };
     SIZEL size = { m_cxClient,m_cyClient };
     BLENDFUNCTION bf;
     bf.BlendOp = AC_SRC_OVER;

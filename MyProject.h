@@ -9,7 +9,7 @@
 
 #include "bass.h"
 
-#define CURRVER L"0.4"
+#define CURRVER L"0.5"
 
 ////////////////////GDI+Flat定义
 enum GpStatus 
@@ -315,8 +315,9 @@ struct CURRMUSICINFO
 #define TIMERELAPSE_TIME			500
 #define TIMERELAPSE_LRCSCROLL		1000
 #define TIMERELAPSE_ANIMATION		60
-#define TIMERELAPSE_ANIMATION2		30
+#define TIMERELAPSE_ANIMATION2		10
 #define TIMERELAPSE_LISTBKDRAG		800
+#define TIMERELAPSE_PLAYEDTIME		500
 ////////////////////配置和其他外围文件
 #define MAXPROFILEBUFFER			48
 #define PROFILENAME					L"\\Data\\QKPlayerConfig.ini"
@@ -567,6 +568,8 @@ struct SETTINGS
 	BOOL bEnableDTLrcBorder;
 
 	PWSTR pszSoundFont;
+
+	UINT uPlayedTimeTimerResolution;
 };
 
 const D2D_COLOR_F c_D2DClrCyanDeeper = { 0.f,0.3764f,0.7529f,1.f };// 易语言青蓝

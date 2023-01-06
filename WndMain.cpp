@@ -34,6 +34,7 @@
 #include "WndEffect.h"
 #include "WndList.h"
 #include "WndOptions.h"
+#include "PlayingStatistics.h"
 
 CURRMUSICINFO                   m_CurrSongInfo              = { 0 };        //当前信息（在顶部显示）
 
@@ -99,6 +100,8 @@ BOOL            m_bWndMinimized             = FALSE;
 
 float           m_fRotationAngle            = 0.f;
 
+float           m_fPlayedTime               = 0;    // 已播放的时间（秒），用于统计信息
+MMRESULT        m_uTimerIDPlayedTime        = 0;    // 定时器ID
 
 void UI_PreProcessAlbumImage(IWICBitmap** ppWICBitmap)
 {
@@ -148,13 +151,19 @@ void CALLBACK SyncProc_End(HSYNC handle, DWORD channel, DWORD data, void* user)
 {
     PostMessageW(g_hMainWnd, MAINWNDM_AUTONEXT, 0, 0);
 }
+void CALLBACK TimerProc_PlayedTime(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
+{
+    m_fPlayedTime += 0.5;
+    //OutputDebugStringW(L"154\n");
+    //m_fPlayedTime += ((float)TIMERELAPSE_PLAYEDTIME / 1000.f);
+}
 int Lrc_DrawItem(int iIndex, int y, BOOL bTop, BOOL bClearBK, BOOL bImmdShow, BOOL bCenterLine, int* yOut)
 {
     if (m_cxLrcShow <= 0 || m_cyLrcShow <= 0)
         return -1;
     BOOL bCurr = (iIndex == g_iCurrLrcIndex);
 
-    LRCDATA* p = (LRCDATA*)QKArray_Get(g_Lrc, iIndex);
+    LRCDATA* p = (LRCDATA*)QKAGet(g_Lrc, iIndex);
 
     IDWriteTextLayout* pDWTextLayout1;
     IDWriteTextLayout* pDWTextLayout2;
@@ -523,7 +532,7 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
     Playing_Stop(TRUE);
     //m_IsDraw[0] = m_IsDraw[1] = m_IsDraw[2] = TRUE;
     Lrc_ClearArray(g_Lrc);
-    g_Lrc = QKArray_Create(0);
+    g_Lrc = QKACreate(0);
     delete[] m_dwWavesData;
     m_dwWavesData = NULL;
     //////////////取现行信息
@@ -601,6 +610,15 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
     SendMessageW(g_hBKLeft, LEFTBKM_SETMAX, g_Lrc->iCount - 1, 0);
     LrcWnd_DrawLrc();
     UI_UpdateLeftBK();
+    //////////////添加统计信息
+	if (!p->Artists)
+		PS_SplitArtist(m_CurrSongInfo.mi.pszArtist, L"、", &p->Artists);
+	for (int i = 0; i < p->Artists->iCount; ++i)
+	{
+		PS_AddArtistPlayingCount((PCWSTR)QKAGet(p->Artists, i));
+	}
+
+    PS_AddSongPlayingCount(p->pszName, p->Artists);
     //////////////应用音效设置
     BASS_ChannelGetAttribute(g_hStream, BASS_ATTRIB_FREQ, &g_fDefSpeed);// 保存默认速度    
     g_llLength = (ULONGLONG)(BASS_ChannelBytes2Seconds(
@@ -678,9 +696,25 @@ void Playing_PlayFile(int iIndex)// 播放前将停止先前的播放
 
 	m_IsDraw[0] = m_IsDraw[1] = m_IsDraw[2] = TRUE;
     SetTimer(g_hBKLeft, IDT_PGS, TIMERELAPSE_PGS, NULL);
+    m_uTimerIDPlayedTime = timeSetEvent(TIMERELAPSE_PLAYEDTIME, GS.uPlayedTimeTimerResolution, 
+        TimerProc_PlayedTime, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
 }
 void Playing_Stop(BOOL bNoGap)
 {
+    timeKillEvent(m_uTimerIDPlayedTime);
+    m_uTimerIDPlayedTime = 0;
+    if (g_iCurrFileIndex >= 0)
+    {
+        PLAYERLISTUNIT* p = List_GetArrayItem(g_iCurrFileIndex);
+        QKARRAY pArtistsAry = p->Artists;
+        for (int i = 0; i < pArtistsAry->iCount; ++i)
+        {
+            PS_AddArtistPlayingTime((PCWSTR)QKAGet(pArtistsAry, i), m_fPlayedTime, FALSE, 0, NULL);
+        }
+
+        PS_AddSongPlayingTime(p->pszName, m_fPlayedTime);
+    }
+    m_fPlayedTime = 0;
     KillTimer(g_hBKLeft, IDT_PGS);
     KillTimer(g_hMainWnd, IDT_ANIMATION);
     KillTimer(g_hMainWnd, IDT_ANIMATION2);
@@ -1501,8 +1535,8 @@ BOOL UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing, BOOL bOnlyDraw
 
 		for (int i = 0; i < iArrayCount; i++)// 遍历歌词数组
 		{
-			fTempTime = ((LRCDATA*)QKArray_Get(g_Lrc, i))->fTime;
-			if (g_fTime < ((LRCDATA*)QKArray_Get(g_Lrc, 0))->fTime)// 还没播到第一句
+			fTempTime = ((LRCDATA*)QKAGet(g_Lrc, i))->fTime;
+			if (g_fTime < ((LRCDATA*)QKAGet(g_Lrc, 0))->fTime)// 还没播到第一句
 			{
 				m_iLrcCenter = 0;
 				g_iCurrLrcIndex = -1;
@@ -1516,7 +1550,7 @@ BOOL UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing, BOOL bOnlyDraw
 					break;
 				}
 			}
-			else if (g_fTime >= fTempTime && g_fTime < ((LRCDATA*)QKArray_Get(g_Lrc, i + 1))->fTime)// 左闭右开，判断歌词区间
+			else if (g_fTime >= fTempTime && g_fTime < ((LRCDATA*)QKAGet(g_Lrc, i + 1))->fTime)// 左闭右开，判断歌词区间
 			{
 				m_iLrcCenter = g_iCurrLrcIndex = i;
 				break;
@@ -1549,7 +1583,7 @@ BOOL UI_VEProcLrcShowing(BOOL bImmdShow, BOOL bIndependlyDrawing, BOOL bOnlyDraw
             {
                 if (m_iLastLrcIndex[0] > g_Lrc->iCount - 1)
                     m_iLastLrcIndex[0] = g_Lrc->iCount - 1;;
-                LRCDATA* p1 = (LRCDATA*)QKArray_Get(g_Lrc, m_iLrcCenter), * p2 = (LRCDATA*)QKArray_Get(g_Lrc, m_iLastLrcIndex[0]);
+                LRCDATA* p1 = (LRCDATA*)QKAGet(g_Lrc, m_iLrcCenter), * p2 = (LRCDATA*)QKAGet(g_Lrc, m_iLastLrcIndex[0]);
                 IDWriteTextLayout* pDWTextLayout;
                 if (GS.bForceTwoLines)
                 {
@@ -1802,8 +1836,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
     case WM_CREATE:
     {
-        g_Lrc = QKArray_Create(0);
-        g_ItemData = QKArray_Create(0);
+        g_Lrc = QKACreate(0);
+        g_ItemData = QKACreate(0);
+        PS_LoadStatFile(NULL);
         ///////////////////////////初始化.....
         g_hMainWnd = hWnd;
         g_iDPI = QKGetDPIForWindow(hWnd);
@@ -1903,6 +1938,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         m_pD2DBrLrc1->Release();
         m_pD2DBrLrc2->Release();
 
+        PS_SaveStatFile();
         MainWnd_ReleaseCurrInfo();
         Lrc_ClearArray(g_Lrc);
         delete[] m_dwWavesData;
@@ -2664,14 +2700,14 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
                     g_hStream,
                     BASS_ChannelSeconds2Bytes(
                         g_hStream,
-                        ((LRCDATA*)QKArray_Get(g_Lrc, i))->fTime),
+                        ((LRCDATA*)QKAGet(g_Lrc, i))->fTime),
                     BASS_POS_BYTE
                 );
             }
             break;
             case IDMI_LS_COPY:// 复制歌词
             {
-                PWSTR pszLrc = ((LRCDATA*)QKArray_Get(g_Lrc, i))->pszLrc;
+                PWSTR pszLrc = ((LRCDATA*)QKAGet(g_Lrc, i))->pszLrc;
                 HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE, (lstrlenW(pszLrc) + 1) * sizeof(WCHAR));
                 void* pGlobal = GlobalLock(hGlobal);
                 lstrcpyW((PWSTR)pGlobal, pszLrc);
@@ -2964,6 +3000,11 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
                 g_pITaskbarList->ThumbBarUpdateButtons(g_hTBGhost, 1, &tb);
             BASS_ChannelPause(g_hStream);
             KillTimer(hWnd, IDT_PGS);
+            if (m_uTimerIDPlayedTime && g_iCurrFileIndex >= 0)
+            {
+                timeKillEvent(m_uTimerIDPlayedTime);
+                m_uTimerIDPlayedTime = 0;
+            }
         }
         else
         {
@@ -2974,9 +3015,14 @@ LRESULT CALLBACK WndProc_LeftBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             lstrcpyW(tb.szTip, L"暂停");
             if (g_pITaskbarList)
                 g_pITaskbarList->ThumbBarUpdateButtons(g_hTBGhost, 1, &tb);
-            BASS_ChannelPlay(g_hStream, FALSE);
-            SetTimer(hWnd, IDT_PGS, TIMERELAPSE_PGS, NULL);
-        }
+			BASS_ChannelPlay(g_hStream, FALSE);
+			SetTimer(hWnd, IDT_PGS, TIMERELAPSE_PGS, NULL);
+			if (!m_uTimerIDPlayedTime && g_iCurrFileIndex >= 0)
+            {
+                m_uTimerIDPlayedTime = timeSetEvent(TIMERELAPSE_PLAYEDTIME, GS.uPlayedTimeTimerResolution,
+                    TimerProc_PlayedTime, 0, TIME_PERIODIC | TIME_KILL_SYNCHRONOUS);
+            }
+		}
         
         WndProc_LeftBK(hWnd, LEFTBKM_REDRAWBTMBT, TRUE, TRUE);
         LrcWnd_DrawLrc();
@@ -3021,6 +3067,8 @@ INT_PTR CALLBACK DlgProc_License(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
 		RECT rc;
 		GetClientRect(hDlg, &rc);
 		SetWindowPos(GetDlgItem(hDlg, IDC_ED_LICENSE), NULL, 0, 0, rc.right, rc.bottom, SWP_NOZORDER);
+
+        SendDlgItemMessageW(hDlg, IDC_ED_LICENSE, EM_SETSEL, -1, 0);
 	}
 	return TRUE;
 	case WM_SIZE:
@@ -3119,7 +3167,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
     {
 		if (m_LrcHScrollInfo.iIndex == -1 || g_iCurrLrcIndex < 0)
             return;
-        LRCDATA* p = (LRCDATA*)QKArray_Get(g_Lrc, g_iCurrLrcIndex);
+        LRCDATA* p = (LRCDATA*)QKAGet(g_Lrc, g_iCurrLrcIndex);
         float fLastTime = g_fTime - p->fTime;
         static int iLastx1 = 0, iLastx2 = 0;// 上次左边，如果跟上次一样就不要再画了
         int ii;
@@ -3275,7 +3323,7 @@ int HitTest_LrcShow(POINT pt)
     if (!g_Lrc->iCount || !g_hStream)
         return -1;
 
-    LRCDATA* p = (LRCDATA*)QKArray_Get(g_Lrc, m_iLrcCenter);
+    LRCDATA* p = (LRCDATA*)QKAGet(g_Lrc, m_iLrcCenter);
     int i = m_iLrcCenter;
     if (pt.y >= p->rcItem.top)// 落在下半部分（包括中间一项）
     {
@@ -3286,7 +3334,7 @@ int HitTest_LrcShow(POINT pt)
             ++i;
             if (i >= g_Lrc->iCount)
                 break;
-            p = (LRCDATA*)QKArray_Get(g_Lrc, i);
+            p = (LRCDATA*)QKAGet(g_Lrc, i);
         }
     }
     else// 落在上半部分
@@ -3294,7 +3342,7 @@ int HitTest_LrcShow(POINT pt)
         --i;// 中间一项就不判断了，跳过
         if (i < 0)
             return -1;
-        p = (LRCDATA*)QKArray_Get(g_Lrc, i);
+        p = (LRCDATA*)QKAGet(g_Lrc, i);
         while (p->iDrawID == m_iDrawingID)
         {
             if (PtInRect(&p->rcItem, pt))
@@ -3302,7 +3350,7 @@ int HitTest_LrcShow(POINT pt)
             --i;
             if (i < 0)
                 break;
-            p = (LRCDATA*)QKArray_Get(g_Lrc, i);
+            p = (LRCDATA*)QKAGet(g_Lrc, i);
         }
     }
 

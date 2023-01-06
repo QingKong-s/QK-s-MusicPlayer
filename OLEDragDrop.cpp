@@ -38,7 +38,7 @@ void QKMakeDropSource(QKARRAY Files, QKDRAGGIVEFEEDBACK pGiveFeedBack, CDataObje
     int* iLength = new int[Files->iCount];
     for (int i = 0; i < Files->iCount; ++i)
     {
-        iLength[i] = lstrlenW((PWSTR)QKArray_Get(Files, i));
+        iLength[i] = lstrlenW((PWSTR)QKAGet(Files, i));
         uSize += (iLength[i] + 1) * sizeof(WCHAR);
     }
 	HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE | GMEM_ZEROINIT, uSize);
@@ -47,8 +47,8 @@ void QKMakeDropSource(QKARRAY Files, QKDRAGGIVEFEEDBACK pGiveFeedBack, CDataObje
 	p = (PWSTR)((BYTE*)p + sizeof(DROPFILES));
     for (int i = 0; i < Files->iCount; ++i)
     {
-        lstrcpyW(p, (PWSTR)QKArray_Get(Files, i));
-        PathFileExistsW((PWSTR)QKArray_Get(Files, i));
+        lstrcpyW(p, (PWSTR)QKAGet(Files, i));
+        PathFileExistsW((PWSTR)QKAGet(Files, i));
         p += (iLength[i] + 1);
     }
     GlobalUnlock(hGlobal);

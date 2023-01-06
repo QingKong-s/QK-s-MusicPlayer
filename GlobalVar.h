@@ -56,6 +56,8 @@ extern IDXGIFactory2*	g_pDXGIFactory;
 extern IDWriteTextFormat* g_pDWTFNormal;
 extern IDWriteTextFormat* g_pDWTFBig;
 extern IDWriteTextFormat* g_pDWTFBig2;
+extern QKHASHTABLE		g_StatArtists;
+extern QKHASHTABLE		g_StatSongs;
 // Bass与播放类
 extern QKARRAY			g_Lrc;                  // 全局歌词数据
 extern int				g_iLrcState;            // 桌面歌词标志

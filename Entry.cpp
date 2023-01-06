@@ -6,7 +6,7 @@
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-// 导入静态库
+
 #pragma comment(lib,"Shlwapi.lib")
 #pragma comment(lib,"UxTheme.lib")
 #pragma comment(lib,"Comctl32.lib")
@@ -17,6 +17,7 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #pragma comment(lib,"dwmapi.lib")
 #pragma comment(lib,"D3D11.lib")
 #pragma comment(lib,"dxguid.lib")
+#pragma comment(lib,"Winmm.lib")
 
 #pragma comment(lib,"bass.lib")
 #pragma comment(lib,"bass_fx.lib")
@@ -40,20 +41,11 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include "WndList.h"
 #include "resource.h"
 #include "WndOptions.h"
- /*
-  * 目标：入口点
-  *
-  * 参数：
-  * hInstance 实例句柄
-  * hPrevInstance 先前实例句柄（恒为NULL）
-  * lpCmdLine 命令行
-  * nCmdShow 显示方式
-  *
-  * 返回值：
-  * 备注：
-  *
-  */
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+#include "PlayingStatistics.h"
+
+HHOOK m_hHook;
+// 测试时候的屎都堆在这里
+BOOL Test()
 {
     //HQKINI h = QKINIParse(L"D:\\@重要文件\\@我的工程\\Player\\Debug\\Data\\QKPlayerConfig1.ini");
     //WCHAR sz[100] = { 0 };
@@ -70,7 +62,42 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     //QKINIClose(h);
     //return 0;
-
+    //QKHASHTABLE ht = QKHTCreate(30, FALSE, TRUE, NULL, NULL, NULL);
+    //PWSTR p1 = new WCHAR[30], p2 = new WCHAR[30], p3 = new WCHAR[30], p4 = new WCHAR[30], p5 = new WCHAR[30];
+    //lstrcpyW(p1, L"键测试1");
+    //lstrcpyW(p2, L"键测试2");
+    //lstrcpyW(p3, L"键测试3");
+    //lstrcpyW(p4, L"键测试4");
+    //lstrcpyW(p5, L"键测试5");
+    //QKHTPut(ht, p1, -1, NULL, 0, 233, NULL);
+    //QKHTPut(ht, p2, -1, NULL, 0, 114514, NULL);
+    //QKHTPut(ht, p3, -1, NULL, 0, 1919810, NULL);
+    //QKHTPut(ht, p4, -1, NULL, 0, 111, NULL);
+    //QKHTPut(ht, p5, -1, NULL, 0, 1111, NULL);
+    //UINT u[5] = { 0 };
+    //QKHTGet(ht, (void*)L"键测试1", -1, (void**)(u), FALSE, 0);
+    //QKHTGet(ht, (void*)L"键测试2", -1, (void**)(u+1), FALSE, 0);
+    //QKHTGet(ht, (void*)L"键测试3", -1, (void**)(u+2), FALSE, 0);
+    //QKHTGet(ht, (void*)L"键测试4", -1, (void**)(u+3), FALSE, 0);
+    //QKHTGet(ht, (void*)L"键测试5", -1, (void**)(u+4), FALSE, 0);
+    //return 0;
+	//QKARRAY ary;
+	//PS_SplitArtist(L"Ashton Love、MPV、4Beats、Conan Mac", L"、", &ary);
+ //   for (int i = 0; i < ary->iCount; ++i)
+ //   {
+ //       OutputDebugStringW((PCWSTR)QKAGet(ary, i));
+ //       OutputDebugStringW(L"\n");
+ //   }
+ //   QKADelete(ary, QKADF_DELETEARRAY);
+ //   return TRUE;
+	return FALSE;
+}
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+{
+#ifdef _DEBUG
+    if (Test())
+        return 0;
+#endif // _DEBUG
 	BOOL bSuccessful = TRUE;
     g_hInst = hInstance;
     HMODULE hLib = LoadLibraryW(L"User32.dll");
@@ -107,21 +134,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         return 1;
     }
     //////////////创建D2D工厂
-#ifndef NDEBUG
+#ifdef _DEBUG
     D2D1_FACTORY_OPTIONS D2DFactoryOptions;
     D2DFactoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory1), &D2DFactoryOptions, (void**)&g_pD2DFactory);
 #else
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, IID_PPV_ARGS(&g_pD2DFactory));
-#endif // !NDBUG
+#endif // _DEBUG
     //////////////创建DWrite工厂
     DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&g_pDWFactory);
     //////////////创建DXGI工厂
     ID3D11Device* pD3DDevice;
     D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT
-#ifndef NDEBUG
+#ifdef _DEBUG
         | D3D11_CREATE_DEVICE_DEBUG
-#endif // !NDEBUG
+#endif // _DEBUG
         , NULL, 0, D3D11_SDK_VERSION, &pD3DDevice, NULL, NULL);
     pD3DDevice->QueryInterface(IID_PPV_ARGS(&g_pDXGIDevice));
     pD3DDevice->Release();
@@ -227,6 +254,28 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     Settings_Read();
     BASS_UpdateSoundFont();
     GlobalEffect_ResetToDefault(EFFECT_ALL);
+    //////////////准备挂钩
+    m_hHook = SetWindowsHookExW(
+        WH_CBT,
+        [](int nCode, WPARAM wParam, LPARAM lParam)->LRESULT
+        {
+            if (nCode == HCBT_CREATEWND)
+            {
+                auto p = (CBT_CREATEWNDW*)lParam;
+                UINT uStyle;
+                WCHAR szClassName[256 + 1];// 类名最大长度为256，+1给结尾NULL
+                GetClassNameW((HWND)wParam, szClassName, 256 + 1);
+                if (wcscmp(szClassName, WC_LISTVIEWW) == 0)// 不能直接用CREATESTRUCT里的比，可能里面放着类原子
+                {
+                    uStyle = LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
+                    SetWindowTheme((HWND)wParam, L"Explorer", NULL);
+                    PostMessageW((HWND)wParam, LVM_SETEXTENDEDLISTVIEWSTYLE, uStyle, uStyle);
+                }
+            }
+            return CallNextHookEx(m_hHook, nCode, wParam, lParam);
+        },
+        g_hInst,
+        GetCurrentThreadId());
 	//////////////创建窗口
 	if (!BASS_Init(-1, 44100, 0, g_hMainWnd, NULL))// 初始化Bass
 		Global_ShowError(L"Bass初始化失败", L"稍后请尝试更换输出设备", ECODESRC_BASS);
@@ -278,6 +327,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
+    UnhookWindowsHookEx(m_hHook);
     //////////////清理全局资源
     FreeLibrary(hLib);
     BASS_Free();

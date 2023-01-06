@@ -5,6 +5,7 @@
 #pragma once
 #include <Windows.h>
 #include "MyProject.h"
+#include "Function.h"
 
 struct PLAYERLISTUNIT// 内存播放列表项目
 {
@@ -17,6 +18,7 @@ struct PLAYERLISTUNIT// 内存播放列表项目
 	COLORREF crBookMark;		// 书签颜色
 	int iMappingIndexSearch;	// 搜索时映射到的索引
 	int iMappingIndexSort;		// 排序时映射到的索引
+	QKARRAY Artists;			// 缓存艺术家列表
 };
 #define QKLIF_INVALID			0x00000001// 项目无效
 #define QKLIF_IGNORED			0x00000002// 忽略
@@ -27,19 +29,20 @@ struct PLAYERLISTUNIT// 内存播放列表项目
 
 struct LISTFILEHEADER	// 播放列表文件头
 {
-	CHAR cHeader[4];	// 文件起始标记，ASCII字符"QKPL"
+	CHAR cHeader[4];	// 文件起始标记，ASCII字符串"QKPL"
 	int iCount;			// 项目数
 	DWORD dwVer;		// 存档文件版本，QKLFVER_常量（见下）
-	DWORD dwReserve;	// 保留，必须为0
+	DWORD dwReserved;	// 保留，必须为0
 };
+
 #define QKLFVER_1				0// 这个版本的列表文件还没有记录时间的功能，但是作者已经把自己的列表排序好了，因为不想重排（懒）所以加了这个版本控制（留保留字段果然是明智的选择2333）
 #define QKLFVER_2				1
 
 struct LISTFILEITEM		// 播放列表文件项目头
 {
 	UINT uFlags;		// 项目标志
-	DWORD dwReserve1;	// 保留，必须为0
-	DWORD dwReserve2;	// 保留，必须为0
+	DWORD dwReserved1;	// 保留，必须为0
+	DWORD dwReserved2;	// 保留，必须为0
 };
 
 #define DLGTYPE_LOADLIST		1

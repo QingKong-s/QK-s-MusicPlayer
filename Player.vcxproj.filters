@@ -54,6 +54,9 @@
     <ClInclude Include="WndOptions.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PlayingStatistics.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WndMain.cpp">
@@ -84,6 +87,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="WndOptions.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayingStatistics.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

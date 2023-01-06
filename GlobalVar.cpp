@@ -51,6 +51,8 @@ IDXGIFactory2*	g_pDXGIFactory;
 IDWriteTextFormat* g_pDWTFNormal;
 IDWriteTextFormat* g_pDWTFBig;
 IDWriteTextFormat* g_pDWTFBig2;
+QKHASHTABLE		g_StatArtists			= NULL;
+QKHASHTABLE		g_StatSongs				= NULL;
 
 QKARRAY			g_Lrc;
 int             g_iLrcState				= LRCSTATE_STOP;
