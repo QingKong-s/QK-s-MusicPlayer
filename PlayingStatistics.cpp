@@ -7,16 +7,12 @@
 
 QKHASHTABLE m_SongsStatWithArtists = NULL;// 便于进行艺术家->歌曲查找的哈希表，(键)艺术家->(值)歌曲统计信息LV索引
 
-int PS_SplitSongName(PCWSTR pszSongName, PCWSTR pszDiv, BOOL bDirection)
-{
-
-	return 0;
-}
-
 void PS_SplitArtist(PCWSTR pszArtist, PCWSTR pszDiv, QKARRAY* ppArray)
 {
-	QKARRAY pArray = QKACreate(0);
-	*ppArray = pArray;
+	if (!pszArtist)
+		return;
+	QKARRAY hA = QKACreate(0);
+	*ppArray = hA;
 	PCWSTR ptemp = pszArtist;
 	PWSTR psz;
 	int iPos = QKStrInStr(pszArtist, pszDiv), iLastPos = 0;
@@ -26,7 +22,7 @@ void PS_SplitArtist(PCWSTR pszArtist, PCWSTR pszDiv, QKARRAY* ppArray)
 	{
 		psz = new WCHAR[iLen + 1];
 		lstrcpyW(psz, pszArtist);
-		QKAAdd(pArray, psz);
+		QKAAdd(hA, psz);
 		return;
 	}
 	while (TRUE)
@@ -37,7 +33,7 @@ void PS_SplitArtist(PCWSTR pszArtist, PCWSTR pszDiv, QKARRAY* ppArray)
 			psz = new WCHAR[iCount];
 			
 			lstrcpynW(psz, pszArtist + iLastPos, iCount);
-			QKAAdd(pArray, psz);
+			QKAAdd(hA, psz);
 
 			iLastPos = iPos + iLenDiv - 1;
 			iPos = QKStrInStr(pszArtist, pszDiv, iLastPos + 1);
@@ -47,7 +43,7 @@ void PS_SplitArtist(PCWSTR pszArtist, PCWSTR pszDiv, QKARRAY* ppArray)
 			iCount = iLen - iLastPos + 1;
 			psz = new WCHAR[iCount];
 			lstrcpynW(psz, pszArtist + iLastPos, iCount);
-			QKAAdd(pArray, psz);
+			QKAAdd(hA, psz);
 			break;
 		}
 	}
@@ -124,6 +120,7 @@ BOOL PS_StatSongFind(PCWSTR pszSongName, BOOL bHasHashCode, UINT uHashCode, UINT
 	PutNewItem:
 		p = new SONGSSTATUNIT;
 		ZeroMemory(p, sizeof(SONGSSTATUNIT));
+		p->uSingleLoopCount = 1;
 		PWSTR psz = new WCHAR[lstrlenW(pszSongName)];
 		lstrcpyW(psz, pszSongName);
 		QKHTPut(g_StatSongs, psz, -1, p, sizeof(SONGSSTATUNIT), 0, TRUE, puHashCode);
@@ -202,7 +199,7 @@ BOOL PS_LoadStatFile(PCWSTR pszDir)
 	ARTISTSFILEHEADER FileHeader;
 	ARTISTSLISTUNIT* pItemHeader;
 	int iLen;
-	PWSTR psz;
+	PWSTR psz, psz2;
 	HANDLE hFile;
 
 	lstrcpyW(ptemp, FILEEXT_STATINFOARTISTS);
@@ -282,9 +279,9 @@ BOOL PS_LoadStatFile(PCWSTR pszDir)
 						for (int i = 0; i < iArtistsCount; ++i)
 						{
 							ReadFile(hFile, &iLen, sizeof(int), &dwBytes, NULL);
-							psz = new WCHAR[iLen + 1];
-							ReadFile(hFile, psz, (iLen + 1) * sizeof(WCHAR), &dwBytes, NULL);
-							QKASet(pItemHeader2->aArtists, i, psz);
+							psz2 = new WCHAR[iLen + 1];
+							ReadFile(hFile, psz2, (iLen + 1) * sizeof(WCHAR), &dwBytes, NULL);
+							QKASet(pItemHeader2->aArtists, i, psz2);
 						}
 
 						QKHTPut(hHT, psz, -1, pItemHeader2, sizeof(SONGSSTATUNIT), 0);
@@ -377,7 +374,6 @@ void PS_SaveStatFile(PCWSTR pszDir)
 	SONGSSTATUNIT End2 = { QKALF_END };
 	WriteFile(hFile, &End2, sizeof(End2), &dwBytes, NULL);
 	CloseHandle(hFile);
-
 
 	delete[] pszFile;
 }
@@ -594,7 +590,7 @@ void UI_FillStatDlg(HWND hDlg)
 			int iLenArtist, iLenSong;
 			int iIndex;
 			int iArtistsCount;
-			QKARRAY pArray;
+			QKARRAY hA;
 			do
 			{
 				lstrcpyW(ptemp, wfd.cFileName);
@@ -640,15 +636,15 @@ void UI_FillStatDlg(HWND hDlg)
 										pszArtist = new WCHAR[iLenArtist + 1];
 										ReadFile(hFile, pszArtist, (iLenArtist + 1) * sizeof(WCHAR), &dwBytes, NULL);
 
-										if (QKHTGet(m_SongsStatWithArtists, pszArtist, -1, &pArray))
+										if (QKHTGet(m_SongsStatWithArtists, pszArtist, -1, &hA))
 										{
-											QKAAddValue(pArray, iIndex);
+											QKAAddValue(hA, iIndex);
 										}
 										else
 										{
-											pArray = QKACreate(0);
-											QKAAddValue(pArray, iIndex);
-											QKHTPut(m_SongsStatWithArtists, pszArtist, -1, pArray, sizeof(QKARRAY), 0);
+											hA = QKACreate(0);
+											QKAAddValue(hA, iIndex);
+											QKHTPut(m_SongsStatWithArtists, pszArtist, -1, hA, sizeof(QKARRAY), 0);
 										}
 									}
 									////////////////播放次数
@@ -663,6 +659,11 @@ void UI_FillStatDlg(HWND hDlg)
 										(ItemHeader.uSecond % 3600) % 60);
 									li.pszText = szValueBuf;
 									li.iSubItem = 2;
+									SendMessageW(hLV, LVM_SETITEM, 0, (LPARAM)&li);
+									////////////////最大循环次数
+									wsprintfW(szValueBuf, L"%u", ItemHeader.uSingleLoopCount);
+									li.pszText = szValueBuf;
+									li.iSubItem = 3;
 									SendMessageW(hLV, LVM_SETITEM, 0, (LPARAM)&li);
 
 									delete[] li.pszText;
@@ -710,20 +711,20 @@ void UI_FillStatDlg(HWND hDlg)
 					pContext->pli->mask &= (~LVIF_GROUPID);
 
 					auto pUnit = (SONGSSTATUNIT*)(p->pValue);
-					QKARRAY pArray;
+					QKARRAY hA;
 					PCVOID pszArtist;
 					for (int i = 0; i < pUnit->aArtists->iCount; ++i)
 					{
 						pszArtist = QKAGet(pUnit->aArtists, i);
-						if (QKHTGet(m_SongsStatWithArtists, pszArtist, -1, &pArray))
+						if (QKHTGet(m_SongsStatWithArtists, pszArtist, -1, &hA))
 						{
-							QKAAddValue(pArray, iIndex);
+							QKAAddValue(hA, iIndex);
 						}
 						else
 						{
-							pArray = QKACreate(0);
-							QKAAddValue(pArray, iIndex);
-							QKHTPut(m_SongsStatWithArtists, pszArtist, -1, pArray, sizeof(QKARRAY), 0);
+							hA = QKACreate(0);
+							QKAAddValue(hA, iIndex);
+							QKHTPut(m_SongsStatWithArtists, pszArtist, -1, hA, sizeof(QKARRAY), 0);
 						}
 					}
 					////////////////播放次数
@@ -738,6 +739,11 @@ void UI_FillStatDlg(HWND hDlg)
 						(pUnit->uSecond % 3600) % 60);
 					pContext->pli->pszText = szValueBuf;
 					pContext->pli->iSubItem = 2;
+					SendMessageW(pContext->hLV, LVM_SETITEM, 0, (LPARAM)pContext->pli);
+					////////////////最大循环次数
+					wsprintfW(szValueBuf, L"%u", pUnit->uSingleLoopCount);
+					pContext->pli->pszText = szValueBuf;
+					pContext->pli->iSubItem = 3;
 					SendMessageW(pContext->hLV, LVM_SETITEM, 0, (LPARAM)pContext->pli);
 					return TRUE;
 				},

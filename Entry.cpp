@@ -90,14 +90,17 @@ BOOL Test()
  //   }
  //   QKADelete(ary, QKADF_DELETEARRAY);
  //   return TRUE;
+
+    PCWSTR p = L"QK112233KKK";
+    //INT I = QKStrInStr(p, L"11",2);
+    //return 1;
 	return FALSE;
 }
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-#ifdef _DEBUG
-    if (Test())
-        return 0;
-#endif // _DEBUG
+#ifndef NDEBUG
+    if (Test()) return 0;
+#endif // !NDEBUG
 	BOOL bSuccessful = TRUE;
     g_hInst = hInstance;
     HMODULE hLib = LoadLibraryW(L"User32.dll");
@@ -134,21 +137,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         return 1;
     }
     //////////////创建D2D工厂
-#ifdef _DEBUG
+#ifndef NDEBUG
     D2D1_FACTORY_OPTIONS D2DFactoryOptions;
     D2DFactoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof(ID2D1Factory1), &D2DFactoryOptions, (void**)&g_pD2DFactory);
 #else
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, IID_PPV_ARGS(&g_pD2DFactory));
-#endif // _DEBUG
+#endif // !NDEBUG
     //////////////创建DWrite工厂
     DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&g_pDWFactory);
     //////////////创建DXGI工厂
     ID3D11Device* pD3DDevice;
     D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_BGRA_SUPPORT
-#ifdef _DEBUG
+#ifndef NDEBUG
         | D3D11_CREATE_DEVICE_DEBUG
-#endif // _DEBUG
+#endif // !NDEBUG
         , NULL, 0, D3D11_SDK_VERSION, &pD3DDevice, NULL, NULL);
     pD3DDevice->QueryInterface(IID_PPV_ARGS(&g_pDXGIDevice));
     pD3DDevice->Release();

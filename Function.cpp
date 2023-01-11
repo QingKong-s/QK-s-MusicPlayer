@@ -36,156 +36,157 @@ QKARRAY QKACreate(int iCount, int iGrow, HANDLE hHeap, QKARYDELPROC pDelProc)
 	if (!hHeap)
 		hHeap = GetProcessHeap();
 
-	auto pArray = (QKARRAYHEADER*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(QKARRAYHEADER));
-	if (!pArray)
+	auto hA = (QKARRAYHEADER*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(QKARRAYHEADER));
+	if (!hA)
 		return NULL;
 
-	pArray->iCount = iCount;
-	pArray->iGrow = iGrow;
-	pArray->hHeap = hHeap;
-	pArray->pProc = pDelProc;
-	pArray->iCountAllocated = iCount + pArray->iGrow;
-	if (pArray->iCountAllocated <= 0)
-		pArray->iCountAllocated = 1;
+	hA->iCount = iCount;
+	hA->iGrow = iGrow;
+	hA->hHeap = hHeap;
+	hA->pProc = pDelProc;
+	hA->iCountAllocated = iCount + hA->iGrow;
+	if (hA->iCountAllocated <= 0)
+		hA->iCountAllocated = 1;
 
-	pArray->pData = (BYTE*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, PTRSIZE * pArray->iCountAllocated);
-	if (!pArray->pData)
+	hA->pData = (BYTE*)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, PTRSIZE * hA->iCountAllocated);
+	if (!hA->pData)
 	{
-		HeapFree(hHeap, 0, pArray);
+		HeapFree(hHeap, 0, hA);
 		return NULL;
 	}
 
-	return pArray;
+	return hA;
 }
-void QKADelete(QKARRAY pArray, UINT uDeleteFlag)
+void QKADelete(QKARRAY hA, UINT uDeleteFlag)
 {
-	assert(pArray);
+	if (!hA)
+		return;
 	switch (uDeleteFlag)
 	{
 	case QKADF_NO:
 		break;
 
 	case QKADF_DELETE:
-		for (int i = 0; i < pArray->iCount; ++i)
-			delete QKAGet(pArray, i);
+		for (int i = 0; i < hA->iCount; ++i)
+			delete QKAGet(hA, i);
 		break;
 
 	case QKADF_DELETEARRAY:
-		for (int i = 0; i < pArray->iCount; ++i)
-			delete[] QKAGet(pArray, i);
+		for (int i = 0; i < hA->iCount; ++i)
+			delete[] QKAGet(hA, i);
 		break;
 
 	case QKADF_HEAPFREE:
-		for (int i = 0; i < pArray->iCount; ++i)
-			HeapFree(pArray->hHeap, 0, QKAGet(pArray, i));
+		for (int i = 0; i < hA->iCount; ++i)
+			HeapFree(hA->hHeap, 0, QKAGet(hA, i));
 		break;
 
 	case QKADF_DELPROC:
-		if (pArray->pProc)
+		if (hA->pProc)
 		{
-			for (int i = 0; i < pArray->iCount; ++i)
-				pArray->pProc(QKAGet(pArray, i));
+			for (int i = 0; i < hA->iCount; ++i)
+				hA->pProc(QKAGet(hA, i));
 		}
 		break;
 	}
-	HeapFree(pArray->hHeap, 0, pArray->pData);
-	HeapFree(pArray->hHeap, 0, pArray);
+	HeapFree(hA->hHeap, 0, hA->pData);
+	HeapFree(hA->hHeap, 0, hA);
 }
-void QKAClear(QKARRAY pArray, UINT uDeleteFlag)
+void QKAClear(QKARRAY hA, UINT uDeleteFlag)
 {
-	assert(pArray);
+	assert(hA);
 	switch (uDeleteFlag)
 	{
 	case QKADF_NO:
 		break;
 
 	case QKADF_DELETE:
-		for (int i = 0; i < pArray->iCount; ++i)
-			delete QKAGet(pArray, i);
+		for (int i = 0; i < hA->iCount; ++i)
+			delete QKAGet(hA, i);
 		break;
 
 	case QKADF_DELETEARRAY:
-		for (int i = 0; i < pArray->iCount; ++i)
-			delete[] QKAGet(pArray, i);
+		for (int i = 0; i < hA->iCount; ++i)
+			delete[] QKAGet(hA, i);
 		break;
 
 	case QKADF_HEAPFREE:
-		for (int i = 0; i < pArray->iCount; ++i)
-			HeapFree(pArray->hHeap, 0, QKAGet(pArray, i));
+		for (int i = 0; i < hA->iCount; ++i)
+			HeapFree(hA->hHeap, 0, QKAGet(hA, i));
 		break;
 
 	case QKADF_DELPROC:
-		if (pArray->pProc)
-			for (int i = 0; i < pArray->iCount; ++i)
-				pArray->pProc(QKAGet(pArray, i));
+		if (hA->pProc)
+			for (int i = 0; i < hA->iCount; ++i)
+				hA->pProc(QKAGet(hA, i));
 		break;
 	}
-	HeapFree(pArray->hHeap, 0, pArray->pData);
-	pArray->pData = (BYTE*)HeapAlloc(pArray->hHeap, HEAP_ZERO_MEMORY, PTRSIZE * pArray->iGrow);
-	pArray->iCount = 0;
-	pArray->iCountAllocated = pArray->iGrow;
+	HeapFree(hA->hHeap, 0, hA->pData);
+	hA->pData = (BYTE*)HeapAlloc(hA->hHeap, HEAP_ZERO_MEMORY, PTRSIZE * hA->iGrow);
+	hA->iCount = 0;
+	hA->iCountAllocated = hA->iGrow;
 }
-int QKAAdd(QKARRAY pArray, void* pData)
+int QKAAdd(QKARRAY hA, PCVOID pData)
 {
-	assert(pArray);
-	assert(pArray->iCountAllocated >= pArray->iCount);
-	if (pArray->iCountAllocated == pArray->iCount)
+	assert(hA);
+	assert(hA->iCountAllocated >= hA->iCount);
+	if (hA->iCountAllocated == hA->iCount)
 	{
-		pArray->iCountAllocated += pArray->iGrow;
-		BYTE* pData = (BYTE*)HeapReAlloc(pArray->hHeap, HEAP_ZERO_MEMORY,
-			pArray->pData, PTRSIZE * pArray->iCountAllocated);
+		hA->iCountAllocated += hA->iGrow;
+		BYTE* pData = (BYTE*)HeapReAlloc(hA->hHeap, HEAP_ZERO_MEMORY,
+			hA->pData, PTRSIZE * hA->iCountAllocated);
 		if (!pData)
 			return -1;
-		pArray->pData = pData;
+		hA->pData = pData;
 	}
-	*(void**)(pArray->pData + PTRSIZE * pArray->iCount) = pData;
-	return pArray->iCount++;
+	*(PCVOID*)(hA->pData + PTRSIZE * hA->iCount) = pData;
+	return hA->iCount++;
 }
-int QKAAddValue(QKARRAY pArray, UINT uValue)
+int QKAAddValue(QKARRAY hA, UINT uValue)
 {
-	assert(pArray);
-	assert(pArray->iCountAllocated >= pArray->iCount);
-	if (pArray->iCountAllocated == pArray->iCount)
+	assert(hA);
+	assert(hA->iCountAllocated >= hA->iCount);
+	if (hA->iCountAllocated == hA->iCount)
 	{
-		pArray->iCountAllocated += pArray->iGrow;
-		BYTE* pData = (BYTE*)HeapReAlloc(pArray->hHeap, HEAP_ZERO_MEMORY,
-			pArray->pData, PTRSIZE * pArray->iCountAllocated);
+		hA->iCountAllocated += hA->iGrow;
+		BYTE* pData = (BYTE*)HeapReAlloc(hA->hHeap, HEAP_ZERO_MEMORY,
+			hA->pData, PTRSIZE * hA->iCountAllocated);
 		if (!pData)
 			return -1;
-		pArray->pData = pData;
+		hA->pData = pData;
 	}
-	*(UINT*)(pArray->pData + PTRSIZE * pArray->iCount) = uValue;
-	return pArray->iCount++;
+	*(UINT*)(hA->pData + PTRSIZE * hA->iCount) = uValue;
+	return hA->iCount++;
 }
-int QKAInsert(QKARRAY pArray, void* pData, int iIndex)
+int QKAInsert(QKARRAY hA, PCVOID pData, int iIndex)
 {
-	assert(pArray);
-	if (iIndex == pArray->iCount)
-		return QKAAdd(pArray, pData);
-	assert(pArray->iCountAllocated >= pArray->iCount);
-	assert(iIndex >= 0 && iIndex < pArray->iCount);
-	if (pArray->iCountAllocated == pArray->iCount)
+	assert(hA);
+	if (iIndex == hA->iCount)
+		return QKAAdd(hA, pData);
+	assert(hA->iCountAllocated >= hA->iCount);
+	assert(iIndex >= 0 && iIndex < hA->iCount);
+	if (hA->iCountAllocated == hA->iCount)
 	{
-		pArray->iCountAllocated += pArray->iGrow;
-		BYTE* pData = (BYTE*)HeapReAlloc(pArray->hHeap, HEAP_ZERO_MEMORY,
-			pArray->pData, PTRSIZE * pArray->iCountAllocated);
+		hA->iCountAllocated += hA->iGrow;
+		BYTE* pData = (BYTE*)HeapReAlloc(hA->hHeap, HEAP_ZERO_MEMORY,
+			hA->pData, PTRSIZE * hA->iCountAllocated);
 		if (!pData)
 			return -1;
-		pArray->pData = pData;
+		hA->pData = pData;
 	}
 
-	BYTE* pChanged = pArray->pData + PTRSIZE * iIndex;
-	memmove(pChanged + PTRSIZE, pChanged, PTRSIZE * (pArray->iCount - iIndex));
-	*(void**)pChanged = pData;
-	pArray->iCount++;
+	BYTE* pChanged = hA->pData + PTRSIZE * iIndex;
+	memmove(pChanged + PTRSIZE, pChanged, PTRSIZE * (hA->iCount - iIndex));
+	*(PCVOID*)pChanged = pData;
+	hA->iCount++;
 	return iIndex;
 }
-void QKASet(QKARRAY pArray, int iIndex, void* pData, UINT uDeleteFlag)
+void QKASet(QKARRAY hA, int iIndex, PCVOID pData, UINT uDeleteFlag)
 {
-	assert(pArray);
-	assert(iIndex >= 0 && iIndex < pArray->iCount);
+	assert(hA);
+	assert(iIndex >= 0 && iIndex < hA->iCount);
 
-	void* pOld = QKAGet(pArray, iIndex);
+	void* pOld = QKAGet(hA, iIndex);
 	switch (uDeleteFlag)
 	{
 	case QKADF_NO:
@@ -200,20 +201,20 @@ void QKASet(QKARRAY pArray, int iIndex, void* pData, UINT uDeleteFlag)
 		break;
 
 	case QKADF_HEAPFREE:
-		HeapFree(pArray->hHeap, 0, pOld);
+		HeapFree(hA->hHeap, 0, pOld);
 		break;
 
 	case QKADF_DELPROC:
-		if (pArray->pProc)
-			pArray->pProc(pOld);
+		if (hA->pProc)
+			hA->pProc(pOld);
 		break;
 	}
 
-	*(void**)(pArray->pData + PTRSIZE * iIndex) = pData;
+	*(PCVOID*)(hA->pData + PTRSIZE * iIndex) = pData;
 }
-BOOL QKADeleteMember(QKARRAY pArray, int iIndex, UINT uDeleteFlag, int iDelCount)
+BOOL QKADeleteMember(QKARRAY hA, int iIndex, UINT uDeleteFlag, int iDelCount)
 {
-	assert(pArray);
+	assert(hA);
 	int iEnd = iIndex + iDelCount;
 	switch (uDeleteFlag)
 	{
@@ -222,82 +223,82 @@ BOOL QKADeleteMember(QKARRAY pArray, int iIndex, UINT uDeleteFlag, int iDelCount
 
 	case QKADF_DELETE:
 		for (int i = iIndex; i < iEnd; ++i)
-			delete QKAGet(pArray, i);
+			delete QKAGet(hA, i);
 		break;
 
 	case QKADF_DELETEARRAY:
 		for (int i = iIndex; i < iEnd; ++i)
-			delete[] QKAGet(pArray, i);
+			delete[] QKAGet(hA, i);
 		break;
 
 	case QKADF_HEAPFREE:
 		for (int i = iIndex; i < iEnd; ++i)
-			HeapFree(pArray->hHeap, 0, QKAGet(pArray, i));
+			HeapFree(hA->hHeap, 0, QKAGet(hA, i));
 		break;
 
 	case QKADF_DELPROC:
-		if (pArray->pProc)
+		if (hA->pProc)
 			for (int i = iIndex; i < iEnd; ++i)
-				pArray->pProc(QKAGet(pArray, i));
+				hA->pProc(QKAGet(hA, i));
 		break;
 	}
 
-	assert(iIndex + iDelCount <= pArray->iCount);
-	BYTE* pSrc = pArray->pData + PTRSIZE * iEnd, 
-		* pDst = pArray->pData + PTRSIZE * iIndex;
-	if (iIndex + iDelCount != pArray->iCount)// 判断有没有删到尾，没删到尾才移动内存
-		memmove(pDst, pSrc, PTRSIZE * (pArray->iCount - iEnd));
+	assert(iIndex + iDelCount <= hA->iCount);
+	BYTE* pSrc = hA->pData + PTRSIZE * iEnd, 
+		* pDst = hA->pData + PTRSIZE * iIndex;
+	if (iIndex + iDelCount != hA->iCount)// 判断有没有删到尾，没删到尾才移动内存
+		memmove(pDst, pSrc, PTRSIZE * (hA->iCount - iEnd));
 
 	// 判断空出的位置有没有超过预分配大小或者只删了一项
-	if (pArray->iCountAllocated - pArray->iCount + iDelCount >= pArray->iGrow && iDelCount != 1)
+	if (hA->iCountAllocated - hA->iCount + iDelCount >= hA->iGrow && iDelCount != 1)
 	{
-		pArray->iCountAllocated = pArray->iCount + pArray->iGrow;// 超过了预分配大小，那么重分配把内存缩小
-		BYTE* pData = (BYTE*)HeapReAlloc(pArray->hHeap, 0, pArray->pData, PTRSIZE * pArray->iCountAllocated);
+		hA->iCountAllocated = hA->iCount + hA->iGrow;// 超过了预分配大小，那么重分配把内存缩小
+		BYTE* pData = (BYTE*)HeapReAlloc(hA->hHeap, 0, hA->pData, PTRSIZE * hA->iCountAllocated);
 		if (!pData)
 			return FALSE;
-		pArray->pData = pData;
+		hA->pData = pData;
 	}
 	else
-		pArray->iCountAllocated += iDelCount;// 没超过或者只删了一项则不重分配
-	pArray->iCount -= iDelCount;
+		hA->iCountAllocated += iDelCount;// 没超过或者只删了一项则不重分配
+	hA->iCount -= iDelCount;
 	return TRUE;
 }
-BOOL QKATrimSize(QKARRAY pArray, BOOL bReserveGrowSpace)
+BOOL QKATrimSize(QKARRAY hA, BOOL bReserveGrowSpace)
 {
-	assert(pArray);
-	assert(pArray->iCountAllocated >= pArray->iCount);
+	assert(hA);
+	assert(hA->iCountAllocated >= hA->iCount);
 	BYTE* pData;
 	if (bReserveGrowSpace)
 	{
-		if (pArray->iCountAllocated - pArray->iCount > pArray->iGrow)
+		if (hA->iCountAllocated - hA->iCount > hA->iGrow)
 		{
-			pArray->iCountAllocated = pArray->iCount + pArray->iGrow;
+			hA->iCountAllocated = hA->iCount + hA->iGrow;
 			goto ReAllocArray;
 		}
 	}
 	else
 	{
-		if (pArray->iCountAllocated > pArray->iCount)
+		if (hA->iCountAllocated > hA->iCount)
 		{
-			pArray->iCountAllocated = pArray->iCount;
+			hA->iCountAllocated = hA->iCount;
 			goto ReAllocArray;
 		}
 	}
 	return FALSE;
 ReAllocArray:
-	pData = (BYTE*)HeapReAlloc(pArray->hHeap, 0, pArray->pData, PTRSIZE * pArray->iCountAllocated);
+	pData = (BYTE*)HeapReAlloc(hA->hHeap, 0, hA->pData, PTRSIZE * hA->iCountAllocated);
 	if (!pData)
 		return FALSE;
-	pArray->pData = pData;
+	hA->pData = pData;
 	return TRUE;
 }
 /////////////////////////////////////数组↑
 
-INT_PTR CALLBACK DlgProc_InputBox(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_InputBox(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	QKINPUTBOXCOMTEXT* pContext = NULL;
 	pContext = (QKINPUTBOXCOMTEXT*)GetPropW(hDlg, PROP_INPUTBOXCONTEXT);
-	switch (message)
+	switch (uMsg)
 	{
 	case WM_INITDIALOG:
 	{
@@ -346,43 +347,21 @@ BOOL QKInputBox(PCWSTR pszTitle, PCWSTR pszTip, PWSTR* ppszBuffer, HWND hParent)
 }
 int QKStrInStr(PCWSTR pszOrg, PCWSTR pszSubStr, int iStartPos)
 {
-	int iSubStrCount = lstrlenW(pszSubStr);
-	int iCount = lstrlenW(pszOrg) - iSubStrCount + 1 - (iStartPos - 1);
-	if (iCount <= 0 || iStartPos <= 0)
+	PCWSTR pszBase = pszOrg + iStartPos - 1;
+	PCWSTR pszResult = StrStrIW(pszBase, pszSubStr);
+	if (pszResult)
+		return pszResult - pszOrg + 1;
+	else
 		return 0;
-	for (int i = 0; i < iCount; i++)
-	{
-		if (CompareStringW(
-			LOCALE_USER_DEFAULT,
-			LINGUISTIC_IGNORECASE,
-			pszOrg + iStartPos - 1 + i,
-			iSubStrCount,
-			pszSubStr,
-			iSubStrCount
-		) == CSTR_EQUAL)
-			return iStartPos + i;
-	}
-	return 0;
 }
 int QKStrInStrCS(PCWSTR pszOrg, PCWSTR pszSubStr, int iStartPos)
 {
-	int iSubStrCount = lstrlenW(pszSubStr);
-	int iCount = lstrlenW(pszOrg) - iSubStrCount + 1 - (iStartPos - 1);
-	if (iCount <= 0 || iStartPos <= 0)
+	PCWSTR pszBase = pszOrg + iStartPos - 1;
+	PCWSTR pszResult = StrStrW(pszBase, pszSubStr);
+	if (pszResult)
+		return pszResult - pszOrg + 1;
+	else
 		return 0;
-	for (int i = 0; i < iCount; i++)
-	{
-		if (CompareStringW(
-			LOCALE_USER_DEFAULT,
-			0,
-			pszOrg + iStartPos - 1 + i,
-			iSubStrCount,
-			pszSubStr,
-			iSubStrCount
-		) == CSTR_EQUAL)
-			return iStartPos + i;
-	}
-	return 0;
 }
 void QKStrTrim(PWSTR pszOrg)
 {
@@ -403,6 +382,61 @@ void QKStrTrim(PWSTR pszOrg)
 	if (i)
 		while (*pszOrg++ = *p++);
 }
+int QKStrRStr(PCWSTR pszOrg, PCWSTR pszSubStr, int iStartPos, int iMaxLen)
+{
+	PCWSTR pszBase = pszOrg + iStartPos - 1;
+	PCWSTR pszResult = StrRStrIW(
+		pszBase, 
+		(iMaxLen < 0) ? NULL : (pszBase + iMaxLen),
+		pszSubStr);
+
+	if (pszResult)
+		return pszResult - pszBase + 1;
+	else
+		return 0;
+}
+int QKStrRStrCS(PCWSTR pszOrg, PCWSTR pszSubStr, int iStartPos, int iMaxLen)
+{
+	PCWSTR pszBase = pszOrg + iStartPos - 1;
+	PCWSTR pszResult = StrRStrW(
+		pszBase,
+		(iMaxLen < 0) ? NULL : (pszBase + iMaxLen),
+		pszSubStr);
+
+	if (pszResult)
+		return pszResult - pszBase + 1;
+	else
+		return 0;
+}
+PWSTR StrRStrW(PCWSTR lpSource, PCWSTR lpLast, PCWSTR lpSrch)
+{
+	PCWSTR lpFound = NULL;
+
+	if (!lpLast)
+		lpLast = lpSource + lstrlenW(lpSource);
+
+	if (lpSource && lpSrch && *lpSrch)
+	{
+		WCHAR   wMatch;
+		UINT    uLen;
+		PCWSTR  lpStart;
+
+		wMatch = *lpSrch;
+		uLen = lstrlenW(lpSrch);
+		lpStart = lpSource;
+		while (*lpStart && (lpStart < lpLast))
+		{
+			if (!ChrCmpW(*lpStart, wMatch))
+			{
+				if (StrCmpNW(lpStart, lpSrch, uLen) == 0)
+					lpFound = lpStart;
+			}
+			lpStart++;
+		}
+	}
+	return((PWSTR)lpFound);
+}
+
 UINT QKMessageBox(PCWSTR pszMainInstruction, PCWSTR pszContent, HICON hIcon, PCWSTR pszWndTitle, HWND hParent, PCWSTR pszChackBoxTitle, UINT iButtonCount,
 	PCWSTR pszButton1Title, PCWSTR pszButton2Title, PCWSTR pszButton3Title, UINT iDefButton, BOOL IsCenterPos, BOOL* IsCheck
 )
@@ -1389,20 +1423,20 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
 	QKADelete(LrcLines, QKADF_DELETEARRAY);
 	//                                                                          ***无临时对象
 	////////////////////////////排序数组，便于合并歌词
-	QKARRAY pArray = *Result;
-	int iCount = pArray->iCount;
+	QKARRAY hA = *Result;
+	int iCount = hA->iCount;
 	LRCDATA* pi, * pj;
 
 	for (int i = 0; i <= iCount - 1; ++i)
 	{
 		for (int j = 0; j < iCount - 1 - i; ++j)
 		{
-			pi = (LRCDATA*)QKAGet(pArray, j);
-			pj = (LRCDATA*)QKAGet(pArray, j + 1);
+			pi = (LRCDATA*)QKAGet(hA, j);
+			pj = (LRCDATA*)QKAGet(hA, j + 1);
 			if (pi->fTime > pj->fTime)
 			{
-				QKASet(pArray, j + 1, pi);
-				QKASet(pArray, j, pj);
+				QKASet(hA, j + 1, pi);
+				QKASet(hA, j, pj);
 			}
 		}
 	}
@@ -1414,13 +1448,13 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
 	LRCDATA* p, * pItem;
 	for (int i = 0; i < iCount; i++)
 	{
-		p = (LRCDATA*)QKAGet(pArray, i);
+		p = (LRCDATA*)QKAGet(hA, i);
 		int iLastTimeCount = ArrLastTime->iCount;
 		if (iLastTimeCount != 0 && i != 0)
 		{
 			if (QKReInterpretNumber(QKAGetValue(ArrLastTime, 0), float) == p->fTime)
 			{
-				pItem = (LRCDATA*)QKAGet(pArray, i - iLastTimeCount);
+				pItem = (LRCDATA*)QKAGet(hA, i - iLastTimeCount);
 				p1 = pItem->pszLrc;
 				p2 = p->pszLrc;
 				QKStrTrim(p1);
@@ -1473,21 +1507,21 @@ UTF16_SkipOthers:// UTF-16的两种编码处理方式不同，它俩处理完后直接跳到这里
 	for (int i = 0; i < ArrDelIndex->iCount; i++)
 	{
 		int iIndex = QKAGetValue(ArrDelIndex, ArrDelIndex->iCount - i - 1);// 倒着删
-		LRCDATA* p = (LRCDATA*)QKAGet(pArray, iIndex);
+		LRCDATA* p = (LRCDATA*)QKAGet(hA, iIndex);
 		delete[] p->pszLrc;
 
-		QKADeleteMember(pArray, iIndex, QKADF_DELETE);
+		QKADeleteMember(hA, iIndex, QKADF_DELETE);
 	}
 	QKADelete(ArrDelIndex);
-	for (int i = 0; i < pArray->iCount; i++)
+	for (int i = 0; i < hA->iCount; i++)
 	{
-		p = (LRCDATA*)QKAGet(pArray, i);
-		if (i != pArray->iCount - 1)
-			p->fDelay = ((LRCDATA*)QKAGet(pArray, i + 1))->fTime - p->fTime;
+		p = (LRCDATA*)QKAGet(hA, i);
+		if (i != hA->iCount - 1)
+			p->fDelay = ((LRCDATA*)QKAGet(hA, i + 1))->fTime - p->fTime;
 		else
 			p->fDelay = g_llLength / 1000 - p->fTime;
 	}
-	QKATrimSize(pArray, FALSE);
+	QKATrimSize(hA, FALSE);
 	//                                                                          ***无临时对象
 	////////////////////////////结束！！
 }

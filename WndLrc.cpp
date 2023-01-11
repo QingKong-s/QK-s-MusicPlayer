@@ -146,11 +146,11 @@ BOOL LrcWnd_Init()
         return FALSE;
     return TRUE;
 }
-LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static BOOL bLBTDown = FALSE;
     static BOOL bShowBKOld = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_CREATE:
     {
@@ -162,7 +162,7 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
     case WM_NCLBUTTONDOWN:// 非客户区鼠标按键事件
     {
         bLBTDown = TRUE;
-        LRESULT lResult = DefWindowProcW(hWnd, message, wParam, lParam);
+        LRESULT lResult = DefWindowProcW(hWnd, uMsg, wParam, lParam);
         bLBTDown = FALSE;
         return lResult;
     }
@@ -184,13 +184,13 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
         switch (iRet)
         {
         case LRCHITTEST_LAST:
-            SendMessageW(g_hBKLeft, LEFTBKM_DOBTOPE, 0, 0);
+            SendMessageW(g_hBKLeft, LEFTBKM_TOOLBAR_DOBTOPE, 0, 0);
             break;
         case LRCHITTEST_PLAY:
-            SendMessageW(g_hBKLeft, LEFTBKM_DOBTOPE, 1, 0);
+            SendMessageW(g_hBKLeft, LEFTBKM_TOOLBAR_DOBTOPE, 1, 0);
             break;
         case LRCHITTEST_NEXT:
-            SendMessageW(g_hBKLeft, LEFTBKM_DOBTOPE, 2, 0);
+            SendMessageW(g_hBKLeft, LEFTBKM_TOOLBAR_DOBTOPE, 2, 0);
             break;
         case LRCHITTEST_CLOSE:
             DestroyWindow(hWnd);
@@ -389,7 +389,7 @@ LRESULT CALLBACK WndProc_Lrc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	}
 	return 0;
 	}
-	return DefWindowProcW(hWnd, message, wParam, lParam);
+	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 void LrcWnd_DrawLrc()
 {
@@ -435,7 +435,7 @@ void LrcWnd_DrawLrc()
         rcF = { (FLOAT)(iLeft + iIconOffest) ,(FLOAT)iIconTop };
         rcF.left = (FLOAT)(iLeft + iIconOffest);
         rcF.top = (FLOAT)iIconTop;
-        rcF.right = rcF.left + GC.cyBT;
+        rcF.right = rcF.left + GC.cyBT; 
         rcF.bottom = rcF.top + GC.cyBT;
         m_pD2DRenderTarget->EndDraw();
 		DrawIconEx(m_hCDCDTLrc, iLeft + iIconOffest, iIconTop, GR.hiLast2, 0, 0, 0, NULL, DI_NORMAL);

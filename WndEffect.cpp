@@ -150,12 +150,12 @@ void GlobalEffect_SetPriority(int* i)
     //g_GlobalEffect.iPriorityRotate = i[8];
 }
 
-INT_PTR CALLBACK DlgProc_EQ(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_EQ(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static HWND hTB[10];
     static BOOL bApply = FALSE;
     static int iCBSel = 0;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -276,7 +276,7 @@ INT_PTR CALLBACK DlgProc_EQ(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static HWND hTBSpeed,
         hTBBlance,
@@ -293,7 +293,7 @@ INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
     static HBITMAP hBitmap;
     static int cxVU, cyVU;
     static DRAWING_TIME DrawingTime[2] = { 0 };
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -580,10 +580,10 @@ INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_Chorus(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Chorus(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static BOOL bApply = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -703,10 +703,10 @@ INT_PTR CALLBACK DlgProc_Chorus(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_Compressor(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Compressor(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static BOOL bApply = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -783,10 +783,10 @@ INT_PTR CALLBACK DlgProc_Compressor(HWND hDlg, UINT message, WPARAM wParam, LPAR
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_Distortion(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Distortion(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static BOOL bApply = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -859,10 +859,10 @@ INT_PTR CALLBACK DlgProc_Distortion(HWND hDlg, UINT message, WPARAM wParam, LPAR
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_Echo(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Echo(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static BOOL bApply = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -938,10 +938,10 @@ INT_PTR CALLBACK DlgProc_Echo(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_Flanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Flanger(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static BOOL bApply = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -1061,10 +1061,10 @@ INT_PTR CALLBACK DlgProc_Flanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_Gargle(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Gargle(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static BOOL bApply = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -1132,10 +1132,10 @@ INT_PTR CALLBACK DlgProc_Gargle(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_I3DL2Reverb(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_I3DL2Reverb(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static BOOL bApply = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -1236,10 +1236,10 @@ INT_PTR CALLBACK DlgProc_I3DL2Reverb(HWND hDlg, UINT message, WPARAM wParam, LPA
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_Reverb(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Reverb(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static BOOL bApply = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -1309,10 +1309,10 @@ INT_PTR CALLBACK DlgProc_Reverb(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_Rotate(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Rotate(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static BOOL bApply = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -1365,11 +1365,11 @@ INT_PTR CALLBACK DlgProc_Rotate(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static HWND hTab;
     static HWND hChild[EFFECTWNDTABCOUNT];
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {

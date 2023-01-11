@@ -292,14 +292,14 @@ void Sort_End()
     UI_RedrawBookMarkPos();
 }
 
-LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static HTHEME hLVTheme = NULL;
 	static int cxClient, cyClient;
 	static int cyVSBArrow = GetSystemMetrics(SM_CYVSCROLL);
 	static int cySBTrack;
 	static COLORREF CustClr[16] = { 0 };
-	switch (message)
+	switch (uMsg)
 	{
 	case WM_CREATE:// 狠狠地创建窗口
 	{
@@ -356,7 +356,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 		///////////////////////////
 		hCtrl = CreateWindowExW(0, WC_BUTTONW, L"保存", WS_CHILD | WS_VISIBLE,
 			iLeft, iTop, DPIS_CXRITBT, GC.cyBT,
-			hCtrl2, (HMENU)IDC_BT_SAVE, g_hInst, NULL);
+			hCtrl2, (HMENU)IDC_BT_SAVELIST, g_hInst, NULL);
 		SendMessageW(hCtrl, WM_SETFONT, (WPARAM)g_hFont, FALSE);
 		SendMessageW(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GR.hiSaveFile);
 		iLeft += (DPIS_CXRITBT + DPIS_GAP);
@@ -544,17 +544,17 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 				case IDMI_TL_OPEN_IN_EXPLORER:
 				{
 					int iCount = QKAGetCount(g_ItemData);
-					QKARRAY pArray = QKACreate(0);
+					QKARRAY hA = QKACreate(0);
 					for (int i = 0; i < iCount; ++i)
 					{
 						if (SendMessageW(g_hLV, LVM_GETITEMSTATE, i, LVIS_SELECTED) == LVIS_SELECTED)
-							QKAAdd(pArray, List_GetArrayItem(i)->pszFile);
+							QKAAdd(hA, List_GetArrayItem(i)->pszFile);
 					}
-					iCount = QKAGetCount(pArray);
+					iCount = QKAGetCount(hA);
 					if (!iCount)
 						return 0;
 					WCHAR pszPath[MAX_PATH];
-					lstrcpyW(pszPath, (PCWSTR)QKAGet(pArray, 0));
+					lstrcpyW(pszPath, (PCWSTR)QKAGet(hA, 0));
 					PathRemoveFileSpecW(pszPath);
 					LPITEMIDLIST pPathIDL;
 					SHParseDisplayName(pszPath, NULL, &pPathIDL, 0, 0);
@@ -563,7 +563,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
 					for (int i = 0; i < iCount; i++)
 					{
-						SHParseDisplayName((PCWSTR)QKAGet(pArray, i), NULL, pFileIDL + i, 0, 0);
+						SHParseDisplayName((PCWSTR)QKAGet(hA, i), NULL, pFileIDL + i, 0, 0);
 					}
 
 					HRESULT hr = SHOpenFolderAndSelectItems(pPathIDL, iCount, (LPCITEMIDLIST*)pFileIDL, 0);
@@ -574,7 +574,7 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 					}
 					CoTaskMemFree(pPathIDL);
 					delete[] pFileIDL;
-					QKADelete(pArray);
+					QKADelete(hA);
 				}
 				break;
 				case IDMI_TL_ADDBOOKMARK:
@@ -872,12 +872,12 @@ LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM
     }
     return 0;
 	}
-	return DefWindowProcW(hWnd, message, wParam, lParam);
+	return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
-LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)//右上容器窗口过程
+LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)//右上容器窗口过程
 {
     static WCHAR szListName[MAX_PATH];
-    switch (message)
+    switch (uMsg)
     {
     case WM_COMMAND:
     {
@@ -1163,7 +1163,7 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
                 List_FillMusicTimeColumn(TRUE);
             }
             return 0;
-            case IDC_BT_SAVE:
+            case IDC_BT_SAVELIST:
             {
                 if (!QKAGetCount(g_ItemData))
                     return 0;
@@ -1612,11 +1612,11 @@ LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
         SetTextColor((HDC)wParam, QKCOLOR_CYANDEEPER);
         return (LRESULT)GetStockObject(WHITE_BRUSH);
     }
-    return DefWindowProcW(hWnd, message, wParam, lParam);
+    return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
-LRESULT CALLBACK WndProc_Edit(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc_Edit(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    switch (message)
+    switch (uMsg)
     {
     case WM_KEYDOWN:
     {
@@ -1625,15 +1625,15 @@ LRESULT CALLBACK WndProc_Edit(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     }
     }
 
-    return CallWindowProcW((WNDPROC)GetPropW(hWnd, PROP_WNDPROC), hWnd, message, wParam, lParam);
+    return CallWindowProcW((WNDPROC)GetPropW(hWnd, PROP_WNDPROC), hWnd, uMsg, wParam, lParam);
 }
-LRESULT CALLBACK WndProc_ListView(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc_ListView(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static int iLastHoverItem = -1;
     int iCurrItem = -1;
-    LRESULT lRet = CallWindowProcW((WNDPROC)GetPropW(hWnd, PROP_WNDPROC), hWnd, message, wParam, lParam);
+    LRESULT lRet = CallWindowProcW((WNDPROC)GetPropW(hWnd, PROP_WNDPROC), hWnd, uMsg, wParam, lParam);
 
-    switch (message)
+    switch (uMsg)
     {
     case WM_LBUTTONDOWN:// 啊啊啊我没办法了，不这么写从别的控件点过来的时候LV不会获得焦点，WM_KEYDOWN也就不会发给LV......
         SetFocus(hWnd);
@@ -1668,10 +1668,10 @@ LRESULT CALLBACK WndProc_ListView(HWND hWnd, UINT message, WPARAM wParam, LPARAM
     }
     return lRet;
 }
-INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static DWORD dwDlgType;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -1803,11 +1803,11 @@ INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
     }
     return FALSE;// 处理一条消息时会返回TRUE，不处理一条消息时返回FALSE
 }
-INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static HWND hLV, hStatic;
     static HBRUSH hbrStatic = NULL;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {

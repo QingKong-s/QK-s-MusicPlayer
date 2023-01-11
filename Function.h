@@ -7,9 +7,22 @@
 #include <wincodec.h>
 
 #include <assert.h>
+#include <process.h>
 
 #include "WndMain.h"
+
+// _beginthreadex wrapper
+#define CRTCreateThread(lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, lpThreadId) \
+                    ((HANDLE)_beginthreadex(lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, lpThreadId))
+// _beginthreadex wrapper
+__forceinline HANDLE CRTCreateThreadSmp(_beginthreadex_proc_type lpStartAddress, void* lpParameter = NULL, 
+    UINT* lpThreadId = NULL, UINT dwCreationFlags = 0)
+{
+    return CRTCreateThread(NULL, 0, lpStartAddress, lpParameter, dwCreationFlags, lpThreadId);
+}
+
 typedef LPCVOID PCVOID;// 什么东西都带个远近指针跟老缠一样
+
 /////////////////数组
 #define QKADF_NO                0// 无动作
 #define QKADF_DELETE            1// delete运算符
@@ -167,114 +180,114 @@ QKARRAY QKACreate(int iCount, int iGrow = 10, HANDLE hHeap = NULL, QKARYDELPROC 
 /// <summary>
 /// 数组_销毁
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄，可以为NULL</param>
 /// <param name="uDeleteFlag">删除标志，QKADF_常量</param>
-void QKADelete(QKARRAY pArray, UINT uDeleteFlag = QKADF_NO);
+void QKADelete(QKARRAY hA, UINT uDeleteFlag = QKADF_NO);
 
 /// <summary>
 /// 数组_清除
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <param name="uDeleteFlag">删除标志，QKADF_常量</param>
-void QKAClear(QKARRAY pArray, UINT uDeleteFlag = QKADF_NO);
+void QKAClear(QKARRAY hA, UINT uDeleteFlag = QKADF_NO);
 
 /// <summary>
 /// 数组_加入，在数组尾部附加成员
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <param name="pData">数据</param>
 /// <returns>成功返回插入新成员的索引，失败返回-1</returns>
-int QKAAdd(QKARRAY pArray, void* pData);
+int QKAAdd(QKARRAY hA, PCVOID pData);
 
 /// <summary>
 /// 数组_加入数值
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <param name="uValue">数值，限制为32位</param>
 /// <returns>成功返回插入新成员的索引，失败返回-1</returns>
-int QKAAddValue(QKARRAY pArray, UINT uValue);
+int QKAAddValue(QKARRAY hA, UINT uValue);
 
 /// <summary>
 /// 数组_插入，在iIndex处插入一个成员
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <param name="pData">数据</param>
 /// <param name="iIndex">插入位置</param>
 /// <returns>成功返回插入新成员的索引，失败返回-1</returns>
-int QKAInsert(QKARRAY pArray, void* pData, int iIndex);
+int QKAInsert(QKARRAY hA, PCVOID pData, int iIndex);
 
 /// <summary>
 /// 数组_取成员
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <param name="iIndex">索引</param>
 /// <returns>返回数据指针</returns>
-__forceinline void* QKAGet(QKARRAY pArray, int iIndex)
+__forceinline void* QKAGet(QKARRAY hA, int iIndex)
 {
-    assert(pArray);
-    return *(void**)(pArray->pData + PTRSIZE * iIndex);
+    assert(hA);
+    return *(void**)(hA->pData + PTRSIZE * iIndex);
 }
 
 /// <summary>
 /// 数组_取数值
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <param name="iIndex">索引</param>
 /// <returns>返回数值</returns>
-__forceinline UINT QKAGetValue(QKARRAY pArray, int iIndex)
+__forceinline UINT QKAGetValue(QKARRAY hA, int iIndex)
 {
-    assert(pArray);
-    return *(UINT*)(pArray->pData + PTRSIZE * iIndex);
+    assert(hA);
+    return *(UINT*)(hA->pData + PTRSIZE * iIndex);
 }
 
 /// <summary>
 /// 数组_置数据
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <param name="iIndex">索引</param>
 /// <param name="pData">数据</param>
 /// <param name="uDeleteFlag">删除标志，QKADF_常量</param>
-void QKASet(QKARRAY pArray, int iIndex, void* pData, UINT uDeleteFlag = QKADF_NO);
+void QKASet(QKARRAY hA, int iIndex, PCVOID pData, UINT uDeleteFlag = QKADF_NO);
 
 /// <summary>
 /// 数组_取成员数
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <returns>返回成员数</returns>
-__forceinline int QKAGetCount(QKARRAY pArray)
+__forceinline int QKAGetCount(QKARRAY hA)
 {
-    assert(pArray);
-    return pArray->iCount;
+    assert(hA);
+    return hA->iCount;
 }
 
 /// <summary>
 /// 数组_删除成员
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <param name="iIndex">索引</param>
 /// <param name="uDeleteFlag">删除标志，QKADF_常量</param>
 /// <param name="iDelCount">要删除的个数</param>
 /// <return>成功返回TRUE，否则返回FALSE</return>
-BOOL QKADeleteMember(QKARRAY pArray, int iIndex, UINT uDeleteFlag = QKADF_NO, int iDelCount = 1);
+BOOL QKADeleteMember(QKARRAY hA, int iIndex, UINT uDeleteFlag = QKADF_NO, int iDelCount = 1);
 
 /// <summary>
 /// 数组_取数据指针，注意：该指针在数组生命周期中可能发生变化
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <returns>数据指针</returns>
-__forceinline void* QKAGetDataPtr(QKARRAY pArray)
+__forceinline void* QKAGetDataPtr(QKARRAY hA)
 {
-    assert(pArray);
-    return pArray->pData;
+    assert(hA);
+    return hA->pData;
 }
 
 /// <summary>
 /// 数组_去除多余空间
 /// </summary>
-/// <param name="pArray">数组句柄</param>
+/// <param name="hA">数组句柄</param>
 /// <param name="bReserveGrowSpace">是否保留出增长空间</param>
 /// <returns>若尺寸已改变，返回TRUE，若尺寸未改变或发生错误则返回FALSE</returns>
-BOOL QKATrimSize(QKARRAY pArray, BOOL bReserveGrowSpace = TRUE);
+BOOL QKATrimSize(QKARRAY hA, BOOL bReserveGrowSpace = TRUE);
 
 
 /*
@@ -314,8 +327,13 @@ int QKStrInStrCS(PCWSTR pszOrg, PCWSTR pszSubStr, int iStartPos = 1);
  * 备注：原字符串将被破坏，欲留副本，请复制内存
  */
 void QKStrTrim(PWSTR pszOrg);
-
-
+int QKStrRStr(PCWSTR pszOrg, PCWSTR pszSubStr, int iStartPos = 1, int iMaxLen = -1);
+int QKStrRStrCS(PCWSTR pszOrg, PCWSTR pszSubStr, int iStartPos = 1, int iMaxLen = -1);
+__forceinline BOOL ChrCmpW(WCHAR w1, WCHAR wMatch)
+{
+    return StrCmpNW(&w1, &wMatch, 1);
+}
+PWSTR StrRStrW(PCWSTR lpSource, PCWSTR lpLast, PCWSTR lpSrch);
 
 BOOL QKInputBox(PCWSTR pszTitle, PCWSTR pszTip, PWSTR* ppszBuffer, HWND hParent);
 UINT QKMessageBox(

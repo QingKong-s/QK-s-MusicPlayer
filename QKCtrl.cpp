@@ -50,11 +50,11 @@ BOOL QKCtrlInit()
 
     return TRUE;
 }
-LRESULT CALLBACK WndProc_QKCTrackBar(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc_QKCTrackBar(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     QKCTBCONTEXT* pContext;
     pContext = (QKCTBCONTEXT*)GetWindowLongW(hWnd, 0);
-    switch (message)
+    switch (uMsg)
     {
     case WM_CREATE:
         pContext = new QKCTBCONTEXT;
@@ -229,13 +229,13 @@ LRESULT CALLBACK WndProc_QKCTrackBar(HWND hWnd, UINT message, WPARAM wParam, LPA
         delete pContext;
         return 0;
     }
-    return DefWindowProcW(hWnd, message, wParam, lParam);
+    return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
-LRESULT CALLBACK WndProc_QKCSeparateBar(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc_QKCSeparateBar(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     QKCSEBCONTEXT* pContext;
     pContext = (QKCSEBCONTEXT*)GetWindowLongW(hWnd, 0);
-    switch (message)
+    switch (uMsg)
     {
     case WM_CREATE:
 	{
@@ -379,5 +379,5 @@ LRESULT CALLBACK WndProc_QKCSeparateBar(HWND hWnd, UINT message, WPARAM wParam, 
     case QKCSEBM_GETRANGE:
         return MAKELONG(pContext->iMin, pContext->iMax);
     }
-    return DefWindowProcW(hWnd, message, wParam, lParam);
+    return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }

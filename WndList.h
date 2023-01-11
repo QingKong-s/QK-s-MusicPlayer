@@ -19,6 +19,7 @@ struct PLAYERLISTUNIT// 内存播放列表项目
 	int iMappingIndexSearch;	// 搜索时映射到的索引
 	int iMappingIndexSort;		// 排序时映射到的索引
 	QKARRAY Artists;			// 缓存艺术家列表
+	BOOL bArtistsAvailble;		// 艺术家是否获取到
 };
 #define QKLIF_INVALID			0x00000001// 项目无效
 #define QKLIF_IGNORED			0x00000002// 忽略
@@ -126,12 +127,12 @@ void StopThread_MusicTime();
 
 
 
-LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK WndProc_Edit(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK WndProc_ListView(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WndProc_PlayList(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WndProc_RitBK(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WndProc_Edit(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WndProc_ListView(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_List(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_BookMark(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 HRESULT CALLBACK OLEDrag_GiveFeedBack(DWORD dwEffect);
 HRESULT CALLBACK OLEDrop_OnEnter(IDataObject* pDataObj, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect);
 HRESULT CALLBACK OLEDrop_OnOver(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect);

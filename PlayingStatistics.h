@@ -2,6 +2,31 @@
 #include <Windows.h>
 
 #include "Function.h"
+/*
+*****艺术家文件：
+文件头
+{
+	项目头
+	艺术家名字长度
+	艺术家名字
+}
+结束项目头
+
+
+*****歌曲文件：
+文件头
+{
+	项目头
+	歌曲名长度
+	歌曲名
+	艺术家个数
+	{
+		艺术家名字长度
+		艺术家名字
+	}
+}
+结束项目头
+*/
 
 #define QKAFVER_1					0
 struct ARTISTSFILEHEADER// 艺术家存档文件头
@@ -53,14 +78,6 @@ struct SONGSSTATUNIT
 #define MAX_DATA_BUFSIZE				9				// 日期字符串最大缓冲区大小，以WCHAR计，包含结尾NULL
 
 typedef void(CALLBACK* STATARTISTSFINDPROC)(void* p, BOOL bNewItem, LPARAM lParam);
-/// <summary>
-/// 按指定的分隔符分割歌曲文件名
-/// </summary>
-/// <param name="pszSongName">歌曲文件名</param>
-/// <param name="pszDiv">分隔符</param>
-/// <param name="bDirection">查找方向 TRUE=正找，FALSE=倒找，默认正找</param>
-/// <returns>分隔符出现的位置</returns>
-int PS_SplitSongName(PCWSTR pszSongName, PCWSTR pszDiv, BOOL bDirection = TRUE);
 
 /// <summary>
 /// 分割艺术家字符串
@@ -75,6 +92,7 @@ void PS_AddArtistPlayingTime(PCWSTR pszArtist, UINT uSecond, BOOL bHasHashCode =
 BOOL PS_StatArtistFind(PCWSTR pszArtist, BOOL bHasHashCode, UINT uHashCode, UINT* puHashCode, STATARTISTSFINDPROC pProc, LPARAM lParam = 0);
 void PS_AddSongPlayingCount(PCWSTR pszSongName, QKARRAY aArtists, BOOL bHasHashCode = FALSE, UINT uHashCode = 0, UINT* puHashCode = NULL);
 void PS_AddSongPlayingTime(PCWSTR pszSongName, UINT uSecond, BOOL bHasHashCode = FALSE, UINT uHashCode = 0, UINT* puHashCode = NULL);
+void PS_AddSongSingleLoop(PCWSTR pszSongName, SYSTEMTIME* pst, BOOL bHasHashCode = FALSE, UINT uHashCode = 0, UINT* puHashCode = NULL);
 BOOL PS_StatSongFind(PCWSTR pszSongName, BOOL bHasHashCode, UINT uHashCode, UINT* puHashCode, STATARTISTSFINDPROC pProc, LPARAM lParam = 0);
 BOOL PS_LoadStatFile(PCWSTR pszDir);
 void PS_SaveStatFile(PCWSTR pszDir = NULL);

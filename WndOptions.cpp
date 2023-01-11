@@ -221,9 +221,9 @@ void Settings_GetFromCtrl(HWND* hChild)
     ///////////////////快捷键
     hWnd = hChild[3];
 }
-INT_PTR CALLBACK DlgProc_OptVisual(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_OptVisual(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -250,9 +250,9 @@ INT_PTR CALLBACK DlgProc_OptVisual(HWND hDlg, UINT message, WPARAM wParam, LPARA
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_OptPlaying(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_OptPlaying(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch (message)
+	switch (uMsg)
 	{
 	case WM_INITDIALOG:
 	{
@@ -341,12 +341,12 @@ INT_PTR CALLBACK DlgProc_OptPlaying(HWND hDlg, UINT message, WPARAM wParam, LPAR
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static HBRUSH hbr1 = NULL/*DT左*/, hbr2 = NULL/*DT右*/, hbr3 = NULL/*SC左*/, hbr4 = NULL/*SC右*/, hbr5 = NULL/*边框*/;
     static HWND hST1 = NULL/*DT左*/, hST2 = NULL/*DT右*/, hST3 = NULL/*SC左*/, hST4 = NULL/*SC右*/, hST5 = NULL/*边框*/;
 	static COLORREF CustClr[16] = { 0 };
-	switch (message)
+	switch (uMsg)
     {
     case WM_INITDIALOG:
     {
@@ -662,16 +662,16 @@ INT_PTR CALLBACK DlgProc_OptLrc(HWND hDlg, UINT message, WPARAM wParam, LPARAM l
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_OptHotKey(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_OptHotKey(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    switch (message)
+    switch (uMsg)
     {
     case WM_NCPAINT:
         return TRUE;
     }
     return FALSE;
 }
-INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static int iOptionIndex = -1;
     static HWND hChild[OPTIONSWNDTABCOUNT];
@@ -680,7 +680,7 @@ INT_PTR CALLBACK DlgProc_Options(HWND hDlg, UINT message, WPARAM wParam, LPARAM 
     static int iSBSize;
     static int cyLB;
     static BOOL bSBShow = FALSE;
-    switch (message)
+    switch (uMsg)
     {
     case WM_INITDIALOG:
     {

@@ -108,14 +108,14 @@ const float c_EQCenter[10] = { 31,62,125,250,500,1000,2000,4000,8000,16000 };// 
 */
 void GlobalEffect_ResetToDefault(UINT i);
 
-INT_PTR CALLBACK DlgProc_EQ(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_Chorus(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_Compressor(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_Distortion(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_Echo(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_Flanger(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_Gargle(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_I3DL2Reverb(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_Reverb(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_EQ(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_SBV(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_Chorus(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_Compressor(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_Distortion(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_Echo(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_Flanger(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_Gargle(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_I3DL2Reverb(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_Reverb(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK DlgProc_Effect(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);

@@ -65,7 +65,6 @@ BOOL			g_bPlaying				= FALSE;
 ULONGLONG       g_llLength = 0;
 float			g_fTime = 0;
 
-PWSTR			g_pszFile				= NULL;
 int				g_iCurrFileIndex		= -1;
 int				g_iCurrLrcIndex			= -2;
 int				g_iLaterPlay			= -1;

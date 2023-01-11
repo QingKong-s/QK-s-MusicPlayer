@@ -70,7 +70,6 @@ extern BOOL				g_bPlaying;				// 是否正在播放，用来判断是否播完
 extern ULONGLONG        g_llLength;             // 总长度，单位毫秒，进度条单位为百毫秒
 extern float			g_fTime;                // 当前进度
 
-extern PWSTR			g_pszFile;				// 当前文件路径
 extern int				g_iCurrFileIndex;       // 正在播放的文件（LV索引）
 extern int				g_iCurrLrcIndex;        // 现行歌词索引，-1：第一句但不高亮
 extern int				g_iLaterPlay;           // 稍后播放（LV索引）

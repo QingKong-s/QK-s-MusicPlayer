@@ -570,6 +570,9 @@ struct SETTINGS
 	PWSTR pszSoundFont;
 
 	UINT uPlayedTimeTimerResolution;
+
+	PWSTR pszArtistsDiv1;
+	PWSTR pszArtistsDiv2;
 };
 
 const D2D_COLOR_F c_D2DClrCyanDeeper = { 0.f,0.3764f,0.7529f,1.f };// “◊”Ô—‘«‡¿∂
